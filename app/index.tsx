@@ -1,15 +1,32 @@
-import { Text, View } from "react-native";
+import { Redirect } from "expo-router";
+import { ActivityIndicator, SafeAreaView, StyleSheet, Text } from "react-native";
+
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Index() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-    </View>
-  );
+  const { session, initializing } = useAuth();
+
+  if (initializing) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" />
+        <Text style={styles.heading}>Initialisation de la session…</Text>
+      </SafeAreaView>
+    );
+  }
+
+  return session ? <Redirect href="/(tabs)" /> : <Redirect href="/auth" />;
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  heading: {
+    fontSize: 16,
+    fontWeight: "500",
+  },
+});
