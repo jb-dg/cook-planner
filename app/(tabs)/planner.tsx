@@ -19,8 +19,10 @@ import {
 } from "date-fns";
 import { fr } from "date-fns/locale";
 
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
+import { colors, radii, spacing } from "../../theme/design";
 
 type DayPlan = {
   day: string;
@@ -161,7 +163,7 @@ export default function PlannerScreen() {
         throw error;
       }
 
-      Alert.alert("Enregistré", "Ton menu hebdo est sauvegardé.");
+      Alert.alert("Enregistré", "Ton menu hebdo est enregistré !");
     } catch (error) {
       console.error("save planner", error);
       Alert.alert(
@@ -174,7 +176,11 @@ export default function PlannerScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
       <View style={styles.headingRow}>
         <Text style={styles.heading}>Semaine {weekNumber}</Text>
         <View style={styles.navRow}>
@@ -209,7 +215,7 @@ export default function PlannerScreen() {
       </View>
 
       {syncing ? (
-        <ActivityIndicator />
+        <ActivityIndicator color={colors.accentSecondary} />
       ) : syncError ? (
         <Text style={styles.errorText}>{syncError}</Text>
       ) : null}
@@ -217,37 +223,49 @@ export default function PlannerScreen() {
       {weekDays.map((item, index) => (
         <View key={item.day} style={styles.dayCard}>
           <View style={styles.dayHeader}>
-            <Text style={styles.day}>{item.date}</Text>
+            <Text style={styles.day}>{item.day}</Text>
+            <Text style={styles.date}>{item.date}</Text>
           </View>
           <TextInput
             value={item.recipe}
             onChangeText={(value) => handleDayChange(index, "recipe", value)}
             placeholder="Plat principal"
+            placeholderTextColor={colors.muted}
             style={styles.recipeInput}
           />
           <TextInput
             value={item.prep}
             onChangeText={(value) => handleDayChange(index, "prep", value)}
             placeholder="Préparation à anticiper"
+            placeholderTextColor={colors.muted}
             style={styles.prepInput}
           />
         </View>
       ))}
 
-      <Text
+      <Pressable
+        disabled={disabled}
         style={[styles.saveButton, disabled && styles.saveButtonDisabled]}
-        onPress={disabled ? undefined : handleSave}
+        onPress={handleSave}
       >
-        {saving ? "Enregistrement…" : "Enregistrer dans Supabase"}
-      </Text>
-    </ScrollView>
+        <Text style={styles.saveButtonText}>
+          {saving ? "Enregistrement…" : "Enregistrer le menu"}
+        </Text>
+      </Pressable>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
-    padding: 24,
-    gap: 16,
+    padding: spacing.screen,
+    gap: 18,
+    paddingBottom: 140,
   },
   headingRow: {
     flexDirection: "row",
@@ -255,21 +273,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   heading: {
-    fontSize: 22,
-    fontWeight: "600",
+    fontSize: 24,
+    fontWeight: "700",
+    color: colors.text,
   },
   navRow: {
     flexDirection: "row",
     gap: 12,
   },
   navButton: {
-    backgroundColor: "#111",
-    borderRadius: 10,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radii.md,
     paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
   },
   navButtonText: {
-    color: "#fff",
+    color: colors.text,
     fontWeight: "700",
   },
   metaRow: {
@@ -284,23 +305,26 @@ const styles = StyleSheet.create({
   metaLabel: {
     fontSize: 12,
     textTransform: "uppercase",
-    color: "#6b7280",
+    color: colors.muted,
     marginBottom: 6,
     fontWeight: "600",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 10,
+    borderColor: colors.cardBorder,
+    borderRadius: radii.md,
     padding: 12,
     fontSize: 16,
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface,
+    color: colors.text,
   },
   dayCard: {
-    padding: 16,
-    backgroundColor: "#f8fafc",
-    borderRadius: 12,
-    gap: 10,
+    padding: spacing.card,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
   },
   dayHeader: {
     flexDirection: "row",
@@ -308,51 +332,57 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   day: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "600",
-    color: "#4b5563",
+    color: colors.text,
+    textTransform: "capitalize",
   },
   date: {
     fontSize: 13,
-    color: "#6b7280",
+    color: colors.muted,
     textTransform: "capitalize",
   },
   recipeInput: {
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 10,
+    borderColor: colors.cardBorder,
+    borderRadius: radii.md,
     padding: 12,
     fontSize: 16,
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(255,255,255,0.02)",
+    color: colors.text,
   },
   prepInput: {
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 10,
+    borderColor: colors.cardBorder,
+    borderRadius: radii.md,
     padding: 12,
     fontSize: 14,
-    backgroundColor: "#fff",
-    color: "#6b7280",
+    backgroundColor: "rgba(255,255,255,0.02)",
+    color: colors.text,
   },
   saveButton: {
-    textAlign: "center",
-    backgroundColor: "#111",
-    color: "#fff",
+    marginTop: 12,
+    backgroundColor: colors.accent,
+    borderRadius: radii.lg,
     paddingVertical: 16,
-    borderRadius: 12,
+    alignItems: "center",
+  },
+  saveButtonDisabled: {
+    backgroundColor: "rgba(255,255,255,0.1)",
+  },
+  saveButtonText: {
+    color: "#fff",
     fontWeight: "600",
     fontSize: 16,
   },
-  saveButtonDisabled: {
-    backgroundColor: "#9ca3af",
-  },
   errorText: {
-    color: "#dc2626",
+    color: colors.danger,
     textAlign: "center",
   },
   helper: {
     fontSize: 12,
-    color: "#6b7280",
+    color: colors.muted,
     textAlign: "center",
+    marginTop: 8,
   },
 });
