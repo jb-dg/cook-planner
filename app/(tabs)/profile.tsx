@@ -1,6 +1,8 @@
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../contexts/AuthContext";
+import { colors, radii, spacing } from "../../theme/design";
 
 export default function ProfileScreen() {
   const { session, signOut } = useAuth();
@@ -13,7 +15,8 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
+      <View style={styles.container}>
       <Text style={styles.heading}>Profil</Text>
       <View style={styles.card}>
         <Text style={styles.label}>Email</Text>
@@ -22,42 +25,49 @@ export default function ProfileScreen() {
       <Pressable style={styles.button} onPress={handleSignOut}>
         <Text style={styles.buttonText}>Se déconnecter</Text>
       </Pressable>
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
-    padding: 24,
+    padding: spacing.screen,
     gap: 16,
   },
   heading: {
     fontSize: 22,
     fontWeight: "600",
+    color: colors.text,
   },
   card: {
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: "#fff",
+    padding: spacing.card,
+    borderRadius: radii.lg,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: colors.cardBorder,
     gap: 4,
   },
   label: {
-    color: "#6b7280",
+    color: colors.muted,
     fontSize: 13,
     textTransform: "uppercase",
   },
   value: {
     fontSize: 18,
     fontWeight: "600",
+    color: colors.text,
   },
   button: {
     marginTop: 12,
     paddingVertical: 14,
-    borderRadius: 10,
-    backgroundColor: "#dc2626",
+    borderRadius: radii.md,
+    backgroundColor: colors.danger,
     alignItems: "center",
   },
   buttonText: {

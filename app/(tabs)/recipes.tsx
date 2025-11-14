@@ -1,4 +1,7 @@
 import { FlatList, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { colors, radii, spacing } from "../../theme/design";
 
 type Recipe = {
   id: string;
@@ -15,7 +18,8 @@ const recipes: Recipe[] = [
 
 export default function RecipesScreen() {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
+      <View style={styles.container}>
       <Text style={styles.heading}>Bibliothèque de recettes</Text>
       <FlatList
         data={recipes}
@@ -31,26 +35,32 @@ export default function RecipesScreen() {
           </View>
         )}
       />
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
-    padding: 24,
+    padding: spacing.screen,
     gap: 16,
   },
   heading: {
     fontSize: 22,
     fontWeight: "600",
+    color: colors.text,
   },
   recipeCard: {
-    padding: 16,
-    borderRadius: 14,
-    backgroundColor: "#fff",
+    padding: spacing.card,
+    borderRadius: radii.lg,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: colors.cardBorder,
     shadowColor: "#000",
     shadowOpacity: 0.04,
     shadowRadius: 4,
@@ -63,14 +73,15 @@ const styles = StyleSheet.create({
   recipeTitle: {
     fontSize: 16,
     fontWeight: "600",
+    color: colors.text,
   },
   difficulty: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#555",
+    color: colors.muted,
   },
   muted: {
-    color: "#666",
+    color: colors.muted,
     marginTop: 8,
   },
 });

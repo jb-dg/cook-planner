@@ -1,5 +1,6 @@
 import { Redirect } from "expo-router";
-import { SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import AuthForm from "../components/AuthForm";
 import { useAuth } from "../contexts/AuthContext";

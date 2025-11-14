@@ -1,17 +1,36 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import {
+  addDays,
+  addWeeks,
+  format,
+  getISOWeek,
+  getYear,
+  startOfWeek,
+} from "date-fns";
+import { fr } from "date-fns/locale";
 
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
+import { colors, radii, spacing } from "../../theme/design";
 
-const DEFAULT_MENU = [
+type DayPlan = {
+  day: string;
+  recipe: string;
+  prep: string;
+};
+
+const DEFAULT_MENU: DayPlan[] = [
   { day: "Lundi", recipe: "Tacos de poisson", prep: "Préparer la marinade" },
   { day: "Mardi", recipe: "Salade césar", prep: "Cuire le poulet" },
   { day: "Mercredi", recipe: "Soupe miso", prep: "Hydrater les algues" },
@@ -21,33 +40,83 @@ const DEFAULT_MENU = [
   { day: "Dimanche", recipe: "Brunch maison", prep: "Battre les oeufs" },
 ];
 
-const getCurrentWeekNumber = () => {
-  const date = new Date();
-  const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-  const pastDaysOfYear =
-    (date.getTime() - firstDayOfYear.getTime()) / (24 * 60 * 60 * 1000);
-  return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+const normalizeDays = (value?: DayPlan[] | null) => {
+  if (!value || value.length === 0) {
+    return DEFAULT_MENU;
+  }
+  return DEFAULT_MENU.map(
+    (template) => value.find((item) => item.day === template.day) ?? template
+  );
 };
 
 export default function PlannerScreen() {
   const { session } = useAuth();
-  const [weekNumber, setWeekNumber] = useState(String(getCurrentWeekNumber()));
-  const [month, setMonth] = useState(
-    new Date().toLocaleString("fr-FR", { month: "long" })
+  const [referenceDate, setReferenceDate] = useState(() =>
+    startOfWeek(new Date(), { weekStartsOn: 1 })
   );
-  const [year, setYear] = useState(String(new Date().getFullYear()));
-  const [days, setDays] = useState(DEFAULT_MENU);
+  const [days, setDays] = useState<DayPlan[]>(DEFAULT_MENU);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+
+  const weekNumber = useMemo(() => getISOWeek(referenceDate), [referenceDate]);
+  const month = useMemo(
+    () => format(referenceDate, "MMMM", { locale: fr }),
+    [referenceDate]
+  );
+  const year = useMemo(() => getYear(referenceDate), [referenceDate]);
 
   const disabled = useMemo(() => {
-    return (
-      !weekNumber.trim() ||
-      !month.trim() ||
-      !year.trim() ||
-      days.some((item) => !item.recipe.trim()) ||
-      !session
-    );
-  }, [weekNumber, month, year, days, session]);
+    return days.some((item) => !item.recipe.trim()) || !session || saving;
+  }, [days, session, saving]);
+
+  const weekDays = useMemo(
+    () =>
+      days.map((item, index) => ({
+        ...item,
+        date: format(addDays(referenceDate, index), "EEEE d MMM", {
+          locale: fr,
+        }),
+      })),
+    [days, referenceDate]
+  );
+
+  useEffect(() => {
+    if (!session) {
+      return;
+    }
+
+    let cancelled = false;
+    setSyncing(true);
+    setSyncError(null);
+
+    supabase
+      .from("weekly_menus")
+      .select("days")
+      .eq("user_id", session.user.id)
+      .eq("year", year)
+      .eq("week_number", weekNumber)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          setSyncError("Impossible de récupérer cette semaine.");
+          console.error("fetch planner", error);
+          setDays(DEFAULT_MENU);
+        } else {
+          setDays(normalizeDays(data?.days as DayPlan[] | undefined));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setSyncing(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session, weekNumber, year]);
 
   const handleDayChange = (
     index: number,
@@ -59,6 +128,12 @@ export default function PlannerScreen() {
       next[index] = { ...next[index], [field]: value };
       return next;
     });
+  };
+
+  const handleNavigate = (direction: "prev" | "next") => {
+    setReferenceDate((current) =>
+      addWeeks(current, direction === "next" ? 1 : -1)
+    );
   };
 
   const handleSave = async () => {
@@ -74,9 +149,9 @@ export default function PlannerScreen() {
     try {
       const payload = {
         user_id: session.user.id,
-        week_number: Number(weekNumber),
+        week_number: weekNumber,
         month,
-        year: Number(year),
+        year,
         days,
       };
 
@@ -88,7 +163,7 @@ export default function PlannerScreen() {
         throw error;
       }
 
-      Alert.alert("Enregistré", "Ton menu hebdo est sauvegardé.");
+      Alert.alert("Enregistré", "Ton menu hebdo est enregistré !");
     } catch (error) {
       console.error("save planner", error);
       Alert.alert(
@@ -101,75 +176,122 @@ export default function PlannerScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.heading}>Planning de la semaine</Text>
+    <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
+      <View style={styles.headingRow}>
+        <Text style={styles.heading}>Semaine {weekNumber}</Text>
+        <View style={styles.navRow}>
+          <Pressable
+            style={styles.navButton}
+            onPress={() => handleNavigate("prev")}
+          >
+            <Text style={styles.navButtonText}>◀︎</Text>
+          </Pressable>
+          <Pressable
+            style={styles.navButton}
+            onPress={() => handleNavigate("next")}
+          >
+            <Text style={styles.navButtonText}>▶︎</Text>
+          </Pressable>
+        </View>
+      </View>
 
       <View style={styles.metaRow}>
         <View style={styles.metaField}>
-          <Text style={styles.metaLabel}>Semaine</Text>
-          <TextInput
-            keyboardType="numeric"
-            value={weekNumber}
-            onChangeText={setWeekNumber}
-            style={styles.input}
-          />
-        </View>
-        <View style={styles.metaField}>
           <Text style={styles.metaLabel}>Mois</Text>
-          <TextInput
-            value={month}
-            onChangeText={setMonth}
-            style={styles.input}
-          />
+          <TextInput editable={false} value={month} style={styles.input} />
         </View>
         <View style={styles.metaField}>
           <Text style={styles.metaLabel}>Année</Text>
           <TextInput
-            keyboardType="numeric"
-            value={year}
-            onChangeText={setYear}
+            editable={false}
+            value={String(year)}
             style={styles.input}
           />
         </View>
       </View>
 
-      {days.map((item, index) => (
+      {syncing ? (
+        <ActivityIndicator color={colors.accentSecondary} />
+      ) : syncError ? (
+        <Text style={styles.errorText}>{syncError}</Text>
+      ) : null}
+
+      {weekDays.map((item, index) => (
         <View key={item.day} style={styles.dayCard}>
-          <Text style={styles.day}>{item.day}</Text>
+          <View style={styles.dayHeader}>
+            <Text style={styles.day}>{item.day}</Text>
+            <Text style={styles.date}>{item.date}</Text>
+          </View>
           <TextInput
             value={item.recipe}
             onChangeText={(value) => handleDayChange(index, "recipe", value)}
             placeholder="Plat principal"
+            placeholderTextColor={colors.muted}
             style={styles.recipeInput}
           />
           <TextInput
             value={item.prep}
             onChangeText={(value) => handleDayChange(index, "prep", value)}
             placeholder="Préparation à anticiper"
+            placeholderTextColor={colors.muted}
             style={styles.prepInput}
           />
         </View>
       ))}
 
-      <Text
+      <Pressable
+        disabled={disabled}
         style={[styles.saveButton, disabled && styles.saveButtonDisabled]}
-        onPress={disabled || saving ? undefined : handleSave}
+        onPress={handleSave}
       >
-        {saving ? "Enregistrement…" : "Enregistrer le planning"}
-      </Text>
-      <Text style={styles.helper}></Text>
-    </ScrollView>
+        <Text style={styles.saveButtonText}>
+          {saving ? "Enregistrement…" : "Enregistrer le menu"}
+        </Text>
+      </Pressable>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
-    padding: 24,
-    gap: 16,
+    padding: spacing.screen,
+    gap: 18,
+    paddingBottom: 140,
+  },
+  headingRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   heading: {
-    fontSize: 22,
-    fontWeight: "600",
+    fontSize: 24,
+    fontWeight: "700",
+    color: colors.text,
+  },
+  navRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  navButton: {
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radii.md,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  navButtonText: {
+    color: colors.text,
+    fontWeight: "700",
   },
   metaRow: {
     flexDirection: "row",
@@ -178,66 +300,89 @@ const styles = StyleSheet.create({
   },
   metaField: {
     flex: 1,
-    minWidth: 120,
+    minWidth: 140,
   },
   metaLabel: {
     fontSize: 12,
     textTransform: "uppercase",
-    color: "#6b7280",
+    color: colors.muted,
     marginBottom: 6,
     fontWeight: "600",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 10,
+    borderColor: colors.cardBorder,
+    borderRadius: radii.md,
     padding: 12,
     fontSize: 16,
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface,
+    color: colors.text,
   },
   dayCard: {
-    padding: 16,
-    backgroundColor: "#f8fafc",
-    borderRadius: 12,
-    gap: 10,
+    padding: spacing.card,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  dayHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   day: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "600",
-    color: "#4b5563",
+    color: colors.text,
+    textTransform: "capitalize",
+  },
+  date: {
+    fontSize: 13,
+    color: colors.muted,
+    textTransform: "capitalize",
   },
   recipeInput: {
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 10,
+    borderColor: colors.cardBorder,
+    borderRadius: radii.md,
     padding: 12,
     fontSize: 16,
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(255,255,255,0.02)",
+    color: colors.text,
   },
   prepInput: {
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 10,
+    borderColor: colors.cardBorder,
+    borderRadius: radii.md,
     padding: 12,
     fontSize: 14,
-    backgroundColor: "#fff",
-    color: "#6b7280",
+    backgroundColor: "rgba(255,255,255,0.02)",
+    color: colors.text,
   },
   saveButton: {
-    textAlign: "center",
-    backgroundColor: "#111",
-    color: "#fff",
+    marginTop: 12,
+    backgroundColor: colors.accent,
+    borderRadius: radii.lg,
     paddingVertical: 16,
-    borderRadius: 12,
+    alignItems: "center",
+  },
+  saveButtonDisabled: {
+    backgroundColor: "rgba(255,255,255,0.1)",
+  },
+  saveButtonText: {
+    color: "#fff",
     fontWeight: "600",
     fontSize: 16,
   },
-  saveButtonDisabled: {
-    backgroundColor: "#9ca3af",
+  errorText: {
+    color: colors.danger,
+    textAlign: "center",
   },
   helper: {
     fontSize: 12,
-    color: "#6b7280",
+    color: colors.muted,
     textAlign: "center",
+    marginTop: 8,
   },
 });
