@@ -20,7 +20,7 @@ import {
   recipeToFormState,
   RecipeFormState,
   RecipeInput,
-} from "./types";
+} from "../../../features/recipes/types";
 
 export default function EditRecipeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

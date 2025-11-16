@@ -9,7 +9,7 @@ import RecipeForm from "./RecipeForm";
 import {
   createEmptyFormState,
   RecipeInput,
-} from "./types";
+} from "../../../features/recipes/types";
 
 export default function CreateRecipeScreen() {
   const { session } = useAuth();

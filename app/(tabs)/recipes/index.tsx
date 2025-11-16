@@ -13,7 +13,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useAuth } from "../../../contexts/AuthContext";
 import { supabase } from "../../../lib/supabase";
 import { colors, radii, spacing } from "../../../theme/design";
-import { mapRecipe, Recipe } from "./types";
+import { mapRecipe, Recipe } from "../../../features/recipes/types";
 
 export default function RecipesScreen() {
   const { session } = useAuth();

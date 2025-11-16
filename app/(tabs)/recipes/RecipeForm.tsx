@@ -15,7 +15,7 @@ import {
   Ingredient,
   RecipeFormState,
   RecipeInput,
-} from "./types";
+} from "../../../features/recipes/types";
 
 type RecipeFormProps = {
   initialValues?: RecipeFormState;
