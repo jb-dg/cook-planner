@@ -12,8 +12,9 @@ import { useFocusEffect, useRouter } from "expo-router";
 
 import { useAuth } from "../../../contexts/AuthContext";
 import { supabase } from "../../../lib/supabase";
+import { fetchHouseholdScope } from "../../../lib/households";
 import { colors, radii, spacing } from "../../../theme/design";
-import { mapRecipe, Recipe } from "./types";
+import { mapRecipe, Recipe } from "../../../features/recipes/types";
 
 export default function RecipesScreen() {
   const { session } = useAuth();
@@ -32,12 +33,13 @@ export default function RecipesScreen() {
     }
     setError(null);
     try {
+      const scope = await fetchHouseholdScope(session.user.id);
       const { data, error: fetchError } = await supabase
         .from("recipes")
         .select(
           "id,title,duration,difficulty,servings,description,ingredients"
         )
-        .eq("user_id", session.user.id)
+        .eq(scope.filterColumn, scope.filterValue)
         .order("created_at", { ascending: false });
       if (fetchError) {
         throw fetchError;

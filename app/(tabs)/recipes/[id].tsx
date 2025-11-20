@@ -13,6 +13,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { useAuth } from "../../../contexts/AuthContext";
 import { supabase } from "../../../lib/supabase";
+import { fetchHouseholdScope } from "../../../lib/households";
 import { colors, spacing, radii } from "../../../theme/design";
 import RecipeForm from "./RecipeForm";
 import {
@@ -20,7 +21,7 @@ import {
   recipeToFormState,
   RecipeFormState,
   RecipeInput,
-} from "./types";
+} from "../../../features/recipes/types";
 
 export default function EditRecipeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -38,10 +39,11 @@ export default function EditRecipeScreen() {
 
     setError(null);
     try {
+      const scope = await fetchHouseholdScope(session.user.id);
       const { data, error: fetchError } = await supabase
         .from("recipes")
         .select(
-          "id,title,duration,difficulty,servings,description,ingredients,user_id"
+          "id,title,duration,difficulty,servings,description,ingredients,user_id,household_id"
         )
         .eq("id", id)
         .maybeSingle();
@@ -50,7 +52,11 @@ export default function EditRecipeScreen() {
         throw fetchError;
       }
 
-      if (!data || data.user_id !== session.user.id) {
+      const belongsToOwner = data?.user_id === session.user.id;
+      const belongsToHousehold =
+        !!scope.householdId && data?.household_id === scope.householdId;
+
+      if (!data || (!belongsToOwner && !belongsToHousehold)) {
         setError("Recette introuvable.");
         return;
       }
@@ -71,6 +77,9 @@ export default function EditRecipeScreen() {
   const handleUpdate = async (input: RecipeInput) => {
     if (!session || !id) return;
     try {
+      const scope = await fetchHouseholdScope(session.user.id);
+      const column = scope.householdId ? "household_id" : "user_id";
+      const value = scope.householdId ?? session.user.id;
       const { error: updateError } = await supabase
         .from("recipes")
         .update({
@@ -82,7 +91,7 @@ export default function EditRecipeScreen() {
           ingredients: input.ingredients,
         })
         .eq("id", id)
-        .eq("user_id", session.user.id);
+        .eq(column, value);
 
       if (updateError) {
         throw updateError;
@@ -117,11 +126,14 @@ export default function EditRecipeScreen() {
     if (!session || !id) return;
     setDeleting(true);
     try {
+      const scope = await fetchHouseholdScope(session.user.id);
+      const column = scope.householdId ? "household_id" : "user_id";
+      const value = scope.householdId ?? session.user.id;
       const { error: deleteError } = await supabase
         .from("recipes")
         .delete()
         .eq("id", id)
-        .eq("user_id", session.user.id);
+        .eq(column, value);
 
       if (deleteError) {
         throw deleteError;

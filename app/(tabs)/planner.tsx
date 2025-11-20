@@ -22,6 +22,7 @@ import { fr } from "date-fns/locale";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
+import { fetchHouseholdScope } from "../../lib/households";
 import { colors, radii, spacing } from "../../theme/design";
 
 type DayPlan = {
@@ -90,28 +91,37 @@ export default function PlannerScreen() {
     setSyncing(true);
     setSyncError(null);
 
-    supabase
-      .from("weekly_menus")
-      .select("days")
-      .eq("user_id", session.user.id)
-      .eq("year", year)
-      .eq("week_number", weekNumber)
-      .maybeSingle()
-      .then(({ data, error }) => {
+    const loadWeek = async () => {
+      try {
+        const scope = await fetchHouseholdScope(session.user.id);
+        const { data, error } = await supabase
+          .from("weekly_menus")
+          .select("days")
+          .eq(scope.filterColumn, scope.filterValue)
+          .eq("year", year)
+          .eq("week_number", weekNumber)
+          .maybeSingle();
+
         if (cancelled) return;
+
         if (error) {
-          setSyncError("Impossible de récupérer cette semaine.");
-          console.error("fetch planner", error);
-          setDays(DEFAULT_MENU);
-        } else {
-          setDays(normalizeDays(data?.days as DayPlan[] | undefined));
+          throw error;
         }
-      })
-      .finally(() => {
+
+        setDays(normalizeDays(data?.days as DayPlan[] | undefined));
+      } catch (error) {
+        if (cancelled) return;
+        setSyncError("Impossible de récupérer cette semaine.");
+        console.error("fetch planner", error);
+        setDays(DEFAULT_MENU);
+      } finally {
         if (!cancelled) {
           setSyncing(false);
         }
-      });
+      }
+    };
+
+    loadWeek();
 
     return () => {
       cancelled = true;
@@ -147,17 +157,50 @@ export default function PlannerScreen() {
 
     setSaving(true);
     try {
+      const scope = await fetchHouseholdScope(session.user.id);
       const payload = {
         user_id: session.user.id,
+        household_id: scope.householdId,
         week_number: weekNumber,
         month,
         year,
         days,
       };
 
-      const { error } = await supabase.from("weekly_menus").upsert(payload, {
-        onConflict: "user_id,year,week_number",
-      });
+      const commonFilters = { year, week_number: weekNumber };
+      const candidateFilters = [
+        { [scope.filterColumn]: scope.filterValue, ...commonFilters },
+      ];
+      if (scope.householdId) {
+        candidateFilters.push({ user_id: session.user.id, ...commonFilters });
+      }
+
+      let existingMenu: { id: string } | null = null;
+      for (const matcher of candidateFilters) {
+        const { data, error } = await supabase
+          .from("weekly_menus")
+          .select("id")
+          .match(matcher)
+          .maybeSingle();
+
+        if (error && error.code !== "PGRST116") {
+          throw error;
+        }
+
+        if (data?.id) {
+          existingMenu = data;
+          break;
+        }
+      }
+
+      const mutation = existingMenu?.id
+        ? supabase
+            .from("weekly_menus")
+            .update(payload)
+            .eq("id", existingMenu.id)
+        : supabase.from("weekly_menus").insert(payload);
+
+      const { error } = await mutation;
 
       if (error) {
         throw error;
