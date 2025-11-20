@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 
 import { useAuth } from "../../../contexts/AuthContext";
 import { supabase } from "../../../lib/supabase";
+import { fetchHouseholdScope } from "../../../lib/households";
 import { colors, spacing } from "../../../theme/design";
 import RecipeForm from "./RecipeForm";
 import {
@@ -17,8 +18,10 @@ export default function CreateRecipeScreen() {
   const handleCreate = async (input: RecipeInput) => {
     if (!session) return;
     try {
+      const scope = await fetchHouseholdScope(session.user.id);
       const payload = {
         user_id: session.user.id,
+        household_id: scope.householdId,
         ...input,
       };
       const { error } = await supabase.from("recipes").insert(payload);

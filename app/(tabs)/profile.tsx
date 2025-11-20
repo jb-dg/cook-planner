@@ -24,6 +24,7 @@ import { useRouter } from "expo-router";
 
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
+import { validateEmail } from "../../lib/validation/auth";
 import { colors, radii, spacing } from "../../theme/design";
 
 type Household = {
@@ -61,7 +62,7 @@ export default function ProfileScreen() {
   const [householdName, setHouseholdName] = useState("");
   const [creatingHousehold, setCreatingHousehold] = useState(false);
 
-  const [invitePseudo, setInvitePseudo] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
   const [inviting, setInviting] = useState(false);
@@ -150,6 +151,49 @@ export default function ProfileScreen() {
     setFabMenuOpen(false);
   };
 
+  const generateDefaultPseudo = useCallback(() => {
+    const rawSource =
+      session?.user.email?.split("@")[0] ??
+      session?.user.user_metadata?.full_name ??
+      "chef";
+    const sanitized = rawSource
+      .toString()
+      .trim()
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toLowerCase();
+    if (sanitized.length >= 3) return sanitized.slice(0, 24);
+    const fallback = `chef${session?.user.id.slice(0, 5) ?? ""}`.toLowerCase();
+    return fallback;
+  }, [session]);
+
+  const ensureDefaultPseudo = useCallback(async () => {
+    if (!session) return "";
+    const base = generateDefaultPseudo();
+    let candidate = base;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const { data, error } = await supabase
+        .from("profiles")
+        .upsert({
+          user_id: session.user.id,
+          pseudo: candidate,
+          email: session.user.email?.toLowerCase(),
+        })
+        .select("pseudo")
+        .single();
+
+      if (!error && data?.pseudo) {
+        return data.pseudo;
+      }
+
+      if ((error as PostgrestError).code !== "23505") {
+        throw error;
+      }
+
+      candidate = `${base}${Math.floor(Math.random() * 900 + 100)}`;
+    }
+    return base;
+  }, [generateDefaultPseudo, session]);
+
   const loadProfile = useCallback(async () => {
     if (!session) return;
     setLoadingProfile(true);
@@ -162,13 +206,18 @@ export default function ProfileScreen() {
         .eq("user_id", session.user.id)
         .maybeSingle();
       if (error) throw error;
-      setPseudo(data?.pseudo ?? "");
+      if (!data?.pseudo) {
+        const autoPseudo = await ensureDefaultPseudo();
+        setPseudo(autoPseudo);
+        return;
+      }
+      setPseudo(data.pseudo);
     } catch (err) {
       console.error("load profile", err);
     } finally {
       setLoadingProfile(false);
     }
-  }, [session]);
+  }, [ensureDefaultPseudo, session]);
 
   const loadHousehold = useCallback(async () => {
     if (!session) return;
@@ -259,7 +308,11 @@ export default function ProfileScreen() {
     try {
       const { error } = await supabase
         .from("profiles")
-        .upsert({ user_id: session.user.id, pseudo: trimmed })
+        .upsert({
+          user_id: session.user.id,
+          pseudo: trimmed,
+          email: session.user.email?.toLowerCase(),
+        })
         .select("user_id")
         .single();
 
@@ -338,33 +391,33 @@ export default function ProfileScreen() {
       );
       return;
     }
-    const trimmed = invitePseudo.trim();
-    if (trimmed.length < 3) {
-      setInviteError("Renseigne le pseudo de ton proche.");
+    const emailValidation = validateEmail(inviteEmail);
+    if (emailValidation) {
+      setInviteError(emailValidation);
       setInviteSuccess(null);
       return;
     }
+    const normalizedEmail = inviteEmail.trim().toLowerCase();
 
     setInviteError(null);
     setInviteSuccess(null);
     setInviting(true);
     try {
+      if (normalizedEmail === session.user.email?.toLowerCase()) {
+        setInviteError("Tu es déjà dans ce foyer.");
+        return;
+      }
       const { data: targetProfile, error: targetError } = await supabase
         .from("profiles")
         .select("user_id")
-        .eq("pseudo", trimmed)
+        .eq("email", normalizedEmail)
         .maybeSingle();
 
       if (targetError) throw targetError;
       if (!targetProfile) {
-        setInviteError("Aucun utilisateur avec ce pseudo.");
+        setInviteError("Aucun utilisateur avec cet email.");
         return;
       }
-      if (targetProfile.user_id === session.user.id) {
-        setInviteError("Tu es déjà dans ce foyer.");
-        return;
-      }
-
       const { data: existingMembership, error: membershipLookupError } =
         await supabase
           .from("household_members")
@@ -393,14 +446,14 @@ export default function ProfileScreen() {
         throw inviteErrorRes;
       }
 
-      setInvitePseudo("");
+      setInviteEmail("");
       setInviteSuccess("Membre ajouté au foyer !");
       await loadHousehold();
     } catch (err) {
       console.error("invite member", err);
       Alert.alert(
         "Erreur",
-        "Impossible d'ajouter ce membre. Vérifie le pseudo et réessaie."
+        "Impossible d'ajouter ce membre. Vérifie l'email et réessaie."
       );
     } finally {
       setInviting(false);
@@ -789,7 +842,7 @@ export default function ProfileScreen() {
                   autoCapitalize="none"
                 />
                 <Text style={styles.helper}>
-                  Ce pseudo sert à rejoindre ou inviter un foyer commun.
+                  Ce pseudo sert à rejoindre un foyer commun.
                 </Text>
                 {pseudoError ? (
                   <Text style={styles.errorText}>{pseudoError}</Text>
@@ -904,13 +957,17 @@ export default function ProfileScreen() {
                     {isOwner ? (
                       <View style={styles.modalBlock}>
                         <Text style={styles.subheading}>Ajouter un membre</Text>
+                        <Text style={styles.helper}>
+                          Invite un proche en indiquant son email de connexion.
+                        </Text>
                         <TextInput
-                          placeholder="Pseudo du membre"
+                          placeholder="Email du membre"
                           placeholderTextColor={colors.muted}
-                          value={invitePseudo}
-                          onChangeText={setInvitePseudo}
+                          value={inviteEmail}
+                          onChangeText={setInviteEmail}
                           style={styles.input}
                           autoCapitalize="none"
+                          keyboardType="email-address"
                         />
                         {inviteError ? (
                           <Text style={styles.errorText}>{inviteError}</Text>
