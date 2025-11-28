@@ -11,10 +11,19 @@ import {
 } from "react-native";
 import {
   addDays,
+  addMonths,
   addWeeks,
+  eachDayOfInterval,
+  endOfMonth,
+  endOfWeek,
   format,
   getISOWeek,
   getYear,
+  isSameDay,
+  isSameMonth,
+  isToday,
+  isWithinInterval,
+  startOfMonth,
   startOfWeek,
 } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -112,8 +121,13 @@ const normalizeDays = (value?: DayPlan[] | null) => {
 
 export default function PlannerScreen() {
   const { session } = useAuth();
-  const [referenceDate, setReferenceDate] = useState(() =>
-    startOfWeek(new Date(), { weekStartsOn: 1 })
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const referenceDate = useMemo(
+    () => startOfWeek(selectedDate, { weekStartsOn: 1 }),
+    [selectedDate]
+  );
+  const [calendarMonth, setCalendarMonth] = useState(() =>
+    startOfMonth(new Date())
   );
   const [days, setDays] = useState<DayPlan[]>(DEFAULT_MENU);
   const [saving, setSaving] = useState(false);
@@ -139,6 +153,15 @@ export default function PlannerScreen() {
     const endLabel = format(addDays(referenceDate, 6), "d MMM", { locale: fr });
     return `${startLabel} → ${endLabel}`;
   }, [referenceDate]);
+  const selectedDayLabel = useMemo(
+    () => format(selectedDate, "EEEE d MMM", { locale: fr }),
+    [selectedDate]
+  );
+
+  const calendarLabel = useMemo(
+    () => format(calendarMonth, "MMMM yyyy", { locale: fr }),
+    [calendarMonth]
+  );
 
   const disabled = useMemo(() => {
     return (
@@ -180,6 +203,13 @@ export default function PlannerScreen() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const nextMonth = startOfMonth(selectedDate);
+    setCalendarMonth((current) =>
+      isSameMonth(current, nextMonth) ? current : nextMonth
+    );
+  }, [selectedDate]);
 
   useEffect(() => {
     if (!session) {
@@ -226,7 +256,7 @@ export default function PlannerScreen() {
     return () => {
       cancelled = true;
     };
-  }, [session, weekNumber, year]);
+  }, [session, weekNumber, year, month]);
 
   const handleDayChange = (
     index: number,
@@ -245,9 +275,23 @@ export default function PlannerScreen() {
   };
 
   const handleNavigate = (direction: "prev" | "next") => {
-    setReferenceDate((current) =>
+    setSelectedDate((current) =>
       addWeeks(current, direction === "next" ? 1 : -1)
     );
+  };
+
+  const handleGoToToday = () => {
+    setSelectedDate(new Date());
+  };
+
+  const handleMonthNavigate = (direction: "prev" | "next") => {
+    setCalendarMonth((current) =>
+      addMonths(current, direction === "next" ? 1 : -1)
+    );
+  };
+
+  const handleSelectDate = (date: Date) => {
+    setSelectedDate(date);
   };
 
   const handleToggleDay = (day: string) => {
@@ -378,6 +422,26 @@ export default function PlannerScreen() {
     }
   };
 
+  const calendarWeeks = useMemo(() => {
+    const monthStart = startOfMonth(calendarMonth);
+    const monthEnd = endOfMonth(calendarMonth);
+    const start = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const end = endOfWeek(monthEnd, { weekStartsOn: 1 });
+    const daysInterval = eachDayOfInterval({ start, end });
+    const weeks: Date[][] = [];
+    for (let i = 0; i < daysInterval.length; i += 7) {
+      weeks.push(daysInterval.slice(i, i + 7));
+    }
+    return weeks;
+  }, [calendarMonth]);
+
+  const weekDayLabels = useMemo(() => {
+    const base = startOfWeek(new Date(), { weekStartsOn: 1 });
+    return Array.from({ length: 7 }).map((_, index) =>
+      format(addDays(base, index), "EEE", { locale: fr }).replace(".", "")
+    );
+  }, []);
+
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
       <ScrollView
@@ -385,89 +449,157 @@ export default function PlannerScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerCard}>
+          <View style={styles.calendarCard}>
+            <View style={styles.calendarHeader}>
+              <Pressable
+                style={styles.navButton}
+                onPress={() => handleMonthNavigate("prev")}
+              >
+                <Text style={styles.navButtonText}>◀︎</Text>
+              </Pressable>
+              <View style={styles.calendarTitle}>
+                <Text style={styles.calendarMonthText}>{calendarLabel}</Text>
+                <Text style={styles.calendarHint}>
+                  Choisis un jour pour afficher le menu de la semaine
+                </Text>
+              </View>
+              <Pressable
+                style={styles.navButton}
+                onPress={() => handleMonthNavigate("next")}
+              >
+                <Text style={styles.navButtonText}>▶︎</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.calendarWeekDays}>
+              {weekDayLabels.map((label) => (
+                <Text key={label} style={styles.calendarWeekDayText}>
+                  {label}
+                </Text>
+              ))}
+            </View>
+
+            <View style={styles.calendarGrid}>
+              {calendarWeeks.map((week, weekIndex) => (
+                <View key={weekIndex} style={styles.calendarWeekRow}>
+                  {week.map((date) => {
+                    const inMonth = isSameMonth(date, calendarMonth);
+                    const inSelectedWeek = isWithinInterval(date, {
+                      start: referenceDate,
+                      end: addDays(referenceDate, 6),
+                    });
+                    const selected = isSameDay(date, selectedDate);
+                    const today = isToday(date);
+
+                    return (
+                      <Pressable
+                        key={format(date, "yyyy-MM-dd")}
+                        style={[
+                          styles.calendarDay,
+                          inMonth ? null : styles.calendarDayOutside,
+                          inSelectedWeek && styles.calendarDayInWeek,
+                          today && styles.calendarDayToday,
+                          selected && styles.calendarDaySelected,
+                        ]}
+                        onPress={() => handleSelectDate(date)}
+                      >
+                        <Text
+                          style={[
+                            styles.calendarDayText,
+                            inMonth ? null : styles.calendarDayTextMuted,
+                            selected && styles.calendarDayTextSelected,
+                          ]}
+                        >
+                          {format(date, "d")}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ))}
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.headerCard}>
           <View style={styles.headingRow}>
             <View style={styles.headingCol}>
               <Text style={styles.sectionLabel}>Planification</Text>
               <Text style={styles.heading}>Semaine {weekNumber}</Text>
               <Text style={styles.rangeText}>{weekRangeLabel}</Text>
+              <Text style={styles.subtleText}>
+                Jour sélectionné · {selectedDayLabel}
+              </Text>
             </View>
-            <View style={styles.navAndStatus}>
-              <View
-                style={[
-                  styles.statusPill,
-                  syncing
-                    ? styles.statusSync
-                    : saving
-                    ? styles.statusSaving
-                    : styles.statusIdle,
-                ]}
-              >
-                <Text style={styles.statusText}>
-                  {syncing
-                    ? "Synchronisation…"
-                    : saving
-                    ? "Enregistrement…"
-                    : "À jour"}
-                </Text>
-              </View>
-              <View style={styles.navRow}>
-                <Pressable
-                  style={styles.navButton}
-                  onPress={() => handleNavigate("prev")}
-                >
-                  <Text style={styles.navButtonText}>◀︎</Text>
-                </Pressable>
-                <Pressable
-                  style={styles.navButton}
-                  onPress={() => handleNavigate("next")}
-                >
-                  <Text style={styles.navButtonText}>▶︎</Text>
-                </Pressable>
-              </View>
+            <View
+              style={[
+                styles.statusPill,
+                syncing
+                  ? styles.statusSync
+                  : saving
+                  ? styles.statusSaving
+                  : styles.statusIdle,
+              ]}
+            >
+              <Text style={styles.statusText}>
+                {syncing
+                  ? "Synchronisation…"
+                  : saving
+                  ? "Enregistrement…"
+                  : "À jour"}
+              </Text>
             </View>
           </View>
 
-          <View style={styles.metaRow}>
-            <View style={styles.metaField}>
-              <Text style={styles.metaLabel}>Mois</Text>
-              <TextInput editable={false} value={month} style={styles.input} />
-            </View>
-            <View style={styles.metaField}>
-              <Text style={styles.metaLabel}>Année</Text>
-              <TextInput
-                editable={false}
-                value={String(year)}
-                style={styles.input}
-              />
-            </View>
+          <View style={styles.navRow}>
+            <Pressable
+              style={styles.navButton}
+              onPress={() => handleNavigate("prev")}
+            >
+              <Text style={styles.navButtonText}>◀︎</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.navButton, styles.navButtonPrimary]}
+              onPress={handleGoToToday}
+            >
+              <Text style={[styles.navButtonText, styles.navButtonPrimaryText]}>
+                Semaine courante
+              </Text>
+            </Pressable>
+            <Pressable
+              style={styles.navButton}
+              onPress={() => handleNavigate("next")}
+            >
+              <Text style={styles.navButtonText}>▶︎</Text>
+            </Pressable>
           </View>
 
-          <View style={styles.quickActions}>
+          <View style={styles.actionRow}>
             <Pressable
               style={[
-                styles.quickButton,
-                (syncing || saving) && styles.quickButtonDisabled,
+                styles.chipButton,
+                (syncing || saving) && styles.chipButtonDisabled,
               ]}
               onPress={handleCopyPreviousWeek}
               disabled={syncing || saving}
             >
-              <Text style={styles.quickButtonText}>Copier semaine -1</Text>
+              <Text style={styles.chipButtonText}>Copier semaine -1</Text>
             </Pressable>
             <Pressable
               style={[
-                styles.quickButton,
-                styles.quickButtonGhost,
-                (syncing || saving) && styles.quickButtonDisabled,
+                styles.chipButton,
+                styles.chipButtonGhost,
+                (syncing || saving) && styles.chipButtonDisabled,
               ]}
               onPress={handleResetWeek}
               disabled={syncing || saving}
-            >
-              <Text
-                style={[styles.quickButtonText, styles.quickButtonGhostText]}
               >
-                Réinitialiser
-              </Text>
-            </Pressable>
+                <Text
+                  style={[styles.chipButtonText, styles.chipButtonGhostText]}
+                >
+                  Réinitialiser
+                </Text>
+              </Pressable>
           </View>
 
           {syncing ? (
@@ -603,13 +735,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.muted,
   },
-  navAndStatus: {
-    alignItems: "flex-end",
-    gap: 10,
+  subtleText: {
+    fontSize: 12,
+    color: colors.muted,
+    textTransform: "capitalize",
   },
   navRow: {
     flexDirection: "row",
-    gap: 12,
+    gap: 10,
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "center",
   },
   navButton: {
     backgroundColor: colors.surfaceAlt,
@@ -622,6 +758,18 @@ const styles = StyleSheet.create({
   navButtonText: {
     color: colors.text,
     fontWeight: "700",
+  },
+  navButtonPrimary: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  navButtonPrimaryText: {
+    color: "#fff",
+  },
+  actionRow: {
+    flexDirection: "row",
+    gap: 10,
+    flexWrap: "wrap",
   },
   statusPill: {
     borderRadius: 20,
@@ -645,57 +793,29 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceAlt,
     borderColor: colors.cardBorder,
   },
-  metaRow: {
-    flexDirection: "row",
-    gap: 12,
-    flexWrap: "wrap",
-  },
-  metaField: {
-    flex: 1,
-    minWidth: 140,
-  },
-  metaLabel: {
-    fontSize: 12,
-    textTransform: "uppercase",
-    color: colors.muted,
-    marginBottom: 6,
-    fontWeight: "600",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: radii.md,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: colors.surface,
-    color: colors.text,
-  },
-  quickActions: {
-    flexDirection: "row",
-    gap: 12,
-    flexWrap: "wrap",
-  },
-  quickButton: {
+  chipButton: {
     flex: 1,
     minWidth: 150,
-    backgroundColor: colors.surfaceAlt,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: radii.md,
-    paddingVertical: 12,
     borderWidth: 1,
     borderColor: colors.cardBorder,
+    backgroundColor: colors.surface,
     alignItems: "center",
   },
-  quickButtonText: {
+  chipButtonText: {
     color: colors.text,
-    fontWeight: "600",
+    fontWeight: "700",
+    fontSize: 14,
   },
-  quickButtonGhost: {
+  chipButtonGhost: {
     backgroundColor: "transparent",
   },
-  quickButtonGhostText: {
+  chipButtonGhostText: {
     color: colors.muted,
   },
-  quickButtonDisabled: {
+  chipButtonDisabled: {
     opacity: 0.6,
   },
   dayCard: {
@@ -804,5 +924,86 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: "600",
     textAlign: "center",
+  },
+  calendarCard: {
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.cardBorder,
+    paddingTop: 12,
+  },
+  calendarHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  calendarTitle: {
+    flex: 1,
+    alignItems: "center",
+    gap: 2,
+  },
+  calendarMonthText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: colors.text,
+    textTransform: "capitalize",
+  },
+  calendarHint: {
+    color: colors.muted,
+    fontSize: 12,
+    textAlign: "center",
+  },
+  calendarWeekDays: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  calendarWeekDayText: {
+    flex: 1,
+    textAlign: "center",
+    textTransform: "capitalize",
+    color: colors.muted,
+    fontWeight: "600",
+  },
+  calendarGrid: {
+    gap: 8,
+  },
+  calendarWeekRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  calendarDay: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.surfaceAlt,
+  },
+  calendarDayOutside: {
+    backgroundColor: colors.surface,
+    borderColor: "rgba(0,0,0,0.04)",
+  },
+  calendarDayInWeek: {
+    borderColor: colors.accent,
+    backgroundColor: "rgba(79,70,229,0.08)",
+  },
+  calendarDayToday: {
+    borderColor: colors.accentSecondary,
+  },
+  calendarDaySelected: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  calendarDayText: {
+    color: colors.text,
+    fontWeight: "700",
+  },
+  calendarDayTextMuted: {
+    color: colors.muted,
+  },
+  calendarDayTextSelected: {
+    color: "#fff",
   },
 });
