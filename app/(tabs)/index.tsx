@@ -1,103 +1,148 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { addDays, format, startOfWeek } from "date-fns";
+import { fr } from "date-fns/locale";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../contexts/AuthContext";
 import { colors, radii, spacing } from "../../theme/design";
 
-const focusStats = [
-  { label: "Meeting", value: "1 / 2" },
-  { label: "Tâches", value: "4 / 8" },
-  { label: "Objectifs", value: "4 / 5" },
+const quickActions = [
+  { title: "Générer ma semaine", icon: "⚡", tone: "primary" as const },
+  { title: "Ajouter un repas", icon: "+", tone: "secondary" as const },
+  { title: "Voir ma liste de courses", icon: "☑︎", tone: "secondary" as const },
 ];
 
-const filters = ["Tout", "À venir", "Courses", "Batch cooking"];
-
-const highlights = [
+const suggestions = [
   {
-    title: "Préparer la session batch",
-    description:
-      "Organise les containers, préchauffe le four et vérifie le garde-manger.",
-    tag: "Focus",
-    level: "Moyen",
-    date: "Novembre 8, 2025",
+    title: "Pâtes courgettes & feta",
+    meta: "20 min · 520 kcal",
+    tags: ["Rapide", "Batch cooking"],
+    colors: ["#E9F9F1", "#D8F2E7"],
   },
   {
-    title: "Courses hebdomadaires",
-    description: "Passe chez l'épicier bio pour les légumes verts et tofu.",
-    tag: "Important",
-    level: "Élevé",
-    date: "Novembre 9, 2025",
+    title: "One pot curry doux",
+    meta: "30 min · 480 kcal",
+    tags: ["Douceur", "Veggie"],
+    colors: ["#FFF4E8", "#FFE3CC"],
+  },
+  {
+    title: "Bowls saumon & riz",
+    meta: "25 min · 600 kcal",
+    tags: ["Protéiné", "Rapide"],
+    colors: ["#E7EBFF", "#D8E1FF"],
   },
 ];
 
 export default function HomeScreen() {
   const { session } = useAuth();
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const weekLabel = `${format(weekStart, "d MMM", { locale: fr })} – ${format(
+    addDays(weekStart, 6),
+    "d MMM",
+    { locale: fr }
+  )}`;
+  const username = session?.user.email?.split("@")[0] ?? "Chef";
+  const planProgress = 72;
 
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
       <ScrollView
-        style={styles.screen}
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.heading}>
-          Hey, {session?.user.email?.split("@")[0] ?? "Chef"}!
-        </Text>
+        <View style={styles.topBar}>
+          <View style={styles.topBarText}>
+            <Text style={styles.metaLabel}>Cette semaine</Text>
+            <Text style={styles.heading}>Bonjour {username}</Text>
+            <Text style={styles.subTitle}>Hub opérationnel</Text>
+          </View>
+          <View style={styles.topBadge}>
+            <Text style={styles.topBadgeText}>{planProgress}%</Text>
+          </View>
+        </View>
 
-        <LinearGradient
-          colors={["#4f5dff", "#7bb8ff"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.focusCard}
-        >
-          <View style={styles.focusHeader}>
-            <Text style={styles.focusTitle}>Focus du jour</Text>
-            <Text style={styles.focusScore}>62%</Text>
+        <View style={styles.heroCard}>
+          <View style={styles.heroHeader}>
+            <View>
+              <Text style={styles.heroLabel}>Semaine du {weekLabel}</Text>
+              <Text style={styles.heroTitle}>72 % des repas planifiés</Text>
+            </View>
+            <Text style={styles.heroPercent}>{planProgress}%</Text>
           </View>
           <View style={styles.progressBar}>
-            <View style={styles.progressIndicator} />
-          </View>
-          {focusStats.map((stat) => (
-            <View key={stat.label} style={styles.focusRow}>
-              <Text style={styles.focusLabel}>{stat.label}</Text>
-              <Text style={styles.focusValue}>{stat.value}</Text>
-            </View>
-          ))}
-        </LinearGradient>
-
-        <View style={styles.filterRow}>
-          {filters.map((filter, index) => (
             <View
-              key={filter}
               style={[
-                styles.filterChip,
-                index === 0 && styles.filterChipActive,
+                styles.progressIndicator,
+                { width: `${planProgress}%` },
+              ]}
+            />
+          </View>
+          <Text style={styles.heroFoot}>
+            3 repas manquants · 1 liste de courses prête
+          </Text>
+        </View>
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Actions rapides</Text>
+        </View>
+        <View style={styles.actionsGrid}>
+          {quickActions.map((action) => (
+            <Pressable
+              key={action.title}
+              style={[
+                styles.actionCard,
+                action.tone === "primary"
+                  ? styles.actionCardPrimary
+                  : styles.actionCardSecondary,
               ]}
             >
+              <Text style={styles.actionIcon}>{action.icon}</Text>
               <Text
                 style={[
-                  styles.filterText,
-                  index === 0 && styles.filterTextActive,
+                  styles.actionText,
+                  action.tone === "primary"
+                    ? styles.actionTextPrimary
+                    : styles.actionTextSecondary,
                 ]}
               >
-                {filter}
+                {action.title}
               </Text>
-            </View>
+            </Pressable>
           ))}
         </View>
 
-        {highlights.map((card) => (
-          <View key={card.title} style={styles.taskCard}>
-            <View style={styles.taskHeader}>
-              <Text style={styles.taskTag}>{card.tag}</Text>
-              <Text style={styles.taskLevel}>{card.level}</Text>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Suggestions pour toi</Text>
+          <Text style={styles.sectionLink}>Voir tout</Text>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.suggestionRow}
+        >
+          {suggestions.map((item) => (
+            <View key={item.title} style={styles.suggestionCard}>
+              <LinearGradient
+                colors={item.colors}
+                style={styles.suggestionImage}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              />
+              <Text style={styles.suggestionTitle} numberOfLines={2}>
+                {item.title}
+              </Text>
+              <Text style={styles.suggestionMeta}>{item.meta}</Text>
+              <View style={styles.tagRow}>
+                {item.tags.map((tag) => (
+                  <View key={tag} style={styles.tagChip}>
+                    <Text style={styles.tagChipText}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
-            <Text style={styles.taskTitle}>{card.title}</Text>
-            <Text style={styles.taskDescription}>{card.description}</Text>
-            <Text style={styles.taskMeta}>{card.date}</Text>
-          </View>
-        ))}
+          ))}
+        </ScrollView>
       </ScrollView>
     </SafeAreaView>
   );
@@ -110,115 +155,194 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: spacing.screen,
-    gap: 18,
-    paddingBottom: 120,
+    gap: spacing.base * 2,
+    paddingBottom: 140,
   },
-  heading: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: colors.text,
-  },
-  muted: {
-    color: colors.muted,
-  },
-  focusCard: {
-    borderRadius: radii.xl,
-    padding: spacing.card,
-    gap: 12,
-    shadowColor: "#4f5dff",
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-  },
-  focusHeader: {
+  topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-end",
+    alignItems: "center",
   },
-  focusTitle: {
-    fontSize: 18,
-    color: colors.text,
+  topBarText: {
+    gap: 4,
+  },
+  metaLabel: {
+    fontSize: 12,
+    color: colors.muted,
+    textTransform: "uppercase",
     fontWeight: "600",
+    letterSpacing: 0.4,
   },
-  focusScore: {
-    fontSize: 44,
+  heading: {
+    fontSize: 28,
     fontWeight: "700",
-    color: "#fff",
+    color: colors.text,
+  },
+  subTitle: {
+    color: colors.muted,
+    fontSize: 14,
+  },
+  topBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: radii.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  topBadgeText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: colors.accent,
+  },
+  heroCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    padding: spacing.card,
+    gap: spacing.base,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    shadowColor: colors.text,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
+  },
+  heroHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  heroLabel: {
+    color: colors.muted,
+    fontSize: 13,
+  },
+  heroTitle: {
+    color: colors.text,
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  heroPercent: {
+    color: colors.accent,
+    fontWeight: "700",
+    fontSize: 26,
   },
   progressBar: {
     height: 6,
-    backgroundColor: "rgba(255,255,255,0.3)",
-    borderRadius: radii.md,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 999,
   },
   progressIndicator: {
-    width: "62%",
     height: "100%",
-    borderRadius: radii.md,
-    backgroundColor: "#fff",
+    backgroundColor: colors.accent,
+    borderRadius: 999,
   },
-  focusRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 4,
-  },
-  focusLabel: {
-    color: "rgba(255,255,255,0.8)",
-  },
-  focusValue: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  filterRow: {
-    flexDirection: "row",
-    gap: 10,
-    flexWrap: "wrap",
-  },
-  filterChip: {
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    borderRadius: 18,
-    backgroundColor: colors.surface,
-  },
-  filterChipActive: {
-    backgroundColor: colors.surfaceAlt,
-  },
-  filterText: {
+  heroFoot: {
     color: colors.muted,
-    fontWeight: "500",
+    fontSize: 13,
   },
-  filterTextActive: {
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: spacing.base,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
     color: colors.text,
   },
-  taskCard: {
+  sectionLink: {
+    color: colors.muted,
+    fontWeight: "600",
+  },
+  actionsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.base,
+  },
+  actionCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flexBasis: "48%",
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.surface,
+  },
+  actionCardPrimary: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  actionCardSecondary: {
+    backgroundColor: colors.surface,
+  },
+  actionIcon: {
+    fontSize: 18,
+    color: colors.text,
+  },
+  actionText: {
+    fontWeight: "700",
+    color: colors.text,
+    flexShrink: 1,
+  },
+  actionTextPrimary: {
+    color: "#fff",
+  },
+  actionTextSecondary: {
+    color: colors.text,
+  },
+  suggestionRow: {
+    gap: spacing.base,
+    paddingVertical: 4,
+  },
+  suggestionCard: {
+    width: 200,
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    padding: spacing.card,
+    padding: 12,
     gap: 8,
   },
-  taskHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  suggestionImage: {
+    width: "100%",
+    height: 120,
+    borderRadius: radii.md,
   },
-  taskTag: {
-    color: colors.accentSecondary,
-    fontWeight: "600",
-  },
-  taskLevel: {
-    color: colors.danger,
-    fontWeight: "600",
-  },
-  taskTitle: {
+  suggestionTitle: {
     color: colors.text,
-    fontSize: 18,
+    fontWeight: "700",
+    fontSize: 16,
+  },
+  suggestionMeta: {
+    color: colors.muted,
+    fontSize: 12,
+  },
+  tagRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  tagChip: {
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: colors.surfaceAlt,
+  },
+  tagChipText: {
+    color: colors.text,
     fontWeight: "600",
-  },
-  taskDescription: {
-    color: colors.muted,
-    lineHeight: 20,
-  },
-  taskMeta: {
-    color: colors.muted,
     fontSize: 12,
   },
 });

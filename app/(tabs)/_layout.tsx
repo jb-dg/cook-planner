@@ -31,14 +31,15 @@ export default function TabsLayout() {
         tabBarStyle: {
           position: "absolute",
           bottom: 20,
-          marginHorizontal: 32,
-          backgroundColor: "#ffffff",
+          marginHorizontal: 24,
+          backgroundColor: colors.surface,
           borderRadius: radii.xl,
           borderTopWidth: 0,
           borderWidth: 1,
           borderColor: colors.cardBorder,
-          height: 64,
-          paddingBottom: 6,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 6,
         },
       }}
     >

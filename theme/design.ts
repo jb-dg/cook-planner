@@ -1,22 +1,23 @@
 export const colors = {
-  background: "#f5f6fb",
-  surface: "#ffffff",
-  surfaceAlt: "#eef2ff",
-  text: "#0f172a",
+  background: "#F7F5F2",
+  surface: "#FFFFFF",
+  surfaceAlt: "#E9F9F1",
+  text: "#111827",
   muted: "#6b7280",
-  accent: "#4f46e5",
-  accentSecondary: "#22c55e",
-  danger: "#dc2626",
-  cardBorder: "#e5e7eb",
+  accent: "#2ECC71",
+  accentSecondary: "#FFB15C",
+  danger: "#EF4444",
+  cardBorder: "#E5E7EB",
 };
 
 export const radii = {
   xl: 24,
-  lg: 18,
+  lg: 16,
   md: 12,
 };
 
 export const spacing = {
-  screen: 24,
-  card: 20,
+  base: 8,
+  screen: 16,
+  card: 16,
 };
