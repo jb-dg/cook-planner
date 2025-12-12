@@ -34,67 +34,51 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { fetchHouseholdScope } from "../../lib/households";
-import { colors, radii, spacing } from "../../theme/design";
+import { colors, radii, shadows, spacing } from "../../theme/design";
 
-type MealKey = "breakfast" | "lunch" | "dinner" | "snack";
+type MealKey = "lunch" | "dinner";
 
 type DayPlan = {
   day: string;
-  breakfast?: { recipe: string };
   lunch: { recipe: string };
   dinner: { recipe: string };
-  snack?: { recipe: string };
 };
 
 const DEFAULT_MENU: DayPlan[] = [
   {
     day: "Lundi",
-    breakfast: { recipe: "" },
     lunch: { recipe: "Salade césar" },
     dinner: { recipe: "Tacos de poisson" },
-    snack: { recipe: "" },
   },
   {
     day: "Mardi",
-    breakfast: { recipe: "" },
     lunch: { recipe: "Quiche aux poireaux" },
     dinner: { recipe: "Curry de légumes" },
-    snack: { recipe: "" },
   },
   {
     day: "Mercredi",
-    breakfast: { recipe: "" },
     lunch: { recipe: "Bowl de lentilles" },
     dinner: { recipe: "Soupe miso" },
-    snack: { recipe: "" },
   },
   {
     day: "Jeudi",
-    breakfast: { recipe: "" },
     lunch: { recipe: "Wraps houmous" },
     dinner: { recipe: "Ramen express" },
-    snack: { recipe: "" },
   },
   {
     day: "Vendredi",
-    breakfast: { recipe: "" },
     lunch: { recipe: "Taboulé" },
     dinner: { recipe: "Pizza veggie" },
-    snack: { recipe: "" },
   },
   {
     day: "Samedi",
-    breakfast: { recipe: "" },
     lunch: { recipe: "Banh mi" },
     dinner: { recipe: "Bibimbap" },
-    snack: { recipe: "" },
   },
   {
     day: "Dimanche",
-    breakfast: { recipe: "" },
     lunch: { recipe: "Brunch maison" },
     dinner: { recipe: "Lasagnes" },
-    snack: { recipe: "" },
   },
 ];
 
@@ -133,10 +117,6 @@ const normalizeDays = (value?: DayPlan[] | null) => {
 
     return {
       ...template,
-      breakfast: ensureMeal(
-        (match as { breakfast?: { recipe?: string } }).breakfast,
-        template.breakfast?.recipe ?? ""
-      ),
       lunch: ensureMeal(
         (match.lunch as { recipe?: string } | null | undefined) ?? null,
         template.lunch.recipe
@@ -144,10 +124,6 @@ const normalizeDays = (value?: DayPlan[] | null) => {
       dinner: ensureMeal(
         (match.dinner as { recipe?: string } | null | undefined) ?? null,
         template.dinner.recipe
-      ),
-      snack: ensureMeal(
-        (match as { snack?: { recipe?: string } }).snack,
-        template.snack?.recipe ?? ""
       ),
     };
   });
@@ -301,11 +277,7 @@ export default function PlannerScreen() {
     };
   }, [session, weekNumber, year, month]);
 
-  const handleDayChange = (
-    index: number,
-    meal: "breakfast" | "lunch" | "dinner" | "snack",
-    value: string
-  ) => {
+  const handleDayChange = (index: number, meal: MealKey, value: string) => {
     setDays((prev) => {
       const next = [...prev];
       const mealState = next[index]?.[meal] ?? { recipe: "" };
@@ -458,10 +430,8 @@ export default function PlannerScreen() {
 
   const mealSlots = useMemo(
     () => [
-      { key: "breakfast" as MealKey, label: "Petit-déj" },
       { key: "lunch" as MealKey, label: "Déj" },
       { key: "dinner" as MealKey, label: "Dîner" },
-      { key: "snack" as MealKey, label: "Snack" },
     ],
     []
   );
@@ -511,19 +481,10 @@ export default function PlannerScreen() {
     return weeks;
   }, [calendarMonth]);
 
-  const visibleWeeks = useMemo(() => {
-    const activeIndex = calendarWeeks.findIndex((week) =>
-      week.some((day) => isSameWeek(day, selectedDate, { weekStartsOn: 1 }))
-    );
-    const startIndex = Math.max(0, activeIndex <= 0 ? 0 : activeIndex - 1);
-    const endIndex = Math.min(calendarWeeks.length, startIndex + 3);
-    return calendarWeeks.slice(startIndex, endIndex || 3);
-  }, [calendarWeeks, selectedDate]);
-
-  const miniWeeks = useMemo(() => visibleWeeks.slice(0, 2), [visibleWeeks]);
+  const visibleWeeks = useMemo(() => calendarWeeks, [calendarWeeks]);
 
   const plannedMarkers = useMemo(() => {
-    const slots: MealKey[] = ["breakfast", "lunch", "dinner", "snack"];
+    const slots: MealKey[] = ["lunch", "dinner"];
     const markers: Record<string, { filled: number; total: number }> = {};
     for (let index = 0; index < days.length; index++) {
       const date = addDays(referenceDate, index);
@@ -1026,11 +987,7 @@ const styles = StyleSheet.create({
     gap: spacing.base,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    shadowColor: colors.text,
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
+    ...shadows.soft,
   },
   heroHeader: {
     flexDirection: "row",
@@ -1170,11 +1127,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.cardBorder,
     gap: spacing.base,
-    shadowColor: colors.text,
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
+    ...shadows.card,
   },
   dayCardHeader: {
     flexDirection: "row",
@@ -1451,10 +1404,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   chipButtonGhost: {
-    backgroundColor: "transparent",
+    backgroundColor: colors.surfaceAlt,
+    borderColor: colors.cardBorder,
   },
   chipButtonGhostText: {
-    color: colors.accentSecondary,
+    color: colors.text,
   },
   chipButtonDisabled: {
     opacity: 0.6,
@@ -1491,11 +1445,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    shadowColor: colors.text,
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
+    ...shadows.card,
   },
   toastSuccess: {
     borderColor: colors.accent,
@@ -1522,9 +1472,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: spacing.card,
     gap: spacing.base,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
+    shadowColor: "rgba(66, 58, 50, 0.25)",
+    shadowOpacity: 0.14,
+    shadowRadius: 18,
     shadowOffset: { width: 0, height: -6 },
     elevation: 8,
   },
@@ -1687,11 +1637,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 12,
     paddingHorizontal: 18,
-    shadowColor: colors.text,
-    shadowOpacity: 0.16,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 6,
+    ...shadows.soft,
   },
   fabIcon: {
     color: "#fff",

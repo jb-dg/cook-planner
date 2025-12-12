@@ -5,33 +5,12 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../contexts/AuthContext";
-import { colors, radii, spacing } from "../../theme/design";
+import { colors, radii, shadows, spacing } from "../../theme/design";
 
 const quickActions = [
   { title: "Générer ma semaine", icon: "⚡", tone: "primary" as const },
   { title: "Ajouter un repas", icon: "+", tone: "secondary" as const },
   { title: "Voir ma liste de courses", icon: "☑︎", tone: "secondary" as const },
-];
-
-const suggestions = [
-  {
-    title: "Pâtes courgettes & feta",
-    meta: "20 min · 520 kcal",
-    tags: ["Rapide", "Batch cooking"],
-    colors: ["#E9F9F1", "#D8F2E7"],
-  },
-  {
-    title: "One pot curry doux",
-    meta: "30 min · 480 kcal",
-    tags: ["Douceur", "Veggie"],
-    colors: ["#FFF4E8", "#FFE3CC"],
-  },
-  {
-    title: "Bowls saumon & riz",
-    meta: "25 min · 600 kcal",
-    tags: ["Protéiné", "Rapide"],
-    colors: ["#E7EBFF", "#D8E1FF"],
-  },
 ];
 
 export default function HomeScreen() {
@@ -57,9 +36,6 @@ export default function HomeScreen() {
             <Text style={styles.heading}>Bonjour {username}</Text>
             <Text style={styles.subTitle}>Hub opérationnel</Text>
           </View>
-          <View style={styles.topBadge}>
-            <Text style={styles.topBadgeText}>{planProgress}%</Text>
-          </View>
         </View>
 
         <View style={styles.heroCard}>
@@ -72,10 +48,7 @@ export default function HomeScreen() {
           </View>
           <View style={styles.progressBar}>
             <View
-              style={[
-                styles.progressIndicator,
-                { width: `${planProgress}%` },
-              ]}
+              style={[styles.progressIndicator, { width: `${planProgress}%` }]}
             />
           </View>
           <Text style={styles.heroFoot}>
@@ -111,38 +84,6 @@ export default function HomeScreen() {
             </Pressable>
           ))}
         </View>
-
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>Suggestions pour toi</Text>
-          <Text style={styles.sectionLink}>Voir tout</Text>
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.suggestionRow}
-        >
-          {suggestions.map((item) => (
-            <View key={item.title} style={styles.suggestionCard}>
-              <LinearGradient
-                colors={item.colors}
-                style={styles.suggestionImage}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              />
-              <Text style={styles.suggestionTitle} numberOfLines={2}>
-                {item.title}
-              </Text>
-              <Text style={styles.suggestionMeta}>{item.meta}</Text>
-              <View style={styles.tagRow}>
-                {item.tags.map((tag) => (
-                  <View key={tag} style={styles.tagChip}>
-                    <Text style={styles.tagChipText}>{tag}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          ))}
-        </ScrollView>
       </ScrollView>
     </SafeAreaView>
   );
@@ -204,11 +145,7 @@ const styles = StyleSheet.create({
     gap: spacing.base,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    shadowColor: colors.text,
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
+    ...shadows.soft,
   },
   heroHeader: {
     flexDirection: "row",
@@ -260,7 +197,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   sectionLink: {
-    color: colors.muted,
+    color: colors.accent,
     fontWeight: "600",
   },
   actionsGrid: {
@@ -279,13 +216,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.cardBorder,
     backgroundColor: colors.surface,
+    ...shadows.card,
   },
   actionCardPrimary: {
     backgroundColor: colors.accent,
     borderColor: colors.accent,
   },
   actionCardSecondary: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceAlt,
   },
   actionIcon: {
     fontSize: 18,
@@ -314,6 +252,7 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     padding: 12,
     gap: 8,
+    ...shadows.card,
   },
   suggestionImage: {
     width: "100%",

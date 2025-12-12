@@ -13,7 +13,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useAuth } from "../../../contexts/AuthContext";
 import { supabase } from "../../../lib/supabase";
 import { fetchHouseholdScope } from "../../../lib/households";
-import { colors, radii, spacing } from "../../../theme/design";
+import { colors, radii, shadows, spacing } from "../../../theme/design";
 import { mapRecipe, Recipe } from "../../../features/recipes/types";
 
 export default function RecipesScreen() {
@@ -234,10 +234,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    ...shadows.card,
   },
   recipeCardPressed: {
     opacity: 0.9,
@@ -304,6 +301,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     gap: 8,
     alignItems: "center",
+    ...shadows.card,
   },
   emptyTitle: {
     fontSize: 18,

@@ -145,49 +145,49 @@ type Palette = Theme["colors"];
 
 const palette: Record<ColorMode, Palette> = {
   light: {
-    primary: "#2ECC71",
-    primarySoft: "#E9F9F1",
+    primary: "#D97757", // terracotta-500
+    primarySoft: "#F4DDCF", // light clay wash
     primaryOn: "#FFFFFF",
-    accent: "#FFB15C",
-    accentOn: "#111827",
-    bg: "#F7F5F2",
+    accent: "#8A9A5B", // sage-500
+    accentOn: "#FDFBF7",
+    bg: "#FDFBF7", // stone-50
     surface: "#FFFFFF",
-    surfaceAlt: "#F3F4F6",
-    textPrimary: "#111827",
-    textSecondary: "#6B7280",
-    textMuted: "#9CA3AF",
-    borderSubtle: "#E5E7EB",
-    borderStrong: "#D1D5DB",
-    error: "#EF4444",
-    success: "#16A34A",
-    overlay: "rgba(15, 23, 42, 0.55)",
+    surfaceAlt: "#F5F0E6", // stone-100
+    textPrimary: "#423A32", // stone-900
+    textSecondary: "#5C5042", // stone-800
+    textMuted: "#8C7B63", // stone-600
+    borderSubtle: "#E6DCC9", // stone-200
+    borderStrong: "#D1C2A5", // stone-300
+    error: "#C75252",
+    success: "#5F6F41", // sage-700
+    overlay: "rgba(66, 58, 50, 0.55)",
   },
   dark: {
-    primary: "#3AD479",
-    primarySoft: "#163726",
-    primaryOn: "#0B1A10",
-    accent: "#FFC176",
-    accentOn: "#0F172A",
-    bg: "#050816",
-    surface: "#111827",
-    surfaceAlt: "#1F2933",
-    textPrimary: "#F9FAFB",
-    textSecondary: "#D1D5DB",
-    textMuted: "#9CA3AF",
-    borderSubtle: "#1B2430",
-    borderStrong: "#2C3542",
-    error: "#F87171",
-    success: "#22C55E",
-    overlay: "rgba(5, 8, 22, 0.65)",
+    primary: "#E89A7D",
+    primarySoft: "#3B2A25",
+    primaryOn: "#0F0B0A",
+    accent: "#A5B97A",
+    accentOn: "#0F0B0A",
+    bg: "#17120F",
+    surface: "#1F1915",
+    surfaceAlt: "#2A231E",
+    textPrimary: "#F6F1E8",
+    textSecondary: "#D7CCBD",
+    textMuted: "#B9AA93",
+    borderSubtle: "#3B3129",
+    borderStrong: "#5A4C40",
+    error: "#D27A6B",
+    success: "#9FB476",
+    overlay: "rgba(12, 9, 8, 0.65)",
   },
 };
 
 const typography: Theme["typography"] = {
   family: {
-    regular: "System", // Uses SF Pro Text on iOS and Roboto on Android
-    medium: "System",
-    semibold: "System",
-    bold: "System",
+    regular: "Inter",
+    medium: "Inter",
+    semibold: "Inter",
+    bold: "Inter",
   },
   size: {
     h1: 28,
@@ -219,46 +219,46 @@ const spacing: Theme["spacing"] = {
   xxs: 4,
   xs: 8,
   sm: 12,
-  md: 16,
-  lg: 20,
-  xl: 24,
-  xxl: 32,
+  md: 18,
+  lg: 22,
+  xl: 28,
+  xxl: 36,
 };
 
 const radius: Theme["radius"] = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
+  xs: 6,
+  sm: 10,
+  md: 14,
+  lg: 20,
+  xl: 28,
   pill: 999,
 };
 
 const createShadow = (mode: ColorMode): Theme["shadow"] => {
   const shadowColor =
-    mode === "light" ? "rgba(15, 23, 42, 0.18)" : "rgba(0, 0, 0, 0.38)";
+    mode === "light" ? "rgba(92, 80, 66, 0.18)" : "rgba(12, 9, 8, 0.32)";
 
   return {
     sm: {
-      elevation: 1,
+      elevation: 2,
       shadowColor,
-      shadowOffset: { width: 0, height: 1 },
+      shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.12,
-      shadowRadius: 3,
+      shadowRadius: 6,
     },
     md: {
-      elevation: 4,
+      elevation: 5,
       shadowColor,
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.16,
-      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.14,
+      shadowRadius: 14,
     },
     lg: {
-      elevation: 10,
+      elevation: 8,
       shadowColor,
-      shadowOffset: { width: 0, height: 12 },
-      shadowOpacity: 0.2,
-      shadowRadius: 20,
+      shadowOffset: { width: 0, height: 14 },
+      shadowOpacity: 0.18,
+      shadowRadius: 22,
     },
   };
 };
