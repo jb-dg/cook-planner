@@ -17,7 +17,7 @@ import {
   View,
 } from "react-native";
 import type { PostgrestError } from "@supabase/supabase-js";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -46,6 +46,7 @@ type FeatherIconName = ComponentProps<typeof Feather>["name"];
 export default function ProfileScreen() {
   const router = useRouter();
   const { session, signOut } = useAuth();
+  const insets = useSafeAreaInsets();
   const [pseudo, setPseudo] = useState("");
   const [pseudoError, setPseudoError] = useState<string | null>(null);
   const [pseudoSuccess, setPseudoSuccess] = useState<string | null>(null);
@@ -78,6 +79,22 @@ export default function ProfileScreen() {
   const [householdModalMode, setHouseholdModalMode] =
     useState<HouseholdModalMode>("create");
   const [fabMenuOpen, setFabMenuOpen] = useState(false);
+
+  const modalContentStyle = useMemo(
+    () => [
+      styles.modalContent,
+      { paddingTop: spacing.screen + insets.top + 16 },
+    ],
+    [insets.top]
+  );
+
+  const modalCloseIconStyle = useMemo(
+    () => [
+      styles.modalCloseIcon,
+      { top: insets.top + spacing.base, right: spacing.screen },
+    ],
+    [insets.top]
+  );
 
   const isOwner = useMemo(
     () => household?.owner_id === session?.user.id,
@@ -761,8 +778,14 @@ export default function ProfileScreen() {
         onRequestClose={() => setProfileModalOpen(false)}
       >
         <SafeAreaView style={styles.modalScreen}>
+          <Pressable
+            style={modalCloseIconStyle}
+            onPress={() => setProfileModalOpen(false)}
+          >
+            <Feather name="x" size={18} color={colors.text} />
+          </Pressable>
           <ScrollView
-            contentContainerStyle={styles.modalContent}
+            contentContainerStyle={modalContentStyle}
             showsVerticalScrollIndicator={false}
           >
             <Text style={styles.modalHeading}>Informations du profil</Text>
@@ -805,12 +828,6 @@ export default function ProfileScreen() {
               </>
             )}
           </ScrollView>
-          <Pressable
-            style={styles.modalClose}
-            onPress={() => setProfileModalOpen(false)}
-          >
-            <Text style={styles.modalCloseText}>Fermer</Text>
-          </Pressable>
         </SafeAreaView>
       </Modal>
 
@@ -820,8 +837,14 @@ export default function ProfileScreen() {
         onRequestClose={() => setHouseholdActionsOpen(false)}
       >
         <SafeAreaView style={styles.modalScreen}>
+          <Pressable
+            style={modalCloseIconStyle}
+            onPress={() => setHouseholdActionsOpen(false)}
+          >
+            <Feather name="x" size={18} color={colors.text} />
+          </Pressable>
           <ScrollView
-            contentContainerStyle={styles.modalContent}
+            contentContainerStyle={modalContentStyle}
             showsVerticalScrollIndicator={false}
           >
             <Text style={styles.modalHeading}>
@@ -946,12 +969,6 @@ export default function ProfileScreen() {
               </>
             )}
           </ScrollView>
-          <Pressable
-            style={styles.modalClose}
-            onPress={() => setHouseholdActionsOpen(false)}
-          >
-            <Text style={styles.modalCloseText}>Fermer</Text>
-          </Pressable>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -1291,8 +1308,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  modalCloseIcon: {
+    position: "absolute",
+    top: spacing.screen - 6,
+    right: spacing.screen,
+    zIndex: 10,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    ...shadows.card,
+  },
   modalContent: {
-    padding: spacing.screen,
+    paddingHorizontal: spacing.screen,
+    paddingTop: spacing.screen,
     gap: 16,
     paddingBottom: 120,
   },
