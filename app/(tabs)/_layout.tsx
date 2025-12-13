@@ -9,7 +9,7 @@ import { colors, radii } from "../../theme/design";
 export default function TabsLayout() {
   const { session, initializing } = useAuth();
   const insets = useSafeAreaInsets();
-
+  const tabBarBottom = Math.max(insets.bottom + 10, 16);
   if (initializing) {
     return <ActivityIndicator style={{ flex: 1 }} size="large" />;
   }
@@ -20,17 +20,13 @@ export default function TabsLayout() {
 
   return (
     <Tabs
-      sceneContainerStyle={{
-        backgroundColor: colors.background,
-        paddingTop: insets.top,
-      }}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
           position: "absolute",
-          bottom: 20,
+          bottom: tabBarBottom,
           marginHorizontal: 24,
           backgroundColor: colors.surface,
           borderRadius: radii.xl,
@@ -38,7 +34,7 @@ export default function TabsLayout() {
           borderWidth: 1,
           borderColor: colors.cardBorder,
           height: 60,
-          paddingBottom: 8,
+          paddingBottom: 10,
           paddingTop: 6,
         },
       }}

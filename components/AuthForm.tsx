@@ -14,6 +14,7 @@ import {
   validateEmail,
   validatePassword,
 } from "../lib/validation/auth";
+import { colors, radii, shadows, spacing } from "../theme/design";
 
 type Mode = "signin" | "signup";
 
@@ -62,15 +63,21 @@ export default function AuthForm() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>
-        {mode === "signin" ? "Connexion" : "Créer un compte"}
-      </Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>
+          {mode === "signin" ? "Connexion" : "Créer un compte"}
+        </Text>
+        <Text style={styles.kicker}>
+          Gère tes menus, recettes et courses au même endroit.
+        </Text>
+      </View>
       <View>
         <TextInput
           autoCapitalize="none"
           autoComplete="email"
           keyboardType="email-address"
           placeholder="email@exemple.com"
+          placeholderTextColor={colors.muted}
           style={[styles.input, errors.email && styles.inputError]}
           value={email}
           onChangeText={setEmail}
@@ -83,6 +90,7 @@ export default function AuthForm() {
         <TextInput
           placeholder="Mot de passe"
           secureTextEntry
+          placeholderTextColor={colors.muted}
           style={[styles.input, errors.password && styles.inputError]}
           value={password}
           onChangeText={setPassword}
@@ -96,6 +104,7 @@ export default function AuthForm() {
           <TextInput
             placeholder="Confirme ton mot de passe"
             secureTextEntry
+            placeholderTextColor={colors.muted}
             style={[styles.input, errors.confirm && styles.inputError]}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
@@ -139,52 +148,62 @@ export default function AuthForm() {
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    padding: 24,
-    gap: 16,
+    gap: spacing.base * 1.5,
+  },
+  titleRow: {
+    gap: 6,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "600",
-    textAlign: "center",
+    fontSize: 22,
+    fontWeight: "700",
+    color: colors.text,
+  },
+  kicker: {
+    color: colors.muted,
+    lineHeight: 20,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
+    borderColor: colors.cardBorder,
+    borderRadius: radii.lg,
     padding: 14,
     fontSize: 16,
-    backgroundColor: "#fff",
+    backgroundColor: colors.surfaceAlt,
+    color: colors.text,
+    ...shadows.soft,
   },
   inputError: {
-    borderColor: "#d14343",
+    borderColor: colors.danger,
   },
   error: {
-    color: "#d14343",
+    color: colors.danger,
     marginTop: 4,
     fontSize: 13,
   },
   message: {
-    color: "#0f5d2f",
-    textAlign: "center",
+    color: colors.accent,
+    textAlign: "left",
     fontSize: 14,
+    fontWeight: "600",
   },
   primaryButton: {
-    backgroundColor: "#111",
+    backgroundColor: colors.accent,
     paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: radii.lg,
     alignItems: "center",
+    ...shadows.soft,
   },
   buttonText: {
     color: "#fff",
-    fontWeight: "600",
+    fontWeight: "700",
     fontSize: 16,
   },
   buttonDisabled: {
-    backgroundColor: "#999",
+    backgroundColor: colors.surfaceAlt,
   },
   link: {
-    textAlign: "center",
-    color: "#555",
-    fontWeight: "500",
+    textAlign: "left",
+    color: colors.accent,
+    fontWeight: "700",
   },
 });

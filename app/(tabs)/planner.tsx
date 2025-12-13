@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { ComponentProps, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -30,10 +30,11 @@ import {
 import { fr } from "date-fns/locale";
 
 import { Feather } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { fetchHouseholdScope } from "../../lib/households";
+import { mapRecipe, Recipe } from "../../features/recipes/types";
 import { colors, radii, shadows, spacing } from "../../theme/design";
 
 type MealKey = "lunch" | "dinner";
@@ -47,38 +48,38 @@ type DayPlan = {
 const DEFAULT_MENU: DayPlan[] = [
   {
     day: "Lundi",
-    lunch: { recipe: "Salade césar" },
-    dinner: { recipe: "Tacos de poisson" },
+    lunch: { recipe: "" },
+    dinner: { recipe: "" },
   },
   {
     day: "Mardi",
-    lunch: { recipe: "Quiche aux poireaux" },
-    dinner: { recipe: "Curry de légumes" },
+    lunch: { recipe: "" },
+    dinner: { recipe: "" },
   },
   {
     day: "Mercredi",
-    lunch: { recipe: "Bowl de lentilles" },
-    dinner: { recipe: "Soupe miso" },
+    lunch: { recipe: "" },
+    dinner: { recipe: "" },
   },
   {
     day: "Jeudi",
-    lunch: { recipe: "Wraps houmous" },
-    dinner: { recipe: "Ramen express" },
+    lunch: { recipe: "" },
+    dinner: { recipe: "" },
   },
   {
     day: "Vendredi",
-    lunch: { recipe: "Taboulé" },
-    dinner: { recipe: "Pizza veggie" },
+    lunch: { recipe: "" },
+    dinner: { recipe: "" },
   },
   {
     day: "Samedi",
-    lunch: { recipe: "Banh mi" },
-    dinner: { recipe: "Bibimbap" },
+    lunch: { recipe: "" },
+    dinner: { recipe: "" },
   },
   {
     day: "Dimanche",
-    lunch: { recipe: "Brunch maison" },
-    dinner: { recipe: "Lasagnes" },
+    lunch: { recipe: "" },
+    dinner: { recipe: "" },
   },
 ];
 
@@ -131,6 +132,7 @@ const normalizeDays = (value?: DayPlan[] | null) => {
 
 export default function PlannerScreen() {
   const { session } = useAuth();
+  const insets = useSafeAreaInsets();
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const referenceDate = useMemo(
     () => startOfWeek(selectedDate, { weekStartsOn: 1 }),
@@ -148,6 +150,14 @@ export default function PlannerScreen() {
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error" | "info";
+  } | null>(null);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [recipesLoading, setRecipesLoading] = useState(false);
+  const [recipesError, setRecipesError] = useState<string | null>(null);
+  const [recipeQuery, setRecipeQuery] = useState("");
+  const [recipePickerTarget, setRecipePickerTarget] = useState<{
+    dayIndex: number;
+    meal: MealKey;
   } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -173,15 +183,8 @@ export default function PlannerScreen() {
   );
 
   const disabled = useMemo(() => {
-    return (
-      days.some(
-        (item) => !item.lunch?.recipe?.trim() || !item.dinner?.recipe?.trim()
-      ) ||
-      !session ||
-      saving ||
-      syncing
-    );
-  }, [days, session, saving, syncing]);
+    return !session || saving || syncing;
+  }, [session, saving, syncing]);
 
   const weekDays = useMemo(
     () =>
@@ -203,6 +206,27 @@ export default function PlannerScreen() {
     }
     setToast({ message, type });
     toastTimer.current = setTimeout(() => setToast(null), 3200);
+  };
+
+  const openRecipePicker = (dayIndex: number, meal: MealKey) => {
+    setRecipePickerTarget({ dayIndex, meal });
+    setRecipeQuery("");
+  };
+
+  const closeRecipePicker = () => {
+    setRecipePickerTarget(null);
+    setRecipeQuery("");
+  };
+
+  const handleSelectRecipe = (recipe: Recipe) => {
+    if (!recipePickerTarget) return;
+    handleDayChange(
+      recipePickerTarget.dayIndex,
+      recipePickerTarget.meal,
+      recipe.title
+    );
+    closeRecipePicker();
+    showToast("Recette ajoutée au planning.", "success");
   };
 
   useEffect(() => {
@@ -276,6 +300,51 @@ export default function PlannerScreen() {
       cancelled = true;
     };
   }, [session, weekNumber, year, month]);
+
+  useEffect(() => {
+    if (!session) {
+      setRecipes([]);
+      setRecipesError(null);
+      setRecipesLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const loadRecipes = async () => {
+      setRecipesLoading(true);
+      setRecipesError(null);
+      try {
+        const scope = await fetchHouseholdScope(session.user.id);
+        const { data, error } = await supabase
+          .from("recipes")
+          .select("id,title,duration,difficulty,servings,description")
+          .eq(scope.filterColumn, scope.filterValue)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          throw error;
+        }
+
+        if (!cancelled) {
+          setRecipes((data ?? []).map(mapRecipe));
+        }
+      } catch (error) {
+        if (cancelled) return;
+        console.error("fetch recipes planner", error);
+        setRecipesError("Impossible de charger tes recettes.");
+      } finally {
+        if (!cancelled) {
+          setRecipesLoading(false);
+        }
+      }
+    };
+
+    loadRecipes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
 
   const handleDayChange = (index: number, meal: MealKey, value: string) => {
     setDays((prev) => {
@@ -365,13 +434,23 @@ export default function PlannerScreen() {
     setSaving(true);
     try {
       const scope = await fetchHouseholdScope(session.user.id);
+      const sanitizedDays = days.map((day) => {
+        const sanitize = (value?: { recipe?: string }) => ({
+          recipe: value?.recipe?.trim() ?? "",
+        });
+        return {
+          ...day,
+          lunch: sanitize((day as DayPlan).lunch),
+          dinner: sanitize((day as DayPlan).dinner),
+        };
+      });
       const payload = {
         user_id: session.user.id,
         household_id: scope.householdId,
         week_number: weekNumber,
         month,
         year,
-        days,
+        days: sanitizedDays,
       };
 
       const commonFilters = { year, week_number: weekNumber, month };
@@ -436,11 +515,41 @@ export default function PlannerScreen() {
     []
   );
 
+  const recipePickerContext = useMemo(() => {
+    if (!recipePickerTarget) return null;
+    const day = weekDays[recipePickerTarget.dayIndex];
+    const mealLabel =
+      mealSlots.find((slot) => slot.key === recipePickerTarget.meal)?.label ??
+      "";
+    return {
+      dayLabel: day?.day ?? "Jour",
+      dateLabel: (day as { date?: string })?.date ?? "",
+      mealLabel,
+    };
+  }, [recipePickerTarget, weekDays, mealSlots]);
+
+  const recipePickerValue = useMemo(() => {
+    if (!recipePickerTarget) return "";
+    const day = days[recipePickerTarget.dayIndex];
+    const meal = (day as Record<MealKey, { recipe?: string }> | undefined)?.[
+      recipePickerTarget.meal
+    ];
+    return meal?.recipe ?? "";
+  }, [recipePickerTarget, days]);
+
+  const filteredRecipes = useMemo(() => {
+    const query = recipeQuery.trim().toLowerCase();
+    if (!query) return recipes;
+    return recipes.filter((recipe) =>
+      recipe.title.toLowerCase().includes(query)
+    );
+  }, [recipes, recipeQuery]);
+
   const dayColumns = useMemo(
     () =>
       weekDays.map((item, index) => ({
         ...item,
-        shortLabel: format(addDays(referenceDate, index), "EEE d", {
+        shortLabel: format(addDays(referenceDate, index), "EEE d MMM", {
           locale: fr,
         }).replace(".", ""),
       })),
@@ -506,6 +615,11 @@ export default function PlannerScreen() {
     );
   }, []);
 
+  const sheetPaddingBottom = useMemo(
+    () => spacing.card + Math.max(insets.bottom, 12),
+    [insets.bottom]
+  );
+
   const openWeekPicker = () => {
     setWeekPickerVisible(true);
     setCalendarMonth(startOfMonth(selectedDate));
@@ -529,12 +643,14 @@ export default function PlannerScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[
+          styles.container,
+          { paddingBottom: spacing.screen + insets.bottom + 140 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.topBar}>
           <View style={styles.topBarText}>
-            <Text style={styles.sectionLabel}>Planning</Text>
             <Text style={styles.heading}>Planning</Text>
             <Pressable onPress={openWeekPicker}>
               <Text style={[styles.rangeText, styles.rangeTextLink]}>
@@ -566,8 +682,7 @@ export default function PlannerScreen() {
             />
           </View>
           <Text style={styles.heroHint}>
-            {Math.max(progress.total - progress.filled, 0)} repas manquants · 1
-            liste de courses prête
+            {Math.max(progress.total - progress.filled, 0)} repas manquants
           </Text>
         </View>
 
@@ -633,31 +748,6 @@ export default function PlannerScreen() {
               </Pressable>
             </View>
           </View>
-
-          {/* <View
-            style={[
-              styles.statusPill,
-              syncing
-                ? styles.statusSync
-                : saving
-                ? styles.statusSaving
-                : styles.statusIdle,
-            ]}
-          >
-            { <Text style={styles.statusText}>
-              {syncing
-                ? "Synchronisation…"
-                : saving
-                ? "Enregistrement…"
-                : "À jour"}
-            </Text> }
-          </View> */}
-
-          {/* {syncing ? (
-            <ActivityIndicator color={colors.accent} />
-          ) : syncError ? (
-            <Text style={styles.errorText}>{syncError}</Text>
-          ) : null} */}
         </View>
 
         <View style={styles.dayList}>
@@ -670,28 +760,67 @@ export default function PlannerScreen() {
                     ?.recipe ?? ""
                 ).trim()
             ).length;
+            const missingMeals = Math.max(mealSlots.length - filledCount, 0);
+            const dayStatusLabel =
+              missingMeals === 0 ? "Complet" : `${missingMeals} à planifier`;
+            const dayStatusIcon: ComponentProps<typeof Feather>["name"] =
+              missingMeals === 0 ? "check" : "alert-circle";
             return (
               <View key={day.day} style={styles.dayCard}>
                 <View style={styles.dayCardHeader}>
-                  <View>
-                    <Text style={styles.dayCardDay}>{day.day}</Text>
-                    <Text style={styles.dayCardDate}>{day.shortLabel}</Text>
+                  <View style={styles.dayCardHeaderLeft}>
+                    <View style={styles.dayAvatar}>
+                      <Text style={styles.dayAvatarText}>
+                        {day.day.slice(0, 1)}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={styles.dayCardDay}>{day.day}</Text>
+                      <Text style={styles.dayCardDate}>{day.shortLabel}</Text>
+                    </View>
                   </View>
                   <View
                     style={[
-                      styles.dayBadge,
-                      filledCount === mealSlots.length && styles.dayBadgeFull,
+                      styles.dayStatusPill,
+                      missingMeals === 0
+                        ? styles.dayStatusPillComplete
+                        : styles.dayStatusPillPending,
                     ]}
                   >
                     <Text
                       style={[
-                        styles.dayBadgeText,
-                        filledCount === mealSlots.length &&
-                          styles.dayBadgeTextFull,
+                        styles.dayStatusText,
+                        missingMeals === 0 && styles.dayStatusTextComplete,
                       ]}
                     >
-                      {filledCount}/{mealSlots.length}
+                      {dayStatusLabel}
                     </Text>
+                    <Feather
+                      name={dayStatusIcon}
+                      size={14}
+                      color={
+                        missingMeals === 0 ? colors.background : colors.text
+                      }
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.dayProgressRow}>
+                  <Text style={styles.dayProgressLabel}>
+                    {filledCount}/{mealSlots.length} repas prêts
+                  </Text>
+                  <View style={styles.dayProgressBar}>
+                    <View
+                      style={[
+                        styles.dayProgressIndicator,
+                        {
+                          width: `${Math.min(
+                            100,
+                            (filledCount / mealSlots.length) * 100
+                          )}%`,
+                        },
+                      ]}
+                    />
                   </View>
                 </View>
 
@@ -701,25 +830,85 @@ export default function PlannerScreen() {
                       dayData as Record<MealKey, { recipe?: string }>
                     )[slot.key] ?? { recipe: "" };
                     const filled = !!meal.recipe?.trim();
+                    const mealIcon: ComponentProps<typeof Feather>["name"] =
+                      slot.key === "lunch" ? "sun" : "moon";
+                    const statusText = filled
+                      ? "Recette ajoutée"
+                      : "À planifier";
+                    const hint =
+                      !session && !recipes.length
+                        ? "Saisie libre ou ajoute tes recettes en te connectant"
+                        : "Saisie libre ou recette enregistrée";
                     return (
                       <View key={slot.key} style={styles.mealRow}>
-                        <Text style={styles.mealLabel}>{slot.label}</Text>
                         <View
                           style={[
-                            styles.mealInputContainer,
-                            filled && styles.mealInputContainerFilled,
+                            styles.mealCard,
+                            filled && styles.mealCardFilled,
                           ]}
                         >
-                          <TextInput
-                            value={meal.recipe}
-                            onChangeText={(value) =>
-                              handleDayChange(dayIndex, slot.key, value)
-                            }
-                            editable={!syncing && !saving}
-                            placeholder="Ajouter"
-                            placeholderTextColor={colors.muted}
-                            style={styles.mealInput}
-                          />
+                          <View style={styles.mealCardHeader}>
+                            <View style={styles.mealLabelRow}>
+                              <View
+                                style={[
+                                  styles.mealIcon,
+                                  filled && styles.mealIconFilled,
+                                ]}
+                              >
+                                <Feather
+                                  name={mealIcon}
+                                  size={14}
+                                  color={
+                                    filled ? colors.background : colors.text
+                                  }
+                                />
+                              </View>
+                              <View style={styles.mealLabelColumn}>
+                                <Text style={styles.mealLabel}>
+                                  {slot.label}
+                                </Text>
+                                <Text style={styles.mealStatusText}>
+                                  {statusText}
+                                </Text>
+                              </View>
+                            </View>
+                            <Pressable
+                              style={[
+                                styles.recipeButton,
+                                (!session || recipesLoading) &&
+                                  styles.recipeButtonDisabled,
+                              ]}
+                              hitSlop={10}
+                              onPress={() =>
+                                openRecipePicker(dayIndex, slot.key)
+                              }
+                              disabled={recipesLoading}
+                            >
+                              <Feather
+                                name="book-open"
+                                size={16}
+                                color={colors.accent}
+                              />
+                            </Pressable>
+                          </View>
+                          <View
+                            style={[
+                              styles.mealInputContainer,
+                              filled && styles.mealInputContainerFilled,
+                            ]}
+                          >
+                            <TextInput
+                              value={meal.recipe}
+                              onChangeText={(value) =>
+                                handleDayChange(dayIndex, slot.key, value)
+                              }
+                              editable={!syncing && !saving}
+                              placeholder="Recette ou note libre"
+                              placeholderTextColor={colors.muted}
+                              style={styles.mealInput}
+                            />
+                            <Text style={styles.mealHint}>{hint}</Text>
+                          </View>
                         </View>
                       </View>
                     );
@@ -760,6 +949,7 @@ export default function PlannerScreen() {
           disabled={disabled}
           style={[styles.saveButton, disabled && styles.saveButtonDisabled]}
           onPress={handleSave}
+          disabled={disabled}
         >
           <Text
             style={[
@@ -779,7 +969,9 @@ export default function PlannerScreen() {
         onRequestClose={closeWeekPicker}
       >
         <Pressable style={styles.sheetBackdrop} onPress={closeWeekPicker} />
-        <View style={styles.sheetContainer}>
+        <View
+          style={[styles.sheetContainer, { paddingBottom: sheetPaddingBottom }]}
+        >
           <View style={styles.sheetHandle} />
           <View style={styles.sheetHeaderRow}>
             <View>
@@ -907,10 +1099,139 @@ export default function PlannerScreen() {
         </View>
       </Modal>
 
-      <Pressable style={styles.fab} onPress={handleCopyPreviousWeek}>
-        <Text style={styles.fabIcon}>✨</Text>
-        <Text style={styles.fabText}>Auto-planifier</Text>
-      </Pressable>
+      <Modal
+        visible={!!recipePickerTarget}
+        transparent
+        animationType="slide"
+        onRequestClose={closeRecipePicker}
+      >
+        <Pressable style={styles.sheetBackdrop} onPress={closeRecipePicker} />
+        <View
+          style={[
+            styles.sheetContainer,
+            styles.recipeSheet,
+            { paddingBottom: sheetPaddingBottom },
+          ]}
+        >
+          <View style={styles.sheetHandle} />
+          <View style={styles.sheetHeaderRow}>
+            <View style={styles.sheetTitleGroup}>
+              <Text style={styles.sheetTitle}>Ajouter un repas</Text>
+              <Text style={styles.sheetSubtitle}>
+                {recipePickerContext
+                  ? `${recipePickerContext.mealLabel} · ${recipePickerContext.dayLabel}`
+                  : "Choisis une option"}
+              </Text>
+              {recipePickerContext?.dateLabel ? (
+                <Text style={styles.sheetSubtle}>
+                  {recipePickerContext.dateLabel}
+                </Text>
+              ) : null}
+            </View>
+            <Pressable style={styles.sheetClose} onPress={closeRecipePicker}>
+              <Feather name="x" size={18} color={colors.text} />
+            </Pressable>
+          </View>
+
+          <View style={styles.freeEntryCard}>
+            <Text style={styles.sheetSectionLabel}>Entrée libre</Text>
+            <TextInput
+              value={recipePickerValue}
+              onChangeText={(value) => {
+                if (!recipePickerTarget) return;
+                handleDayChange(
+                  recipePickerTarget.dayIndex,
+                  recipePickerTarget.meal,
+                  value
+                );
+              }}
+              placeholder="Ajouter un repas personnalisé"
+              placeholderTextColor={colors.muted}
+              style={styles.freeEntryInput}
+              autoFocus
+            />
+            <Text style={styles.freeEntryHint}>
+              Tape ton idée, elle sera enregistrée pour ce repas.
+            </Text>
+          </View>
+
+          <View style={styles.sheetSectionHeader}>
+            <Text style={styles.sheetSectionLabel}>Ou choisis une recette</Text>
+            <View style={styles.sheetSearch}>
+              <Feather name="search" size={14} color={colors.muted} />
+              <TextInput
+                placeholder="Rechercher dans ta bibliothèque"
+                placeholderTextColor={colors.muted}
+                style={styles.sheetSearchInput}
+                value={recipeQuery}
+                onChangeText={setRecipeQuery}
+              />
+            </View>
+          </View>
+
+          {recipesError ? (
+            <Text style={styles.sheetErrorText}>{recipesError}</Text>
+          ) : null}
+
+          {recipesLoading ? (
+            <ActivityIndicator color={colors.accent} />
+          ) : !session ? (
+            <View style={styles.sheetEmptyState}>
+              <Text style={styles.sheetEmptyText}>
+                Connecte-toi pour parcourir tes recettes.
+              </Text>
+            </View>
+          ) : filteredRecipes.length ? (
+            <ScrollView
+              style={styles.recipeList}
+              contentContainerStyle={styles.recipeListContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {filteredRecipes.map((recipe) => (
+                <Pressable
+                  key={recipe.id}
+                  style={({ pressed }) => [
+                    styles.recipeOption,
+                    pressed && styles.recipeOptionPressed,
+                  ]}
+                  onPress={() => handleSelectRecipe(recipe)}
+                >
+                  <View style={styles.recipeOptionHeader}>
+                    <Text style={styles.recipeOptionTitle}>{recipe.title}</Text>
+                    <View style={styles.recipeOptionBadges}>
+                      {recipe.duration ? (
+                        <Text style={styles.recipeBadge}>
+                          {recipe.duration}
+                        </Text>
+                      ) : null}
+                      <Text style={styles.recipeBadge}>
+                        {recipe.servings} pers.
+                      </Text>
+                    </View>
+                  </View>
+                  {recipe.description ? (
+                    <Text style={styles.recipeOptionDescription}>
+                      {recipe.description}
+                    </Text>
+                  ) : null}
+                  <Text style={styles.recipeOptionAction}>
+                    Utiliser pour ce repas
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.sheetEmptyState}>
+              <Text style={styles.sheetEmptyText}>
+                Aucune recette trouvée avec ce filtre.
+              </Text>
+              <Text style={styles.sheetEmptySubtext}>
+                Essaie un autre mot-clé ou ajoute une nouvelle recette.
+              </Text>
+            </View>
+          )}
+        </View>
+      </Modal>
 
       {toast && (
         <View
@@ -935,7 +1256,7 @@ const styles = StyleSheet.create({
   container: {
     padding: spacing.screen,
     gap: spacing.base * 2,
-    paddingBottom: 200,
+    paddingBottom: spacing.screen * 2,
   },
   topBar: {
     flexDirection: "row",
@@ -1134,6 +1455,25 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  dayCardHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  dayAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceAlt,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  dayAvatarText: {
+    fontWeight: "700",
+    color: colors.text,
+  },
   dayCardDay: {
     fontSize: 15,
     fontWeight: "700",
@@ -1145,39 +1485,126 @@ const styles = StyleSheet.create({
     color: colors.muted,
     textTransform: "capitalize",
   },
-  dayBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    backgroundColor: colors.surfaceAlt,
+  dayStatusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.cardBorder,
+    backgroundColor: colors.surfaceAlt,
   },
-  dayBadgeFull: {
+  dayStatusPillComplete: {
     backgroundColor: colors.accent,
     borderColor: colors.accent,
   },
-  dayBadgeText: {
+  dayStatusPillPending: {
+    backgroundColor: colors.surfaceAlt,
+  },
+  dayStatusText: {
+    fontWeight: "700",
+    color: colors.text,
+  },
+  dayStatusTextComplete: {
+    color: colors.background,
+  },
+  dayProgressRow: {
+    gap: 8,
+  },
+  dayProgressLabel: {
+    color: colors.muted,
+    fontWeight: "600",
+  },
+  dayProgressBar: {
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: colors.surfaceAlt,
+    overflow: "hidden",
+  },
+  dayProgressIndicator: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: colors.accent,
+  },
+  mealList: {
+    gap: spacing.base * 1.1,
+  },
+  mealRow: {
+    gap: spacing.base * 0.75,
+    width: "100%",
+  },
+  mealLabelColumn: {
+    flex: 1,
+    gap: 4,
+  },
+  mealLabel: {
     fontSize: 13,
     fontWeight: "700",
     color: colors.text,
   },
-  dayBadgeTextFull: {
-    color: colors.background,
+  mealStatusText: {
+    color: colors.muted,
+    fontSize: 12,
   },
-  mealList: {
-    gap: spacing.base,
+  mealHint: {
+    color: colors.muted,
+    fontSize: 12,
+    marginTop: 2,
   },
-  mealRow: {
+  mealCard: {
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceAlt,
+    padding: spacing.base,
+    gap: 8,
+    width: "100%",
+  },
+  mealCardFilled: {
+    backgroundColor: colors.surface,
+    borderColor: colors.accent,
+  },
+  mealCardHeader: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
     gap: spacing.base,
   },
-  mealLabel: {
-    width: 82,
-    fontSize: 13,
-    fontWeight: "700",
-    color: colors.text,
+  mealLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.base,
+    flex: 1,
+  },
+  mealIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  mealIconFilled: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  recipeButton: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: colors.accent,
+    backgroundColor: colors.surface,
+    flexShrink: 0,
+  },
+  recipeButtonDisabled: {
+    opacity: 0.6,
   },
   mealInputContainer: {
     flex: 1,
@@ -1187,6 +1614,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceAlt,
     paddingVertical: 10,
     paddingHorizontal: 12,
+    gap: 6,
   },
   mealInputContainerFilled: {
     borderColor: colors.accent,
@@ -1195,6 +1623,7 @@ const styles = StyleSheet.create({
   mealInput: {
     fontSize: 14,
     color: colors.text,
+    paddingVertical: 0,
   },
   inlineCalendar: {
     marginTop: spacing.base * 1.5,
@@ -1478,6 +1907,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -6 },
     elevation: 8,
   },
+  recipeSheet: {
+    maxHeight: "82%",
+  },
   sheetHandle: {
     alignSelf: "center",
     width: 42,
@@ -1490,6 +1922,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  sheetTitleGroup: {
+    flex: 1,
+    gap: 2,
+  },
   sheetTitle: {
     fontSize: 18,
     fontWeight: "700",
@@ -1498,6 +1934,37 @@ const styles = StyleSheet.create({
   sheetSubtitle: {
     color: colors.muted,
     fontSize: 13,
+  },
+  sheetSubtle: {
+    color: colors.muted,
+    fontSize: 12,
+  },
+  sheetSectionLabel: {
+    fontWeight: "700",
+    color: colors.text,
+  },
+  sheetSectionHeader: {
+    gap: 8,
+    marginTop: spacing.base,
+  },
+  sheetSearch: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.surfaceAlt,
+    paddingHorizontal: 12,
+  },
+  sheetSearchInput: {
+    flex: 1,
+    color: colors.text,
+    paddingVertical: 10,
+  },
+  sheetErrorText: {
+    color: colors.danger,
+    marginTop: 4,
   },
   sheetClose: {
     width: 36,
@@ -1508,6 +1975,29 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceAlt,
     borderWidth: 1,
     borderColor: colors.cardBorder,
+  },
+  freeEntryCard: {
+    marginTop: spacing.base,
+    padding: spacing.base,
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    gap: 8,
+  },
+  freeEntryInput: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: colors.text,
+  },
+  freeEntryHint: {
+    color: colors.muted,
+    fontSize: 12,
   },
   sheetShortcutRow: {
     flexDirection: "row",
@@ -1625,6 +2115,76 @@ const styles = StyleSheet.create({
     opacity: 1,
     width: 10,
     height: 10,
+  },
+  recipeList: {
+    marginTop: spacing.base,
+  },
+  recipeListContent: {
+    gap: spacing.base,
+    paddingBottom: spacing.base,
+  },
+  recipeOption: {
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.surface,
+    padding: spacing.card,
+    gap: 6,
+  },
+  recipeOptionPressed: {
+    opacity: 0.92,
+  },
+  recipeOptionHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: spacing.base,
+  },
+  recipeOptionTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.text,
+  },
+  recipeOptionBadges: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  recipeBadge: {
+    backgroundColor: colors.surfaceAlt,
+    color: colors.text,
+    borderRadius: radii.md,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  recipeOptionDescription: {
+    color: colors.muted,
+  },
+  recipeOptionAction: {
+    marginTop: 6,
+    color: colors.accent,
+    fontWeight: "700",
+  },
+  sheetEmptyState: {
+    marginTop: spacing.base,
+    padding: spacing.base,
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    gap: 4,
+    alignItems: "center",
+  },
+  sheetEmptyText: {
+    color: colors.text,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  sheetEmptySubtext: {
+    color: colors.muted,
+    textAlign: "center",
   },
   fab: {
     position: "absolute",
