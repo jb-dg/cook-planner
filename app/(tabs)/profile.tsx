@@ -17,7 +17,7 @@ import {
   View,
 } from "react-native";
 import type { PostgrestError } from "@supabase/supabase-js";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -25,7 +25,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { validateEmail } from "../../lib/validation/auth";
-import { colors, radii, spacing } from "../../theme/design";
+import { colors, radii, shadows, spacing } from "../../theme/design";
 
 type Household = {
   id: string;
@@ -46,6 +46,7 @@ type FeatherIconName = ComponentProps<typeof Feather>["name"];
 export default function ProfileScreen() {
   const router = useRouter();
   const { session, signOut } = useAuth();
+  const insets = useSafeAreaInsets();
   const [pseudo, setPseudo] = useState("");
   const [pseudoError, setPseudoError] = useState<string | null>(null);
   const [pseudoSuccess, setPseudoSuccess] = useState<string | null>(null);
@@ -79,6 +80,22 @@ export default function ProfileScreen() {
     useState<HouseholdModalMode>("create");
   const [fabMenuOpen, setFabMenuOpen] = useState(false);
 
+  const modalContentStyle = useMemo(
+    () => [
+      styles.modalContent,
+      { paddingTop: spacing.screen + insets.top + 16 },
+    ],
+    [insets.top]
+  );
+
+  const modalCloseIconStyle = useMemo(
+    () => [
+      styles.modalCloseIcon,
+      { top: insets.top + spacing.base, right: spacing.screen },
+    ],
+    [insets.top]
+  );
+
   const isOwner = useMemo(
     () => household?.owner_id === session?.user.id,
     [household, session?.user.id]
@@ -90,36 +107,6 @@ export default function ProfileScreen() {
   }, [pseudo, session?.user.email]);
 
   const displayName = pseudo || session?.user.email?.split("@")[0] || "Chef";
-
-  const quickActions: {
-    label: string;
-    helper: string;
-    icon: FeatherIconName;
-    action: () => void;
-  }[] = [
-    {
-      label: "Mes recettes",
-      helper: "Retrouve tes créations favorites",
-      icon: "book-open",
-      action: () => router.push("/(tabs)/recipes"),
-    },
-    {
-      label: "Planning du foyer",
-      helper: "Consulte le planning partagé",
-      icon: "calendar",
-      action: () => router.push("/(tabs)/planner"),
-    },
-    {
-      label: "Courses partagées",
-      helper: "Synchronise les listes à venir",
-      icon: "shopping-bag",
-      action: () =>
-        Alert.alert(
-          "Bientôt disponible",
-          "Les listes de courses partagées arrivent bientôt."
-        ),
-    },
-  ];
 
   const heroSubtitle = household
     ? `${household.name} - ${householdMembers.length} membre${
@@ -646,7 +633,7 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         <LinearGradient
-          colors={["#ffffffff", "#ffffffff"]}
+          colors={["#F4DDCF", "#FDFBF7"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.heroCard}
@@ -674,36 +661,6 @@ export default function ProfileScreen() {
             ))}
           </View> */}
         </LinearGradient>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Raccourcis du quotidien</Text>
-          <Text style={styles.sectionDescription}>
-            Pilote les outils que tu utilises le plus.
-          </Text>
-          <View style={styles.quickActionsGrid}>
-            {quickActions.map((action) => (
-              <Pressable
-                key={action.label}
-                style={styles.quickActionCard}
-                onPress={action.action}
-              >
-                <View style={styles.quickActionIcon}>
-                  <Feather name={action.icon} size={18} color="#fff" />
-                </View>
-                <Text style={styles.quickActionLabel}>{action.label}</Text>
-                <Text style={styles.quickActionHelper}>{action.helper}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Vie du foyer</Text>
-          <Text style={styles.sectionDescription}>
-            Organise la cuisine partagée et invite des proches.
-          </Text>
-          {renderHouseholdSummary()}
-        </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Actions rapides</Text>
@@ -821,8 +778,14 @@ export default function ProfileScreen() {
         onRequestClose={() => setProfileModalOpen(false)}
       >
         <SafeAreaView style={styles.modalScreen}>
+          <Pressable
+            style={modalCloseIconStyle}
+            onPress={() => setProfileModalOpen(false)}
+          >
+            <Feather name="x" size={18} color={colors.text} />
+          </Pressable>
           <ScrollView
-            contentContainerStyle={styles.modalContent}
+            contentContainerStyle={modalContentStyle}
             showsVerticalScrollIndicator={false}
           >
             <Text style={styles.modalHeading}>Informations du profil</Text>
@@ -865,12 +828,6 @@ export default function ProfileScreen() {
               </>
             )}
           </ScrollView>
-          <Pressable
-            style={styles.modalClose}
-            onPress={() => setProfileModalOpen(false)}
-          >
-            <Text style={styles.modalCloseText}>Fermer</Text>
-          </Pressable>
         </SafeAreaView>
       </Modal>
 
@@ -880,8 +837,14 @@ export default function ProfileScreen() {
         onRequestClose={() => setHouseholdActionsOpen(false)}
       >
         <SafeAreaView style={styles.modalScreen}>
+          <Pressable
+            style={modalCloseIconStyle}
+            onPress={() => setHouseholdActionsOpen(false)}
+          >
+            <Feather name="x" size={18} color={colors.text} />
+          </Pressable>
           <ScrollView
-            contentContainerStyle={styles.modalContent}
+            contentContainerStyle={modalContentStyle}
             showsVerticalScrollIndicator={false}
           >
             <Text style={styles.modalHeading}>
@@ -1006,12 +969,6 @@ export default function ProfileScreen() {
               </>
             )}
           </ScrollView>
-          <Pressable
-            style={styles.modalClose}
-            onPress={() => setHouseholdActionsOpen(false)}
-          >
-            <Text style={styles.modalCloseText}>Fermer</Text>
-          </Pressable>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -1031,11 +988,11 @@ const styles = StyleSheet.create({
   heroCard: {
     borderRadius: radii.lg,
     padding: spacing.card,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    borderWidth: 0,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.surface,
     gap: 16,
+    ...shadows.soft,
   },
   heroHeader: {
     flexDirection: "row",
@@ -1048,23 +1005,26 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     borderWidth: 2,
     borderStyle: "dashed",
-    borderColor: "#000000ff",
+    borderColor: colors.cardBorder,
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
+    backgroundColor: colors.surface,
   },
   avatarLetter: {
     fontSize: 32,
     fontWeight: "700",
-    color: "#000000ff",
+    color: colors.text,
   },
   avatarEdit: {
     position: "absolute",
     bottom: -4,
     right: -4,
-    backgroundColor: "#ffffffff",
+    backgroundColor: colors.surface,
     borderRadius: 999,
     padding: 6,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
   },
   heroText: {
     flex: 1,
@@ -1077,13 +1037,12 @@ const styles = StyleSheet.create({
   },
   heroEmail: {
     marginTop: 4,
-    color: colors.text,
-    fontWeight: "500",
+    color: colors.muted,
+    fontWeight: "600",
   },
   heroSubtitle: {
-    color: colors.text,
+    color: colors.muted,
     fontSize: 14,
-    opacity: 0.8,
     marginTop: -4,
   },
   heroUtilities: {
@@ -1098,7 +1057,7 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface,
   },
   heroStats: {
     flexDirection: "row",
@@ -1110,7 +1069,9 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     borderRadius: radii.md,
-    backgroundColor: "rgba(255,255,255,0.75)",
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
   },
   statValue: {
     fontSize: 18,
@@ -1131,6 +1092,7 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     backgroundColor: colors.surface,
     gap: 12,
+    ...shadows.card,
   },
   sectionTitle: {
     fontSize: 18,
@@ -1155,6 +1117,7 @@ const styles = StyleSheet.create({
     padding: 14,
     backgroundColor: colors.surfaceAlt,
     gap: 8,
+    ...shadows.card,
   },
   quickActionIcon: {
     width: 32,
@@ -1212,7 +1175,7 @@ const styles = StyleSheet.create({
     borderColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface,
   },
   infoActionContent: {
     flex: 1,
@@ -1237,6 +1200,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     padding: 14,
     gap: 12,
+    ...shadows.card,
   },
   actionIcon: {
     width: 36,
@@ -1272,17 +1236,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
+    ...shadows.soft,
   },
   fabMenu: {
     marginTop: 12,
-    backgroundColor: colors.text,
+    backgroundColor: colors.surface,
     borderRadius: radii.md,
     paddingVertical: 6,
     width: 200,
     gap: 6,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    ...shadows.card,
   },
   menuBackdrop: {
     position: "absolute",
@@ -1299,7 +1264,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   fabMenuText: {
-    color: "#fff",
+    color: colors.text,
     fontWeight: "600",
   },
   overlay: {
@@ -1313,6 +1278,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radii.lg,
     borderTopRightRadius: radii.lg,
     gap: 12,
+    ...shadows.card,
   },
   menuItem: {
     paddingVertical: 12,
@@ -1342,8 +1308,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  modalCloseIcon: {
+    position: "absolute",
+    top: spacing.screen - 6,
+    right: spacing.screen,
+    zIndex: 10,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    ...shadows.card,
+  },
   modalContent: {
-    padding: spacing.screen,
+    paddingHorizontal: spacing.screen,
+    paddingTop: spacing.screen,
     gap: 16,
     paddingBottom: 120,
   },
@@ -1437,6 +1419,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     padding: spacing.card,
     backgroundColor: colors.surface,
+    ...shadows.card,
   },
   householdCardEmpty: {
     borderStyle: "dashed",
