@@ -74,8 +74,7 @@ export default function HomeScreen() {
         const total = (days.length || 7) * slots.length;
         const filled = days.reduce((acc, day) => {
           return (
-            acc +
-            slots.filter((slot) => !!day?.[slot]?.recipe?.trim()).length
+            acc + slots.filter((slot) => !!day?.[slot]?.recipe?.trim()).length
           );
         }, 0);
         const percent = total
@@ -157,9 +156,7 @@ export default function HomeScreen() {
             />
           </View>
           <Text style={styles.heroFoot}>
-            {progressError
-              ? progressError
-              : `${missingMeals} repas manquants · 1 liste de courses prête`}
+            {progressError ? progressError : `${missingMeals} repas manquants`}
           </Text>
         </View>
 
