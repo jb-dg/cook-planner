@@ -30,7 +30,10 @@ import {
 import { fr } from "date-fns/locale";
 
 import { Feather } from "@expo/vector-icons";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { fetchHouseholdScope } from "../../lib/households";
@@ -556,6 +559,13 @@ export default function PlannerScreen() {
     [referenceDate, weekDays]
   );
 
+  const selectedDayIndex = useMemo(() => {
+    const index = dayColumns.findIndex((_, dayIndex) =>
+      isSameDay(addDays(referenceDate, dayIndex), selectedDate)
+    );
+    return index >= 0 ? index : 0;
+  }, [dayColumns, referenceDate, selectedDate]);
+
   const progress = useMemo(() => {
     const trackedMeals: MealKey[] = ["lunch", "dinner"];
     const filled = days.reduce((acc, day) => {
@@ -750,9 +760,54 @@ export default function PlannerScreen() {
           </View>
         </View>
 
-        <View style={styles.dayList}>
+        <View style={styles.dayGrid}>
           {dayColumns.map((day, dayIndex) => {
-            const dayData = days[dayIndex] || {};
+            const dayDate = addDays(referenceDate, dayIndex);
+            const isActiveDay = isSameDay(dayDate, selectedDate);
+            const dayNumber = format(dayDate, "d", { locale: fr });
+            const dayAbbrev = format(dayDate, "EEE", { locale: fr })
+              .replace(".", "")
+              .toUpperCase();
+            return (
+              <Pressable
+                key={day.day}
+                style={[
+                  styles.dayGridItem,
+                  isActiveDay && styles.dayGridItemActive,
+                ]}
+                onPress={() => setSelectedDate(dayDate)}
+              >
+                <Text
+                  style={[
+                    styles.dayGridTitle,
+                    isActiveDay && styles.dayGridTitleActive,
+                  ]}
+                >
+                  {dayAbbrev}
+                </Text>
+                <Text
+                  style={[
+                    styles.dayGridNumber,
+                    isActiveDay && styles.dayGridNumberActive,
+                  ]}
+                >
+                  {dayNumber}
+                </Text>
+                <View
+                  style={[
+                    styles.dayGridDot,
+                    isActiveDay && styles.dayGridDotActive,
+                  ]}
+                />
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <View style={styles.dayList}>
+          {(() => {
+            const day = dayColumns[selectedDayIndex];
+            const dayData = days[selectedDayIndex] || {};
             const filledCount = mealSlots.filter(
               (slot) =>
                 !!(
@@ -766,7 +821,10 @@ export default function PlannerScreen() {
             const dayStatusIcon: ComponentProps<typeof Feather>["name"] =
               missingMeals === 0 ? "check" : "alert-circle";
             return (
-              <View key={day.day} style={styles.dayCard}>
+              <View
+                key={day.day}
+                style={[styles.dayCard, styles.dayCardActive]}
+              >
                 <View style={styles.dayCardHeader}>
                   <View style={styles.dayCardHeaderLeft}>
                     <View style={styles.dayAvatar}>
@@ -776,7 +834,11 @@ export default function PlannerScreen() {
                     </View>
                     <View>
                       <Text style={styles.dayCardDay}>{day.day}</Text>
-                      <Text style={styles.dayCardDate}>{day.shortLabel}</Text>
+                      <Text
+                        style={[styles.dayCardDate, styles.dayCardDateActive]}
+                      >
+                        {day.shortLabel}
+                      </Text>
                     </View>
                   </View>
                   <View
@@ -880,7 +942,7 @@ export default function PlannerScreen() {
                               ]}
                               hitSlop={10}
                               onPress={() =>
-                                openRecipePicker(dayIndex, slot.key)
+                                openRecipePicker(selectedDayIndex, slot.key)
                               }
                               disabled={recipesLoading}
                             >
@@ -900,7 +962,11 @@ export default function PlannerScreen() {
                             <TextInput
                               value={meal.recipe}
                               onChangeText={(value) =>
-                                handleDayChange(dayIndex, slot.key, value)
+                                handleDayChange(
+                                  selectedDayIndex,
+                                  slot.key,
+                                  value
+                                )
                               }
                               editable={!syncing && !saving}
                               placeholder="Recette ou note libre"
@@ -914,12 +980,21 @@ export default function PlannerScreen() {
                     );
                   })}
                 </View>
+
+                {((dayData as DayPlan).notes ?? "").trim() ? (
+                  <View style={styles.dayNote}>
+                    <Text style={styles.dayNoteLabel}>Note</Text>
+                    <Text style={styles.dayNoteText}>
+                      {(dayData as DayPlan).notes}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
             );
-          })}
+          })()}
         </View>
 
-        <View style={styles.actionRow}>
+        {/* <View style={styles.actionRow}>
           <Pressable
             style={[
               styles.chipButton,
@@ -943,7 +1018,7 @@ export default function PlannerScreen() {
               Réinitialiser
             </Text>
           </Pressable>
-        </View>
+        </View> */}
 
         <Pressable
           disabled={disabled}
@@ -1438,8 +1513,69 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderColor: colors.cardBorder,
   },
+  dayGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.base,
+    marginTop: spacing.base * 0.5,
+    justifyContent: "center",
+    alignContent: "center",
+  },
+  dayGridItem: {
+    flexBasis: "22%",
+    maxWidth: "22%",
+    minWidth: 82,
+    minHeight: 96,
+    borderWidth: 1.1,
+    borderColor: colors.cardBorder,
+    borderRadius: 18,
+    paddingVertical: spacing.base * 0.8,
+    paddingHorizontal: spacing.base * 0.8,
+    backgroundColor: colors.surface,
+    gap: spacing.base * 0.4,
+    justifyContent: "center",
+    alignItems: "center",
+    ...shadows.card,
+  },
+  dayGridItemActive: {
+    borderColor: colors.accent,
+    backgroundColor: colors.accent,
+    shadowColor: "rgba(217, 119, 87, 0.32)",
+    shadowOpacity: 0.32,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+  },
+  dayGridTitle: {
+    fontWeight: "700",
+    color: colors.muted,
+    textTransform: "uppercase",
+    textAlign: "center",
+  },
+  dayGridTitleActive: {
+    color: colors.background,
+  },
+  dayGridNumber: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: colors.text,
+    textAlign: "center",
+  },
+  dayGridNumberActive: {
+    color: colors.background,
+  },
+  dayGridDot: {
+    marginTop: 4,
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: "transparent",
+  },
+  dayGridDotActive: {
+    backgroundColor: colors.background,
+  },
   dayList: {
     gap: spacing.base * 1.5,
+    alignItems: "center",
   },
   dayCard: {
     backgroundColor: colors.surface,
@@ -1449,6 +1585,8 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     gap: spacing.base,
     ...shadows.card,
+    width: "100%",
+    maxWidth: 720,
   },
   dayCardHeader: {
     flexDirection: "row",
