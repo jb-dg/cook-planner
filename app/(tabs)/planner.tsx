@@ -697,7 +697,7 @@ export default function PlannerScreen() {
         </View>
 
         <View style={styles.segmentCard}>
-          <View style={styles.segmentRow}>
+          {/* <View style={styles.segmentRow}>
             <Pressable
               onPress={() => handleSelectTimeframe("current")}
               style={[
@@ -730,7 +730,7 @@ export default function PlannerScreen() {
                 Prochaine
               </Text>
             </Pressable>
-          </View>
+          </View> */}
 
           <View style={styles.weekMetaRow}>
             <View>
@@ -1516,14 +1516,18 @@ const styles = StyleSheet.create({
   dayGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.base,
+    gap: spacing.base * 0.5,
+    columnGap: spacing.base * 0.5,
+    rowGap: spacing.base * 0.5,
     marginTop: spacing.base * 0.5,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     alignContent: "center",
+    alignSelf: "center",
+    width: "100%",
   },
   dayGridItem: {
-    flexBasis: "22%",
-    maxWidth: "22%",
+    flexBasis: "23%",
+    maxWidth: "23%",
     minWidth: 82,
     minHeight: 96,
     borderWidth: 1.1,
