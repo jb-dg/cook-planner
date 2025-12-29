@@ -676,7 +676,6 @@ export default function PlannerScreen() {
         <View style={styles.heroCard}>
           <View style={styles.heroHeader}>
             <View>
-              <Text style={styles.heroLabel}>Semaine du {weekRangeLabel}</Text>
               <Text style={styles.heroTitle}>
                 {progress.percent}% des repas planifiés
               </Text>
@@ -1024,7 +1023,6 @@ export default function PlannerScreen() {
           disabled={disabled}
           style={[styles.saveButton, disabled && styles.saveButtonDisabled]}
           onPress={handleSave}
-          disabled={disabled}
         >
           <Text
             style={[
@@ -1223,7 +1221,6 @@ export default function PlannerScreen() {
               placeholder="Ajouter un repas personnalisé"
               placeholderTextColor={colors.muted}
               style={styles.freeEntryInput}
-              autoFocus
             />
             <Text style={styles.freeEntryHint}>
               Tape ton idée, elle sera enregistrée pour ce repas.

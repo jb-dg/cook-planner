@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { LinearGradient } from "expo-linear-gradient";
 import { addDays, format, getISOWeek, getYear, startOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
@@ -19,6 +18,7 @@ const quickActions = [
 
 export default function HomeScreen() {
   const { session } = useAuth();
+  const router = useRouter();
   const weekStart = useMemo(
     () => startOfWeek(new Date(), { weekStartsOn: 1 }),
     []
@@ -133,7 +133,10 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <View style={styles.heroCard}>
+        <Pressable
+          style={styles.heroCard}
+          onPress={() => router.push("/planner")}
+        >
           <View style={styles.heroHeader}>
             <View>
               <Text style={styles.heroLabel}>Semaine du {weekLabel}</Text>
@@ -158,7 +161,7 @@ export default function HomeScreen() {
           <Text style={styles.heroFoot}>
             {progressError ? progressError : `${missingMeals} repas manquants`}
           </Text>
-        </View>
+        </Pressable>
 
         {/* <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Actions rapides</Text>

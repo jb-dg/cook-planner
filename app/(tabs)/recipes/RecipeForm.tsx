@@ -1,11 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { colors, radii } from "../../../theme/design";
 import {
   createEmptyFormState,
@@ -155,9 +149,7 @@ export default function RecipeForm({
                 styles.difficultyChip,
                 form.difficulty === item && styles.difficultyChipActive,
               ]}
-              onPress={() =>
-                setForm((prev) => ({ ...prev, difficulty: item }))
-              }
+              onPress={() => setForm((prev) => ({ ...prev, difficulty: item }))}
               disabled={submitting}
             >
               <Text
