@@ -1,15 +1,3 @@
-import { ComponentProps, useEffect, useMemo, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
 import {
   addDays,
   addMonths,
@@ -28,6 +16,18 @@ import {
   startOfWeek,
 } from "date-fns";
 import { fr } from "date-fns/locale";
+import { ComponentProps, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 import { Feather } from "@expo/vector-icons";
 import {
@@ -35,9 +35,9 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useAuth } from "../../contexts/AuthContext";
-import { supabase } from "../../lib/supabase";
-import { fetchHouseholdScope } from "../../lib/households";
 import { mapRecipe, Recipe } from "../../features/recipes/types";
+import { fetchHouseholdScope } from "../../lib/households";
+import { supabase } from "../../lib/supabase";
 import { colors, radii, shadows, spacing } from "../../theme/design";
 
 type MealKey = "lunch" | "dinner";
@@ -46,6 +46,7 @@ type DayPlan = {
   day: string;
   lunch: { recipe: string };
   dinner: { recipe: string };
+  notes?: string;
 };
 
 const DEFAULT_MENU: DayPlan[] = [
@@ -162,6 +163,7 @@ export default function PlannerScreen() {
     dayIndex: number;
     meal: MealKey;
   } | null>(null);
+  const [viewMode, setViewMode] = useState<"focus" | "list">("focus");
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const weekNumber = useMemo(() => getISOWeek(referenceDate), [referenceDate]);
@@ -457,7 +459,7 @@ export default function PlannerScreen() {
       };
 
       const commonFilters = { year, week_number: weekNumber, month };
-      const candidateFilters = [
+      const candidateFilters: Record<string, any>[] = [
         { [scope.filterColumn]: scope.filterValue, ...commonFilters },
       ];
       if (scope.householdId) {
@@ -668,276 +670,264 @@ export default function PlannerScreen() {
               </Text>
             </Pressable>
           </View>
-          <Pressable style={styles.topBarIcon} onPress={openWeekPicker}>
-            <Feather name="calendar" size={20} color={colors.text} />
-          </Pressable>
-        </View>
-
-        <View style={styles.heroCard}>
-          <View style={styles.heroHeader}>
-            <View>
-              <Text style={styles.heroTitle}>
-                {progress.percent}% des repas planifiés
-              </Text>
-            </View>
-            <Text style={styles.heroPercent}>{progress.percent}%</Text>
-          </View>
-          <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressIndicator,
-                { width: `${progress.percent}%` },
-              ]}
-            />
-          </View>
-          <Text style={styles.heroHint}>
-            {Math.max(progress.total - progress.filled, 0)} repas manquants
-          </Text>
-        </View>
-
-        <View style={styles.segmentCard}>
-          {/* <View style={styles.segmentRow}>
+          <View style={styles.topBarActions}>
             <Pressable
-              onPress={() => handleSelectTimeframe("current")}
               style={[
-                styles.segmentChip,
-                timeframe === "current" && styles.segmentChipActive,
+                styles.topBarIcon,
+                viewMode === "list" && styles.topBarIconActive,
               ]}
+              onPress={() =>
+                setViewMode((prev) => (prev === "list" ? "focus" : "list"))
+              }
+              accessibilityLabel="Basculer en vue liste"
             >
-              <Text
-                style={[
-                  styles.segmentText,
-                  timeframe === "current" && styles.segmentTextActive,
-                ]}
-              >
-                Cette semaine
-              </Text>
+              <Feather
+                name="list"
+                size={18}
+                color={viewMode === "list" ? colors.accent : colors.text}
+              />
             </Pressable>
-            <Pressable
-              onPress={() => handleSelectTimeframe("next")}
-              style={[
-                styles.segmentChip,
-                timeframe === "next" && styles.segmentChipActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.segmentText,
-                  timeframe === "next" && styles.segmentTextActive,
-                ]}
-              >
-                Prochaine
-              </Text>
+            <Pressable style={styles.topBarIcon} onPress={openWeekPicker}>
+              <Feather name="calendar" size={20} color={colors.text} />
             </Pressable>
-          </View> */}
-
-          <View style={styles.weekMetaRow}>
-            <View>
-              <Text style={styles.weekTitle}>Semaine {weekNumber}</Text>
-              <Text style={styles.subtleText}>{selectedDayLabel}</Text>
-            </View>
-            <View style={styles.weekControls}>
-              <Pressable
-                style={styles.iconButton}
-                onPress={() => handleNavigate("prev")}
-              >
-                <Feather name="chevron-left" size={18} color={colors.text} />
-              </Pressable>
-              <Pressable
-                style={[styles.iconButton, styles.iconButtonGhost]}
-                onPress={handleGoToToday}
-              >
-                <Text style={styles.iconButtonGhostText}>Aujourd'hui</Text>
-              </Pressable>
-              <Pressable
-                style={styles.iconButton}
-                onPress={() => handleNavigate("next")}
-              >
-                <Feather name="chevron-right" size={18} color={colors.text} />
-              </Pressable>
-            </View>
           </View>
         </View>
 
-        <View style={styles.dayGrid}>
-          {dayColumns.map((day, dayIndex) => {
-            const dayDate = addDays(referenceDate, dayIndex);
-            const isActiveDay = isSameDay(dayDate, selectedDate);
-            const dayNumber = format(dayDate, "d", { locale: fr });
-            const dayAbbrev = format(dayDate, "EEE", { locale: fr })
-              .replace(".", "")
-              .toUpperCase();
-            return (
-              <Pressable
-                key={day.day}
-                style={[
-                  styles.dayGridItem,
-                  isActiveDay && styles.dayGridItemActive,
-                ]}
-                onPress={() => setSelectedDate(dayDate)}
-              >
-                <Text
-                  style={[
-                    styles.dayGridTitle,
-                    isActiveDay && styles.dayGridTitleActive,
-                  ]}
+        {viewMode === "focus" && (
+          <View style={styles.modernCard}>
+            {/* Header avec navigation */}
+            <View style={styles.modernHeader}>
+              <View style={styles.modernHeaderLeft}>
+                <Text style={styles.modernWeekLabel}>Semaine {weekNumber}</Text>
+                <Text style={styles.modernDateLabel}>{selectedDayLabel}</Text>
+              </View>
+              <View style={styles.modernNavGroup}>
+                <Pressable
+                  style={styles.modernNavButton}
+                  onPress={() => handleNavigate("prev")}
                 >
-                  {dayAbbrev}
-                </Text>
-                <Text
-                  style={[
-                    styles.dayGridNumber,
-                    isActiveDay && styles.dayGridNumberActive,
-                  ]}
+                  <Feather name="chevron-left" size={16} color={colors.text} />
+                </Pressable>
+                <Pressable
+                  style={styles.modernTodayButton}
+                  onPress={handleGoToToday}
                 >
-                  {dayNumber}
-                </Text>
-                <View
-                  style={[
-                    styles.dayGridDot,
-                    isActiveDay && styles.dayGridDotActive,
-                  ]}
-                />
-              </Pressable>
-            );
-          })}
-        </View>
+                  <Feather name="calendar" size={14} color={colors.accent} />
+                  <Text style={styles.modernTodayText}>Aujourd'hui</Text>
+                </Pressable>
+                <Pressable
+                  style={styles.modernNavButton}
+                  onPress={() => handleNavigate("next")}
+                >
+                  <Feather name="chevron-right" size={16} color={colors.text} />
+                </Pressable>
+              </View>
+            </View>
 
-        <View style={styles.dayList}>
-          {(() => {
-            const day = dayColumns[selectedDayIndex];
-            const dayData = days[selectedDayIndex] || {};
-            const filledCount = mealSlots.filter(
-              (slot) =>
-                !!(
-                  (dayData as Record<MealKey, { recipe?: string }>)[slot.key]
-                    ?.recipe ?? ""
-                ).trim()
-            ).length;
-            const missingMeals = Math.max(mealSlots.length - filledCount, 0);
-            const dayStatusLabel =
-              missingMeals === 0 ? "Complet" : `${missingMeals} à planifier`;
-            const dayStatusIcon: ComponentProps<typeof Feather>["name"] =
-              missingMeals === 0 ? "check" : "alert-circle";
-            return (
-              <View
-                key={day.day}
-                style={[styles.dayCard, styles.dayCardActive]}
-              >
-                <View style={styles.dayCardHeader}>
-                  <View style={styles.dayCardHeaderLeft}>
-                    <View style={styles.dayAvatar}>
-                      <Text style={styles.dayAvatarText}>
-                        {day.day.slice(0, 1)}
-                      </Text>
-                    </View>
-                    <View>
-                      <Text style={styles.dayCardDay}>{day.day}</Text>
-                      <Text
-                        style={[styles.dayCardDate, styles.dayCardDateActive]}
-                      >
-                        {day.shortLabel}
-                      </Text>
-                    </View>
+            {/* Progression visuelle moderne */}
+            <View style={styles.modernProgressContainer}>
+              <View style={styles.modernProgressCircle}>
+                <Text style={styles.modernProgressPercent}>
+                  {progress.percent}%
+                </Text>
+                <Text style={styles.modernProgressLabel}>planifiés</Text>
+              </View>
+              <View style={styles.modernProgressDetails}>
+                <View style={styles.modernStatItem}>
+                  <View style={styles.modernStatIcon}>
+                    <Feather
+                      name="check-circle"
+                      size={16}
+                      color={colors.accent}
+                    />
                   </View>
-                  <View
+                  <View>
+                    <Text style={styles.modernStatValue}>
+                      {progress.filled}
+                    </Text>
+                    <Text style={styles.modernStatLabel}>repas prêts</Text>
+                  </View>
+                </View>
+                <View style={styles.modernStatDivider} />
+                <View style={styles.modernStatItem}>
+                  <View style={styles.modernStatIcon}>
+                    <Feather name="clock" size={16} color={colors.muted} />
+                  </View>
+                  <View>
+                    <Text style={styles.modernStatValue}>
+                      {Math.max(progress.total - progress.filled, 0)}
+                    </Text>
+                    <Text style={styles.modernStatLabel}>à planifier</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {/* Barre de progression linéaire */}
+            <View style={styles.modernProgressBar}>
+              <View
+                style={[
+                  styles.modernProgressFill,
+                  { width: `${progress.percent}%` },
+                ]}
+              />
+            </View>
+          </View>
+        )}
+
+        {viewMode === "focus" && (
+          <View style={styles.dayGrid}>
+            {dayColumns.map((day, dayIndex) => {
+              const dayDate = addDays(referenceDate, dayIndex);
+              const isActiveDay = isSameDay(dayDate, selectedDate);
+              const dayNumber = format(dayDate, "d", { locale: fr });
+              const dayAbbrev = format(dayDate, "EEE", { locale: fr })
+                .replace(".", "")
+                .toUpperCase();
+              return (
+                <Pressable
+                  key={day.day}
+                  style={[
+                    styles.dayGridItem,
+                    isActiveDay && styles.dayGridItemActive,
+                  ]}
+                  onPress={() => setSelectedDate(dayDate)}
+                >
+                  <Text
                     style={[
-                      styles.dayStatusPill,
-                      missingMeals === 0
-                        ? styles.dayStatusPillComplete
-                        : styles.dayStatusPillPending,
+                      styles.dayGridTitle,
+                      isActiveDay && styles.dayGridTitleActive,
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.dayStatusText,
-                        missingMeals === 0 && styles.dayStatusTextComplete,
-                      ]}
-                    >
-                      {dayStatusLabel}
-                    </Text>
-                    <Feather
-                      name={dayStatusIcon}
-                      size={14}
-                      color={
-                        missingMeals === 0 ? colors.background : colors.text
-                      }
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.dayProgressRow}>
-                  <Text style={styles.dayProgressLabel}>
-                    {filledCount}/{mealSlots.length} repas prêts
+                    {dayAbbrev}
                   </Text>
-                  <View style={styles.dayProgressBar}>
-                    <View
-                      style={[
-                        styles.dayProgressIndicator,
-                        {
-                          width: `${Math.min(
-                            100,
-                            (filledCount / mealSlots.length) * 100
-                          )}%`,
-                        },
-                      ]}
-                    />
-                  </View>
-                </View>
+                  <Text
+                    style={[
+                      styles.dayGridNumber,
+                      isActiveDay && styles.dayGridNumberActive,
+                    ]}
+                  >
+                    {dayNumber}
+                  </Text>
+                  <View
+                    style={[
+                      styles.dayGridDot,
+                      isActiveDay && styles.dayGridDotActive,
+                    ]}
+                  />
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
 
-                <View style={styles.mealList}>
-                  {mealSlots.map((slot) => {
-                    const meal = (
-                      dayData as Record<MealKey, { recipe?: string }>
-                    )[slot.key] ?? { recipe: "" };
-                    const filled = !!meal.recipe?.trim();
-                    const mealIcon: ComponentProps<typeof Feather>["name"] =
-                      slot.key === "lunch" ? "sun" : "moon";
-                    const statusText = filled
-                      ? "Recette ajoutée"
-                      : "À planifier";
-                    const hint =
-                      !session && !recipes.length
-                        ? "Saisie libre ou ajoute tes recettes en te connectant"
-                        : "Saisie libre ou recette enregistrée";
-                    return (
-                      <View key={slot.key} style={styles.mealRow}>
-                        <View
+        {viewMode === "focus" ? (
+          <View style={styles.dayList}>
+            {(() => {
+              const day = dayColumns[selectedDayIndex];
+              const dayData = days[selectedDayIndex] || {};
+              const filledCount = mealSlots.filter(
+                (slot) =>
+                  !!(
+                    (dayData as Record<MealKey, { recipe?: string }>)[slot.key]
+                      ?.recipe ?? ""
+                  ).trim()
+              ).length;
+              const missingMeals = Math.max(mealSlots.length - filledCount, 0);
+              const dayStatusIcon: ComponentProps<typeof Feather>["name"] =
+                missingMeals === 0 ? "check" : "alert-circle";
+              return (
+                <View
+                  key={day.day}
+                  style={[styles.modernDayCard, styles.modernDayCardActive]}
+                >
+                  {/* Header moderne simplifié */}
+                  <View style={styles.modernDayHeader}>
+                    <View style={styles.modernDayHeaderMain}>
+                      <View style={styles.modernDayInfo}>
+                        <Text style={styles.modernDayDate}>
+                          {day.shortLabel}
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.modernDayProgressBadge,
+                          missingMeals === 0 &&
+                            styles.modernDayProgressBadgeComplete,
+                        ]}
+                      >
+                        <Feather
+                          name={dayStatusIcon}
+                          size={12}
+                          color={
+                            missingMeals === 0 ? colors.background : colors.text
+                          }
+                        />
+                        <Text
                           style={[
-                            styles.mealCard,
-                            filled && styles.mealCardFilled,
+                            styles.modernDayProgressText,
+                            missingMeals === 0 &&
+                              styles.modernDayProgressTextComplete,
                           ]}
                         >
-                          <View style={styles.mealCardHeader}>
-                            <View style={styles.mealLabelRow}>
+                          {filledCount}/{mealSlots.length} repas
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Liste des repas avec design moderne */}
+                  <View style={styles.modernMealList}>
+                    {mealSlots.map((slot) => {
+                      const meal = (
+                        dayData as Record<MealKey, { recipe?: string }>
+                      )[slot.key] ?? { recipe: "" };
+                      const filled = !!meal.recipe?.trim();
+                      const mealIcon: ComponentProps<typeof Feather>["name"] =
+                        slot.key === "lunch" ? "sun" : "moon";
+                      const hint =
+                        !session && !recipes.length
+                          ? "Saisie libre ou ajoute tes recettes en te connectant"
+                          : "Saisie libre ou recette enregistrée";
+                      return (
+                        <View key={slot.key} style={styles.modernMealCard}>
+                          <View
+                            style={[
+                              styles.modernMealHeader,
+                              filled && styles.modernMealHeaderFilled,
+                            ]}
+                          >
+                            <View style={styles.modernMealLeft}>
                               <View
                                 style={[
-                                  styles.mealIcon,
-                                  filled && styles.mealIconFilled,
+                                  styles.modernMealIconWrapper,
+                                  filled && styles.modernMealIconWrapperFilled,
                                 ]}
                               >
                                 <Feather
                                   name={mealIcon}
-                                  size={14}
+                                  size={16}
                                   color={
-                                    filled ? colors.background : colors.text
+                                    filled ? colors.background : colors.accent
                                   }
                                 />
                               </View>
-                              <View style={styles.mealLabelColumn}>
-                                <Text style={styles.mealLabel}>
+                              <View style={styles.modernMealLabels}>
+                                <Text style={styles.modernMealLabel}>
                                   {slot.label}
                                 </Text>
-                                <Text style={styles.mealStatusText}>
-                                  {statusText}
-                                </Text>
+                                {!filled && (
+                                  <Text style={styles.modernMealStatus}>
+                                    À planifier
+                                  </Text>
+                                )}
                               </View>
                             </View>
                             <Pressable
                               style={[
-                                styles.recipeButton,
+                                styles.modernRecipeButton,
                                 (!session || recipesLoading) &&
-                                  styles.recipeButtonDisabled,
+                                  styles.modernRecipeButtonDisabled,
                               ]}
                               hitSlop={10}
                               onPress={() =>
@@ -954,8 +944,8 @@ export default function PlannerScreen() {
                           </View>
                           <View
                             style={[
-                              styles.mealInputContainer,
-                              filled && styles.mealInputContainerFilled,
+                              styles.modernMealInputWrapper,
+                              filled && styles.modernMealInputWrapperFilled,
                             ]}
                           >
                             <TextInput
@@ -968,57 +958,139 @@ export default function PlannerScreen() {
                                 )
                               }
                               editable={!syncing && !saving}
-                              placeholder="Recette ou note libre"
+                              placeholder={
+                                filled
+                                  ? "Modifier la recette..."
+                                  : "Recette ou note libre"
+                              }
                               placeholderTextColor={colors.muted}
-                              style={styles.mealInput}
+                              style={styles.modernMealInput}
+                              multiline
                             />
-                            <Text style={styles.mealHint}>{hint}</Text>
+                            {!filled && (
+                              <Text style={styles.modernMealHint}>{hint}</Text>
+                            )}
                           </View>
                         </View>
-                      </View>
-                    );
-                  })}
-                </View>
-
-                {((dayData as DayPlan).notes ?? "").trim() ? (
-                  <View style={styles.dayNote}>
-                    <Text style={styles.dayNoteLabel}>Note</Text>
-                    <Text style={styles.dayNoteText}>
-                      {(dayData as DayPlan).notes}
-                    </Text>
+                      );
+                    })}
                   </View>
-                ) : null}
-              </View>
-            );
-          })()}
-        </View>
 
-        {/* <View style={styles.actionRow}>
-          <Pressable
-            style={[
-              styles.chipButton,
-              (syncing || saving) && styles.chipButtonDisabled,
-            ]}
-            onPress={handleCopyPreviousWeek}
-            disabled={syncing || saving}
-          >
-            <Text style={styles.chipButtonText}>Copier semaine précédente</Text>
-          </Pressable>
-          <Pressable
-            style={[
-              styles.chipButton,
-              styles.chipButtonGhost,
-              (syncing || saving) && styles.chipButtonDisabled,
-            ]}
-            onPress={handleResetWeek}
-            disabled={syncing || saving}
-          >
-            <Text style={[styles.chipButtonText, styles.chipButtonGhostText]}>
-              Réinitialiser
-            </Text>
-          </Pressable>
-        </View> */}
+                  {((dayData as DayPlan).notes ?? "").trim() ? (
+                    <View style={styles.modernDayNote}>
+                      <Feather
+                        name="file-text"
+                        size={14}
+                        color={colors.muted}
+                      />
+                      <View style={styles.modernDayNoteContent}>
+                        <Text style={styles.modernDayNoteLabel}>Note</Text>
+                        <Text style={styles.modernDayNoteText}>
+                          {(dayData as DayPlan).notes}
+                        </Text>
+                      </View>
+                    </View>
+                  ) : null}
+                </View>
+              );
+            })()}
+          </View>
+        ) : (
+          <View style={styles.weekList}>
+            {weekDays.map((day, dayIndex) => {
+              const dayDate = addDays(referenceDate, dayIndex);
+              const dayData = days[dayIndex] || {};
+              const filledCount = mealSlots.filter(
+                (slot) =>
+                  !!(
+                    (dayData as Record<MealKey, { recipe?: string }>)[slot.key]
+                      ?.recipe ?? ""
+                  ).trim()
+              ).length;
+              const missingMeals = Math.max(mealSlots.length - filledCount, 0);
+              const dayLabel = format(dayDate, "EEE d MMM", {
+                locale: fr,
+              }).replace(".", "");
+              const isActive = isSameDay(dayDate, selectedDate);
+              return (
+                <View
+                  key={day.day}
+                  style={[
+                    styles.weekListRow,
+                    isActive && styles.weekListRowActive,
+                  ]}
+                >
+                  <Pressable
+                    style={styles.weekListMeta}
+                    hitSlop={6}
+                    onPress={() => setSelectedDate(dayDate)}
+                  >
+                    <Text style={styles.weekListDay}>{dayLabel}</Text>
+                    <Text
+                      style={[
+                        styles.weekListStatus,
+                        missingMeals === 0 && styles.weekListStatusDone,
+                      ]}
+                    >
+                      {missingMeals === 0
+                        ? "Complet"
+                        : `${missingMeals} à planifier`}
+                    </Text>
+                  </Pressable>
+                  <View style={styles.weekListMeals}>
+                    {mealSlots.map((slot) => {
+                      const meal = (
+                        dayData as Record<MealKey, { recipe?: string }>
+                      )[slot.key] ?? { recipe: "" };
 
+                      const mealIcon: ComponentProps<typeof Feather>["name"] =
+                        slot.key === "lunch" ? "sun" : "moon";
+                      return (
+                        <View key={slot.key} style={styles.weekListMeal}>
+                          <View style={styles.weekListMealLabel}>
+                            <Feather
+                              name={mealIcon}
+                              size={12}
+                              color={colors.muted}
+                            />
+                            <Text style={styles.weekListMealText}>
+                              {slot.label}
+                            </Text>
+                          </View>
+                          <View style={styles.weekListInputRow}>
+                            <TextInput
+                              value={meal.recipe}
+                              onChangeText={(value) =>
+                                handleDayChange(dayIndex, slot.key, value)
+                              }
+                              editable={!syncing && !saving}
+                              placeholder="Ajouter un repas"
+                              placeholderTextColor={colors.muted}
+                              style={styles.weekListInput}
+                            />
+                            <Pressable
+                              hitSlop={8}
+                              style={styles.weekListRecipeButton}
+                              onPress={() =>
+                                openRecipePicker(dayIndex, slot.key)
+                              }
+                            >
+                              <Feather
+                                name="book-open"
+                                size={14}
+                                color={colors.accent}
+                              />
+                            </Pressable>
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
         <Pressable
           disabled={disabled}
           style={[styles.saveButton, disabled && styles.saveButtonDisabled]}
@@ -1335,6 +1407,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
+  topBarActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.base * 0.5,
+  },
   topBarText: {
     gap: 2,
   },
@@ -1347,6 +1424,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     borderColor: colors.cardBorder,
+  },
+  topBarIconActive: {
+    borderColor: colors.accent,
+    backgroundColor: colors.surfaceAlt,
   },
   sectionLabel: {
     fontSize: 12,
@@ -1386,6 +1467,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: spacing.base * 0.75,
+  },
+  heroHeaderLeft: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: spacing.base * 0.75,
+    minWidth: 0,
+  },
+  weekControlsRow: {
+    marginBottom: spacing.base * 0.75,
+    alignItems: "center",
   },
   heroLabel: {
     color: colors.muted,
@@ -1393,11 +1487,12 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     color: colors.text,
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: "700",
+    flexShrink: 1,
   },
   heroPercent: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "700",
     color: colors.accent,
   },
@@ -1405,6 +1500,7 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 999,
     backgroundColor: colors.surfaceAlt,
+    marginBottom: spacing.base * 0.5,
   },
   progressIndicator: {
     height: "100%",
@@ -1413,7 +1509,192 @@ const styles = StyleSheet.create({
   },
   heroHint: {
     color: colors.muted,
+    fontSize: 12,
+    marginTop: spacing.base * 0.25,
+  },
+  weekNavRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.base * 0.5,
+    marginBottom: spacing.base * 1,
+  },
+  navButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surface,
+  },
+  weekInfo: {
+    flex: 1,
+    alignItems: "center",
+    gap: 2,
+  },
+  todayButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    backgroundColor: colors.surfaceAlt,
+  },
+  todayButtonText: {
+    color: colors.accent,
+    fontWeight: "700",
     fontSize: 13,
+  },
+  progressSection: {
+    gap: spacing.base * 0.5,
+  },
+  progressHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  progressLabel: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: colors.text,
+  },
+  progressStats: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.muted,
+  },
+  modernCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    padding: spacing.card,
+    gap: spacing.base * 1.5,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    ...shadows.soft,
+  },
+  modernHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  modernHeaderLeft: {
+    gap: 2,
+  },
+  modernWeekLabel: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: colors.text,
+  },
+  modernDateLabel: {
+    fontSize: 13,
+    color: colors.muted,
+    textTransform: "capitalize",
+  },
+  modernNavGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.base * 0.5,
+  },
+  modernNavButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surfaceAlt,
+  },
+  modernTodayButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    backgroundColor: colors.surfaceAlt,
+  },
+  modernTodayText: {
+    color: colors.accent,
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  modernProgressContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.base * 1.5,
+    paddingVertical: spacing.base,
+  },
+  modernProgressCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 2,
+  },
+  modernProgressPercent: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: colors.accent,
+  },
+  modernProgressLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.muted,
+    textTransform: "uppercase",
+  },
+  modernProgressDetails: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.base,
+  },
+  modernStatItem: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.base * 0.75,
+  },
+  modernStatIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: colors.surfaceAlt,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modernStatValue: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: colors.text,
+  },
+  modernStatLabel: {
+    fontSize: 12,
+    color: colors.muted,
+    fontWeight: "600",
+  },
+  modernStatDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: colors.cardBorder,
+  },
+  modernProgressBar: {
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: colors.surfaceAlt,
+    overflow: "hidden",
+  },
+  modernProgressFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: colors.accent,
   },
   segmentCard: {
     backgroundColor: colors.surface,
@@ -1448,24 +1729,27 @@ const styles = StyleSheet.create({
   },
   weekMetaRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    gap: spacing.base,
+    gap: spacing.base * 0.75,
+    marginTop: spacing.base * 0.5,
   },
   weekTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
     color: colors.text,
+    textAlign: "center",
   },
   weekControls: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.base,
+    gap: spacing.base * 0.4,
+    flexShrink: 0,
+    alignSelf: "center",
   },
   iconButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     alignItems: "center",
@@ -1473,10 +1757,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   iconButtonGhost: {
-    paddingHorizontal: 14,
-    minWidth: 110,
-    height: 42,
-    borderRadius: 14,
+    paddingHorizontal: 10,
+    minWidth: 95,
+    height: 36,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.accent,
     backgroundColor: colors.surfaceAlt,
@@ -1486,6 +1770,7 @@ const styles = StyleSheet.create({
   iconButtonGhostText: {
     color: colors.accent,
     fontWeight: "700",
+    fontSize: 13,
   },
   statusPill: {
     borderRadius: 16,
@@ -1512,28 +1797,26 @@ const styles = StyleSheet.create({
   },
   dayGrid: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.base * 0.5,
-    columnGap: spacing.base * 0.5,
-    rowGap: spacing.base * 0.5,
+    flexWrap: "nowrap",
+    gap: spacing.base * 0.15,
+    columnGap: spacing.base * 0.15,
     marginTop: spacing.base * 0.5,
-    justifyContent: "flex-start",
+    justifyContent: "space-between",
     alignContent: "center",
     alignSelf: "center",
     width: "100%",
   },
   dayGridItem: {
-    flexBasis: "23%",
-    maxWidth: "23%",
-    minWidth: 82,
-    minHeight: 96,
-    borderWidth: 1.1,
+    flex: 1,
+    minHeight: 60,
+    maxWidth: "14%",
+    borderWidth: 1,
     borderColor: colors.cardBorder,
-    borderRadius: 18,
-    paddingVertical: spacing.base * 0.8,
-    paddingHorizontal: spacing.base * 0.8,
+    borderRadius: 10,
+    paddingVertical: spacing.base * 0.25,
+    paddingHorizontal: spacing.base * 0.15,
     backgroundColor: colors.surface,
-    gap: spacing.base * 0.4,
+    gap: spacing.base * 0.15,
     justifyContent: "center",
     alignItems: "center",
     ...shadows.card,
@@ -1551,12 +1834,13 @@ const styles = StyleSheet.create({
     color: colors.muted,
     textTransform: "uppercase",
     textAlign: "center",
+    fontSize: 10,
   },
   dayGridTitleActive: {
     color: colors.background,
   },
   dayGridNumber: {
-    fontSize: 28,
+    fontSize: 18,
     fontWeight: "800",
     color: colors.text,
     textAlign: "center",
@@ -1565,9 +1849,9 @@ const styles = StyleSheet.create({
     color: colors.background,
   },
   dayGridDot: {
-    marginTop: 4,
-    width: 8,
-    height: 8,
+    marginTop: 2,
+    width: 6,
+    height: 6,
     borderRadius: 999,
     backgroundColor: "transparent",
   },
@@ -1577,6 +1861,94 @@ const styles = StyleSheet.create({
   dayList: {
     gap: spacing.base * 1.5,
     alignItems: "center",
+  },
+  weekList: {
+    width: "100%",
+    gap: spacing.base * 0.75,
+    alignItems: "center",
+  },
+  weekListHeader: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    width: "100%",
+    maxWidth: 780,
+  },
+  weekListRow: {
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.surface,
+    paddingVertical: spacing.base * 1.1,
+    paddingHorizontal: spacing.base * 1.2,
+    gap: spacing.base * 0.7,
+    width: "100%",
+    maxWidth: 780,
+  },
+  weekListRowActive: {
+    borderColor: colors.accent,
+  },
+  weekListMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  weekListDay: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.text,
+    textTransform: "capitalize",
+  },
+  weekListStatus: {
+    color: colors.muted,
+    fontWeight: "600",
+    fontSize: 11,
+  },
+  weekListStatusDone: {
+    color: colors.accent,
+  },
+  weekListMeals: {
+    gap: spacing.base * 0.55,
+  },
+  weekListMeal: {
+    gap: spacing.base * 0.25,
+  },
+  weekListMealLabel: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  weekListMealText: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 12.5,
+  },
+  weekListInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.base * 0.45,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.surfaceAlt,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  weekListInput: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 12.5,
+    paddingVertical: 0,
+  },
+  weekListRecipeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surface,
   },
   dayCard: {
     backgroundColor: colors.surface,
@@ -1691,6 +2063,175 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 12,
     marginTop: 2,
+  },
+  modernDayCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    padding: spacing.card,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    gap: spacing.base * 1.5,
+    ...shadows.card,
+    width: "100%",
+    maxWidth: 720,
+  },
+  modernDayCardActive: {
+    borderColor: colors.accent,
+    borderWidth: 1,
+  },
+  modernDayHeader: {
+    gap: spacing.base * 0.75,
+  },
+  modernDayHeaderMain: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.base,
+  },
+  modernDayInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  modernDayDate: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: colors.text,
+    textTransform: "capitalize",
+  },
+  modernDayProgressBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  modernDayProgressBadgeComplete: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  modernDayProgressText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.text,
+  },
+  modernDayProgressTextComplete: {
+    color: colors.background,
+  },
+  modernMealList: {
+    gap: spacing.base,
+  },
+  modernMealCard: {
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.surfaceAlt,
+    overflow: "hidden",
+  },
+  modernMealHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: spacing.base,
+    gap: spacing.base,
+  },
+  modernMealHeaderFilled: {
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.cardBorder,
+  },
+  modernMealLeft: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.base * 0.75,
+  },
+  modernMealIconWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.accent,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modernMealIconWrapperFilled: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  modernMealLabels: {
+    flex: 1,
+    gap: 4,
+  },
+  modernMealLabel: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.text,
+  },
+  modernMealStatus: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: colors.muted,
+  },
+  modernRecipeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: colors.accent,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  modernRecipeButtonDisabled: {
+    opacity: 0.5,
+  },
+  modernMealInputWrapper: {
+    padding: spacing.base,
+    backgroundColor: colors.surfaceAlt,
+  },
+  modernMealInputWrapperFilled: {
+    backgroundColor: colors.surface,
+  },
+  modernMealInput: {
+    fontSize: 14,
+    color: colors.text,
+    fontWeight: "500",
+    minHeight: 40,
+    paddingVertical: 0,
+  },
+  modernMealHint: {
+    fontSize: 11,
+    color: colors.muted,
+    marginTop: spacing.base * 0.5,
+  },
+  modernDayNote: {
+    flexDirection: "row",
+    gap: spacing.base * 0.75,
+    padding: spacing.base,
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  modernDayNoteContent: {
+    flex: 1,
+    gap: 4,
+  },
+  modernDayNoteLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.text,
+    textTransform: "uppercase",
+  },
+  modernDayNoteText: {
+    fontSize: 13,
+    color: colors.muted,
+    lineHeight: 18,
   },
   mealCard: {
     borderWidth: 1,
