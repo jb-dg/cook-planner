@@ -75,20 +75,20 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="recipes"
-        options={{
-          title: "Recettes",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="book-open" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="planner"
         options={{
           title: "Planning",
           tabBarIcon: ({ color, size }) => (
             <Feather name="calendar" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="recipes"
+        options={{
+          title: "Recettes",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="book-open" color={color} size={size} />
           ),
         }}
       />
