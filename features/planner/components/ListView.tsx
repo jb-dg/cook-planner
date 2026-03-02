@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   weekListRow: {
-    borderRadius: radii.lg,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     backgroundColor: colors.surface,
@@ -137,9 +137,18 @@ const styles = StyleSheet.create({
     gap: spacing.base * 0.7,
     width: "100%",
     maxWidth: 780,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   weekListRowActive: {
     borderColor: colors.accent,
+    shadowColor: colors.accent,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 2,
   },
   weekListMeta: {
     flexDirection: "row",
@@ -158,7 +167,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   weekListStatusDone: {
-    color: colors.accent,
+    color: colors.accentSecondary,
   },
   weekListMeals: {
     gap: spacing.base * 0.55,
@@ -180,7 +189,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.base * 0.45,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     backgroundColor: colors.surfaceAlt,

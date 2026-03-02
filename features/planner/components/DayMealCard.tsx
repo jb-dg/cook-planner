@@ -1,8 +1,9 @@
 import { ComponentProps } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { Session } from "@supabase/supabase-js";
-import { colors, radii, spacing } from "../../../theme/design";
+import { colors, gradients, radii, spacing } from "../../../theme/design";
 import { MealKey } from "../utils/types";
 
 type Props = {
@@ -31,6 +32,7 @@ export const DayMealCard = ({
   const filled = !!meal.recipe?.trim();
   const mealIcon: ComponentProps<typeof Feather>["name"] =
     slot.key === "lunch" ? "sun" : "moon";
+  const mealGradient = slot.key === "lunch" ? gradients.lunch : gradients.dinner;
   const hint =
     !session && !recipesLength
       ? "Saisie libre ou ajoute tes recettes en te connectant"
@@ -45,22 +47,24 @@ export const DayMealCard = ({
         ]}
       >
         <View style={styles.modernMealLeft}>
-          <View
-            style={[
-              styles.modernMealIconWrapper,
-              filled && styles.modernMealIconWrapperFilled,
-            ]}
-          >
-            <Feather
-              name={mealIcon}
-              size={16}
-              color={filled ? colors.background : colors.accent}
-            />
-          </View>
+          {filled ? (
+            <LinearGradient
+              colors={mealGradient}
+              style={styles.modernMealIconWrapper}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Feather name={mealIcon} size={20} color="#FFF" />
+            </LinearGradient>
+          ) : (
+            <View style={styles.modernMealIconWrapper}>
+              <Feather name={mealIcon} size={20} color={colors.accent} />
+            </View>
+          )}
           <View style={styles.modernMealLabels}>
             <Text style={styles.modernMealLabel}>{slot.label}</Text>
             {!filled && (
-              <Text style={styles.modernMealStatus}>À planifier</Text>
+              <Text style={styles.modernMealStatus}>Non planifié</Text>
             )}
           </View>
         </View>
@@ -101,11 +105,15 @@ export const DayMealCard = ({
 
 const styles = StyleSheet.create({
   modernMealCard: {
-    borderRadius: radii.md,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    backgroundColor: colors.surfaceAlt,
-    overflow: "hidden",
+    backgroundColor: colors.surface,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   modernMealHeader: {
     flexDirection: "row",
@@ -126,31 +134,30 @@ const styles = StyleSheet.create({
     gap: spacing.base * 0.75,
   },
   modernMealIconWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.accent,
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: colors.surfaceAlt,
     alignItems: "center",
     justifyContent: "center",
-  },
-  modernMealIconWrapperFilled: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   modernMealLabels: {
     flex: 1,
     gap: 4,
   },
   modernMealLabel: {
-    fontSize: 15,
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: "bold",
     color: colors.text,
   },
   modernMealStatus: {
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: "600",
     color: colors.muted,
   },
   modernRecipeButton: {

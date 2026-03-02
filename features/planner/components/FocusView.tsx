@@ -82,9 +82,7 @@ export const FocusView = ({
               <Feather
                 name={dayStatusIcon}
                 size={12}
-                color={
-                  missingMeals === 0 ? colors.background : colors.text
-                }
+                color={missingMeals === 0 ? "#FFF" : colors.text}
               />
               <Text
                 style={[
@@ -149,18 +147,21 @@ const styles = StyleSheet.create({
   },
   modernDayCard: {
     backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.card,
+    borderRadius: 20,
+    padding: 16,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     gap: spacing.base * 1.5,
-    ...shadows.card,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
     width: "100%",
     maxWidth: 720,
   },
   modernDayCardActive: {
-    borderColor: colors.accent,
-    borderWidth: 1,
+    borderColor: colors.cardBorder,
   },
   modernDayHeader: {
     gap: spacing.base * 0.75,
@@ -184,16 +185,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 10,
+    borderRadius: 12,
     backgroundColor: colors.surfaceAlt,
     borderWidth: 1,
     borderColor: colors.cardBorder,
   },
   modernDayProgressBadgeComplete: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
+    backgroundColor: colors.accentSecondary,
+    borderColor: colors.accentSecondary,
   },
   modernDayProgressText: {
     fontSize: 13,
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   modernDayProgressTextComplete: {
-    color: colors.background,
+    color: "#FFF",
   },
   modernMealList: {
     gap: spacing.base,

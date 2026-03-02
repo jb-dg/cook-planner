@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
-import { colors, radii, shadows, spacing } from "../../../theme/design";
+import { colors, gradients, radii, shadows, spacing } from "../../../theme/design";
 
 type Props = {
   weekNumber: number;
@@ -36,7 +37,6 @@ export const WeekProgressCard = ({
             <Feather name="chevron-left" size={16} color={colors.text} />
           </Pressable>
           <Pressable style={styles.modernTodayButton} onPress={onGoToToday}>
-            <Feather name="calendar" size={14} color={colors.accent} />
             <Text style={styles.modernTodayText}>Aujourd'hui</Text>
           </Pressable>
           <Pressable
@@ -48,43 +48,38 @@ export const WeekProgressCard = ({
         </View>
       </View>
 
-      <View style={styles.modernProgressContainer}>
-        <View style={styles.modernProgressCircle}>
-          <Text style={styles.modernProgressPercent}>{progress.percent}%</Text>
-          <Text style={styles.modernProgressLabel}>planifiés</Text>
-        </View>
-        <View style={styles.modernProgressDetails}>
-          <View style={styles.modernStatItem}>
-            <View style={styles.modernStatIcon}>
-              <Feather name="check-circle" size={16} color={colors.accent} />
-            </View>
-            <View>
-              <Text style={styles.modernStatValue}>{progress.filled}</Text>
-              <Text style={styles.modernStatLabel}>repas prêts</Text>
-            </View>
-          </View>
-          <View style={styles.modernStatDivider} />
-          <View style={styles.modernStatItem}>
-            <View style={styles.modernStatIcon}>
-              <Feather name="clock" size={16} color={colors.muted} />
-            </View>
-            <View>
-              <Text style={styles.modernStatValue}>
-                {Math.max(progress.total - progress.filled, 0)}
-              </Text>
-              <Text style={styles.modernStatLabel}>à planifier</Text>
-            </View>
-          </View>
-        </View>
-      </View>
+      <View style={styles.statsGrid}>
+        <LinearGradient
+          colors={gradients.statsOrange}
+          style={styles.statCard}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Text style={styles.statValue}>{progress.percent}%</Text>
+          <Text style={styles.statLabel}>Planifiés</Text>
+        </LinearGradient>
 
-      <View style={styles.modernProgressBar}>
-        <View
-          style={[
-            styles.modernProgressFill,
-            { width: `${progress.percent}%` },
-          ]}
-        />
+        <LinearGradient
+          colors={gradients.statsGreen}
+          style={styles.statCard}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Text style={styles.statValue}>{progress.filled}</Text>
+          <Text style={styles.statLabel}>Prêts</Text>
+        </LinearGradient>
+
+        <LinearGradient
+          colors={gradients.statsYellow}
+          style={styles.statCard}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Text style={styles.statValue}>
+            {Math.max(progress.total - progress.filled, 0)}
+          </Text>
+          <Text style={styles.statLabel}>À planifier</Text>
+        </LinearGradient>
       </View>
     </View>
   );
@@ -93,12 +88,16 @@ export const WeekProgressCard = ({
 const styles = StyleSheet.create({
   modernCard: {
     backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.card,
+    borderRadius: 20,
+    padding: 16,
     gap: spacing.base * 1.5,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    ...shadows.soft,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   modernHeader: {
     flexDirection: "row",
@@ -137,90 +136,43 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.accent,
-    backgroundColor: colors.surfaceAlt,
+    borderRadius: 16,
+    backgroundColor: colors.accent,
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   modernTodayText: {
-    color: colors.accent,
-    fontWeight: "700",
-    fontSize: 13,
+    color: "#FFF",
+    fontWeight: "600",
+    fontSize: 14,
   },
-  modernProgressContainer: {
+  statsGrid: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.base * 1.5,
-    paddingVertical: spacing.base,
+    gap: 12,
   },
-  modernProgressCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.surfaceAlt,
+  statCard: {
+    flex: 1,
+    borderRadius: 16,
+    padding: 12,
     borderWidth: 1,
-    borderColor: colors.accent,
+    borderColor: colors.cardBorder,
     alignItems: "center",
-    justifyContent: "center",
-    gap: 2,
   },
-  modernProgressPercent: {
-    fontSize: 18,
+  statValue: {
+    fontSize: 20,
     fontWeight: "800",
-    color: colors.accent,
+    color: colors.text,
+    marginBottom: 2,
   },
-  modernProgressLabel: {
-    fontSize: 12,
+  statLabel: {
+    fontSize: 11,
     fontWeight: "600",
     color: colors.muted,
     textTransform: "uppercase",
-  },
-  modernProgressDetails: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.base,
-  },
-  modernStatItem: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.base * 0.75,
-  },
-  modernStatIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: colors.surfaceAlt,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  modernStatValue: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: colors.text,
-  },
-  modernStatLabel: {
-    fontSize: 12,
-    color: colors.muted,
-    fontWeight: "600",
-  },
-  modernStatDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: colors.cardBorder,
-  },
-  modernProgressBar: {
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: colors.surfaceAlt,
-    overflow: "hidden",
-  },
-  modernProgressFill: {
-    height: "100%",
-    borderRadius: 999,
-    backgroundColor: colors.accent,
   },
 });

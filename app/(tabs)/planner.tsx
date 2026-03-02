@@ -9,7 +9,7 @@ import { addMonths, format, startOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useAuth } from "../../contexts/AuthContext";
 import { Recipe } from "../../features/recipes/types";
-import { colors, radii, shadows, spacing } from "../../theme/design";
+import { colors, spacing } from "../../theme/design";
 import { MealKey, RecipePickerTarget, ViewMode } from "../../features/planner/utils/types";
 import { usePlannerData } from "../../features/planner/hooks/usePlannerData";
 import { useRecipes } from "../../features/planner/hooks/useRecipes";
@@ -275,11 +275,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: spacing.base * 0.6,
     paddingVertical: spacing.base * 1.1,
-    borderRadius: radii.lg,
+    borderRadius: 20,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    ...shadows.card,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   listButtonText: {
     color: colors.text,

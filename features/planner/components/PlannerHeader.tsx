@@ -85,8 +85,8 @@ const styles = StyleSheet.create({
   topBarIcon: {
     width: 44,
     height: 44,
-    borderRadius: 14,
-    backgroundColor: colors.surface,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceAlt,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -94,19 +94,19 @@ const styles = StyleSheet.create({
   },
   topBarIconActive: {
     borderColor: colors.accent,
-    backgroundColor: colors.surfaceAlt,
+    backgroundColor: colors.accent + "15",
   },
   heading: {
-    fontSize: 26,
-    fontWeight: "700",
+    fontSize: 24,
+    fontWeight: "bold",
     color: colors.text,
   },
   rangeText: {
-    fontSize: 15,
+    fontSize: 14,
     color: colors.muted,
   },
   rangeTextLink: {
-    color: colors.accent,
-    fontWeight: "700",
+    color: colors.muted,
+    fontWeight: "400",
   },
 });
