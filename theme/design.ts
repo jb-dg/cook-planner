@@ -1,13 +1,24 @@
 export const colors = {
-  background: "#FDFBF7", // stone-50
+  background: "#F9FAFB", // Modern gray-50
   surface: "#FFFFFF",
-  surfaceAlt: "#F5F0E6", // stone-100
-  text: "#423A32", // stone-900
-  muted: "#8C7B63", // stone-600
-  accent: "#D97757", // terracotta-500
-  accentSecondary: "#8A9A5B", // sage-500
-  danger: "#C75252",
-  cardBorder: "#E6DCC9", // stone-200
+  surfaceAlt: "#F9FAFB", // gray-50
+  text: "#111827", // gray-900
+  muted: "#6B7280", // gray-500
+  accent: "#F97316", // Modern orange-500
+  accentSecondary: "#10B981", // green-500
+  accentTertiary: "#A855F7", // purple-500
+  danger: "#EF4444", // red-500
+  cardBorder: "#E5E7EB", // gray-200
+};
+
+// Gradient definitions for modern design
+export const gradients = {
+  breakfast: ["#FBBF24", "#F97316"] as [string, string], // yellow to orange
+  lunch: ["#34D399", "#10B981"] as [string, string], // light green to green
+  dinner: ["#6366F1", "#A855F7"] as [string, string], // indigo to purple
+  statsOrange: ["#FED7AA", "#FFEDD5"] as [string, string], // orange tints
+  statsGreen: ["#A7F3D0", "#D1FAE5"] as [string, string], // green tints
+  statsYellow: ["#FDE68A", "#FEF3C7"] as [string, string], // yellow tints
 };
 
 export const radii = {
