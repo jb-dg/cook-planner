@@ -1,9 +1,8 @@
-import { ComponentProps } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
-import { colors, radii, spacing } from "../../../theme/design";
+import { spacing } from "../../../theme/design";
 import { DayPlan, MealKey } from "../utils/types";
 import { MEAL_SLOTS } from "../utils/constants";
 
@@ -40,79 +39,74 @@ export const ListView = ({
                 ?.recipe ?? ""
             ).trim()
         ).length;
-        const missingMeals = Math.max(MEAL_SLOTS.length - filledCount, 0);
-        const dayLabel = format(dayDate, "EEE d MMM", {
-          locale: fr,
-        }).replace(".", "");
+        const isComplete = filledCount === MEAL_SLOTS.length;
+        const abbrev = format(dayDate, "EEE", { locale: fr })
+          .replace(".", "")
+          .toUpperCase()
+          .slice(0, 3);
+        const dateNum = format(dayDate, "d", { locale: fr });
+        const dateMonth = format(dayDate, "MMM", { locale: fr });
         const isActive = isSameDay(dayDate, selectedDate);
 
         return (
-          <View
-            key={day.day}
-            style={[
-              styles.weekListRow,
-              isActive && styles.weekListRowActive,
-            ]}
-          >
+          <View key={day.day} style={styles.rowWrapper}>
+            {/* Day badge — like the HTML's left column */}
             <Pressable
-              style={styles.weekListMeta}
+              style={styles.dayBadge}
               hitSlop={6}
               onPress={() => onSelectDate(dayDate)}
             >
-              <Text style={styles.weekListDay}>{dayLabel}</Text>
-              <Text
-                style={[
-                  styles.weekListStatus,
-                  missingMeals === 0 && styles.weekListStatusDone,
-                ]}
-              >
-                {missingMeals === 0 ? "Complet" : `${missingMeals} à planifier`}
+              <Text style={[styles.dayAbbrev, (isActive || isComplete) && styles.dayAbbrevAccent]}>
+                {abbrev}
               </Text>
+              <Text style={styles.dayNum}>{dateNum}</Text>
+              <Text style={styles.dayMonth}>{dateMonth}</Text>
             </Pressable>
-            <View style={styles.weekListMeals}>
-              {MEAL_SLOTS.map((slot) => {
-                const meal = (dayData as Record<MealKey, { recipe?: string }>)[
-                  slot.key
-                ] ?? { recipe: "" };
 
-                const mealIcon: ComponentProps<typeof Feather>["name"] =
-                  slot.key === "lunch" ? "sun" : "moon";
-                return (
-                  <View key={slot.key} style={styles.weekListMeal}>
-                    <View style={styles.weekListMealLabel}>
-                      <Feather
-                        name={mealIcon}
-                        size={12}
-                        color={colors.muted}
-                      />
-                      <Text style={styles.weekListMealText}>{slot.label}</Text>
-                    </View>
-                    <View style={styles.weekListInputRow}>
-                      <TextInput
-                        value={meal.recipe}
-                        onChangeText={(value) =>
-                          onDayChange(dayIndex, slot.key, value)
-                        }
-                        editable={!syncing && !saving}
-                        placeholder="Ajouter un repas"
-                        placeholderTextColor={colors.muted}
-                        style={styles.weekListInput}
-                      />
-                      <Pressable
-                        hitSlop={8}
-                        style={styles.weekListRecipeButton}
-                        onPress={() => onOpenRecipePicker(dayIndex, slot.key)}
-                      >
-                        <Feather
-                          name="book-open"
-                          size={14}
-                          color={colors.accent}
+            {/* Soft card */}
+            <View style={[styles.softCard, isActive && styles.softCardActive]}>
+              {/* Status chip */}
+              <View style={[styles.statusChip, isComplete && styles.statusChipComplete]}>
+                <Text style={[styles.statusText, isComplete && styles.statusTextComplete]}>
+                  {isComplete ? "Complet" : `${filledCount}/${MEAL_SLOTS.length}`}
+                </Text>
+              </View>
+
+              {/* Meal rows */}
+              <View style={styles.meals}>
+                {MEAL_SLOTS.map((slot) => {
+                  const meal = (dayData as Record<MealKey, { recipe?: string }>)[
+                    slot.key
+                  ] ?? { recipe: "" };
+                  const filled = !!meal.recipe?.trim();
+                  const isLunch = slot.key === "lunch";
+
+                  return (
+                    <View key={slot.key} style={styles.mealRow}>
+                      <Text style={[styles.mealLabel, !isLunch && styles.mealLabelDinner]}>
+                        {isLunch ? "Déjeuner" : "Dîner"}
+                      </Text>
+                      <View style={[styles.inputRow, filled && styles.inputRowFilled]}>
+                        <TextInput
+                          value={meal.recipe}
+                          onChangeText={(value) => onDayChange(dayIndex, slot.key, value)}
+                          editable={!syncing && !saving}
+                          placeholder={isLunch ? "Ajouter un déjeuner" : "Ajouter un dîner"}
+                          placeholderTextColor="#A5A58D"
+                          style={[styles.input, filled && styles.inputFilled]}
                         />
-                      </Pressable>
+                        <Pressable
+                          hitSlop={8}
+                          style={styles.recipeBtn}
+                          onPress={() => onOpenRecipePicker(dayIndex, slot.key)}
+                        >
+                          <Feather name="book-open" size={14} color="#BC6C25" />
+                        </Pressable>
+                      </View>
                     </View>
-                  </View>
-                );
-              })}
+                  );
+                })}
+              </View>
             </View>
           </View>
         );
@@ -124,92 +118,135 @@ export const ListView = ({
 const styles = StyleSheet.create({
   weekList: {
     width: "100%",
-    gap: spacing.base * 0.75,
-    alignItems: "center",
+    gap: spacing.base * 1.2,
   },
-  weekListRow: {
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.surface,
-    paddingVertical: spacing.base * 1.1,
-    paddingHorizontal: spacing.base * 1.2,
-    gap: spacing.base * 0.7,
-    width: "100%",
-    maxWidth: 780,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  weekListRowActive: {
-    borderColor: colors.accent,
-    shadowColor: colors.accent,
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  weekListMeta: {
+  rowWrapper: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    gap: spacing.base,
+    alignItems: "flex-start",
   },
-  weekListDay: {
-    fontSize: 14,
+  dayBadge: {
+    width: 52,
+    alignItems: "center",
+    gap: 1,
+    paddingTop: 16,
+    flexShrink: 0,
+  },
+  dayAbbrev: {
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#2D2D2A",
+    letterSpacing: -0.3,
+  },
+  dayAbbrevAccent: {
+    color: "#BC6C25",
+  },
+  dayNum: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#2D2D2A",
+    letterSpacing: -1,
+    lineHeight: 26,
+  },
+  dayMonth: {
+    fontSize: 10,
     fontWeight: "700",
-    color: colors.text,
-    textTransform: "capitalize",
+    color: "#A5A58D",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
-  weekListStatus: {
-    color: colors.muted,
-    fontWeight: "600",
-    fontSize: 11,
-  },
-  weekListStatusDone: {
-    color: colors.accentSecondary,
-  },
-  weekListMeals: {
-    gap: spacing.base * 0.55,
-  },
-  weekListMeal: {
-    gap: spacing.base * 0.25,
-  },
-  weekListMealLabel: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  weekListMealText: {
-    color: colors.text,
-    fontWeight: "700",
-    fontSize: 12.5,
-  },
-  weekListInputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.base * 0.45,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.surfaceAlt,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  weekListInput: {
+  softCard: {
     flex: 1,
-    color: colors.text,
-    fontSize: 12.5,
+    backgroundColor: "rgba(255, 255, 255, 0.82)",
+    borderRadius: 28,
+    padding: 18,
+    gap: spacing.base,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    shadowColor: "rgba(107, 112, 92, 1)",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.13,
+    shadowRadius: 30,
+    elevation: 4,
+  },
+  softCardActive: {
+    borderColor: "rgba(188, 108, 37, 0.25)",
+    shadowColor: "rgba(188, 108, 37, 1)",
+    shadowOpacity: 0.15,
+  },
+  statusChip: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: "#F5EFE4",
+    borderWidth: 1,
+    borderColor: "#E4D9C8",
+  },
+  statusChipComplete: {
+    backgroundColor: "rgba(188, 108, 37, 0.1)",
+    borderColor: "rgba(188, 108, 37, 0.22)",
+  },
+  statusText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#6B705C",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  statusTextComplete: {
+    color: "#BC6C25",
+  },
+  meals: {
+    gap: spacing.base * 0.9,
+  },
+  mealRow: {
+    gap: 5,
+  },
+  mealLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
+    color: "#A5A58D",
+  },
+  mealLabelDinner: {
+    color: "#BC6C25",
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.base * 0.5,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: "rgba(165, 165, 141, 0.35)",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  inputRowFilled: {
+    borderStyle: "solid",
+    borderColor: "transparent",
+    backgroundColor: "#F5EFE4",
+  },
+  input: {
+    flex: 1,
+    color: "#6B705C",
+    fontSize: 13,
     paddingVertical: 0,
   },
-  weekListRecipeButton: {
+  inputFilled: {
+    color: "#2D2D2A",
+    fontWeight: "600",
+  },
+  recipeBtn: {
     width: 30,
     height: 30,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: colors.accent,
+    borderColor: "#E4D9C8",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.surface,
+    backgroundColor: "#FFFFFF",
   },
 });

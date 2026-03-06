@@ -1,10 +1,11 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { colors, spacing } from "../../../theme/design";
+import { spacing } from "../../../theme/design";
 import { ViewMode } from "../utils/types";
 import { SaveStatusIndicator } from "./SaveStatusIndicator";
 
 type Props = {
+  weekNumber: number;
   weekRangeLabel: string;
   viewMode: ViewMode;
   saveStatus?: "idle" | "saving" | "saved" | "error";
@@ -15,6 +16,7 @@ type Props = {
 };
 
 export const PlannerHeader = ({
+  weekNumber,
   weekRangeLabel,
   viewMode,
   saveStatus = "idle",
@@ -25,88 +27,120 @@ export const PlannerHeader = ({
 }: Props) => {
   return (
     <View style={styles.container}>
-      <View style={styles.topBar}>
-        <View style={styles.topBarText}>
-          <Text style={styles.heading}>Planning</Text>
-          <Pressable onPress={onWeekPickerOpen}>
-            <Text style={[styles.rangeText, styles.rangeTextLink]}>
-              Semaine du {weekRangeLabel}
-            </Text>
+      {/* Top row: badge + actions */}
+      <View style={styles.topRow}>
+        <View style={styles.weekBadge}>
+          <Text style={styles.weekBadgeText}>Semaine {weekNumber}</Text>
+        </View>
+        <View style={styles.actions}>
+          {/* View toggle — physical dark button */}
+          <Pressable
+            style={[styles.physicalBtn, viewMode === "list" && styles.physicalBtnActive]}
+            onPress={onViewModeToggle}
+            accessibilityLabel="Basculer en vue liste"
+          >
+            <Feather
+              name={viewMode === "list" ? "grid" : "list"}
+              size={18}
+              color={viewMode === "list" ? "#FDF8F1" : "#2D2D2A"}
+            />
+          </Pressable>
+          {/* Calendar trigger */}
+          <Pressable style={styles.calendarBtn} onPress={onWeekPickerOpen}>
+            <Feather name="calendar" size={18} color="#BC6C25" />
+            <Text style={styles.calendarBtnText}>Changer</Text>
           </Pressable>
         </View>
-        <View style={styles.topBarActions}>
-        <Pressable
-          style={[
-            styles.topBarIcon,
-            viewMode === "list" && styles.topBarIconActive,
-          ]}
-          onPress={onViewModeToggle}
-          accessibilityLabel="Basculer en vue liste"
-        >
-          <Feather
-            name="list"
-            size={18}
-            color={viewMode === "list" ? colors.accent : colors.text}
-          />
-        </Pressable>
-        <Pressable style={styles.topBarIcon} onPress={onWeekPickerOpen}>
-          <Feather name="calendar" size={20} color={colors.text} />
-        </Pressable>
       </View>
-    </View>
 
-    {/* Save Status Indicator */}
-    <SaveStatusIndicator
-      status={saveStatus}
-      lastSaved={lastSaved}
-      error={saveError}
-    />
-  </View>
+      {/* Week range heading */}
+      <Pressable onPress={onWeekPickerOpen}>
+        <Text style={styles.heading}>{weekRangeLabel}</Text>
+      </Pressable>
+
+      {/* Save status */}
+      <SaveStatusIndicator
+        status={saveStatus}
+        lastSaved={lastSaved}
+        error={saveError}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    gap: spacing.base * 0.5,
+    gap: spacing.base * 0.6,
   },
-  topBar: {
+  topRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  topBarActions: {
+  weekBadge: {
+    backgroundColor: "rgba(188, 108, 37, 0.1)",
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  weekBadgeText: {
+    color: "#BC6C25",
+    fontWeight: "700",
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  actions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.base * 0.5,
+    gap: spacing.base * 0.6,
   },
-  topBarText: {
-    gap: 2,
-  },
-  topBarIcon: {
+  physicalBtn: {
     width: 44,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: colors.surfaceAlt,
+    borderRadius: 14,
+    backgroundColor: "#F5EFE4",
+    borderWidth: 1,
+    borderColor: "#E4D9C8",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
+    shadowColor: "#8B4513",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
   },
-  topBarIconActive: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accent + "15",
+  physicalBtnActive: {
+    backgroundColor: "#2D2D2A",
+    borderColor: "#2D2D2A",
+    shadowColor: "#000",
+  },
+  calendarBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(165, 165, 141, 0.25)",
+    shadowColor: "rgba(107, 112, 92, 0.12)",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  calendarBtnText: {
+    color: "#2D2D2A",
+    fontWeight: "700",
+    fontSize: 14,
   },
   heading: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: colors.text,
-  },
-  rangeText: {
-    fontSize: 14,
-    color: colors.muted,
-  },
-  rangeTextLink: {
-    color: colors.muted,
-    fontWeight: "400",
+    fontSize: 30,
+    fontWeight: "900",
+    color: "#2D2D2A",
+    letterSpacing: -0.5,
+    lineHeight: 36,
   },
 });

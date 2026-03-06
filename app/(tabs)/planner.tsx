@@ -164,6 +164,7 @@ export default function PlannerScreen() {
         showsVerticalScrollIndicator={false}
       >
         <PlannerHeader
+          weekNumber={weekNumber}
           weekRangeLabel={weekRangeLabel}
           viewMode={viewMode}
           saveStatus={saveStatus}

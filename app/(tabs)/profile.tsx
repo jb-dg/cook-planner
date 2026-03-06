@@ -25,7 +25,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { validateEmail } from "../../lib/validation/auth";
-import { colors, radii, shadows, spacing } from "../../theme/design";
+import { spacing } from "../../theme/design";
 
 type Household = {
   id: string;
@@ -532,7 +532,7 @@ export default function ProfileScreen() {
     if (loadingHousehold) {
       return (
         <View style={styles.householdCard}>
-          <ActivityIndicator color={colors.accentSecondary} />
+          <ActivityIndicator color="#6B705C" />
         </View>
       );
     }
@@ -633,7 +633,7 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         <LinearGradient
-          colors={["#F4DDCF", "#FDFBF7"]}
+          colors={["rgba(255,255,255,0.92)", "rgba(245,239,228,0.85)"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.heroCard}
@@ -642,7 +642,7 @@ export default function ProfileScreen() {
             <View style={styles.avatar}>
               <Text style={styles.avatarLetter}>{badgeLetter}</Text>
               <View style={styles.avatarEdit}>
-                <Feather name="edit-3" size={14} color={colors.text} />
+                <Feather name="edit-3" size={14} color="#2D2D2A" />
               </View>
             </View>
             <View style={styles.heroText}>
@@ -673,7 +673,7 @@ export default function ProfileScreen() {
               onPress={() => setProfileModalOpen(true)}
             >
               <View style={styles.actionIcon}>
-                <Feather name="settings" size={16} color={colors.accent} />
+                <Feather name="settings" size={16} color="#BC6C25" />
               </View>
               <View style={styles.actionContent}>
                 <Text style={styles.actionLabel}>Mes Informations</Text>
@@ -681,14 +681,14 @@ export default function ProfileScreen() {
                   Photo, pseudo et préférences
                 </Text>
               </View>
-              <Feather name="chevron-right" size={18} color={colors.muted} />
+              <Feather name="chevron-right" size={18} color="#A5A58D" />
             </Pressable>
             <Pressable
               style={styles.actionItem}
               onPress={() => openHouseholdModal("create")}
             >
               <View style={styles.actionIcon}>
-                <Feather name="home" size={16} color={colors.accent} />
+                <Feather name="home" size={16} color="#BC6C25" />
               </View>
               <View style={styles.actionContent}>
                 <Text style={styles.actionLabel}>Créer un foyer</Text>
@@ -696,14 +696,14 @@ export default function ProfileScreen() {
                   Pour démarrer un espace partagé
                 </Text>
               </View>
-              <Feather name="chevron-right" size={18} color={colors.muted} />
+              <Feather name="chevron-right" size={18} color="#A5A58D" />
             </Pressable>
             <Pressable
               style={styles.actionItem}
               onPress={() => openHouseholdModal("join")}
             >
               <View style={styles.actionIcon}>
-                <Feather name="link-2" size={16} color={colors.accent} />
+                <Feather name="link-2" size={16} color="#BC6C25" />
               </View>
               <View style={styles.actionContent}>
                 <Text style={styles.actionLabel}>Rejoindre un foyer</Text>
@@ -711,14 +711,14 @@ export default function ProfileScreen() {
                   Avec le pseudo de l'administrateur
                 </Text>
               </View>
-              <Feather name="chevron-right" size={18} color={colors.muted} />
+              <Feather name="chevron-right" size={18} color="#A5A58D" />
             </Pressable>
             <Pressable
               style={styles.actionItem}
               onPress={() => openHouseholdModal("manage")}
             >
               <View style={styles.actionIcon}>
-                <Feather name="users" size={16} color={colors.accent} />
+                <Feather name="users" size={16} color="#BC6C25" />
               </View>
               <View style={styles.actionContent}>
                 <Text style={styles.actionLabel}>Gérer mes membres</Text>
@@ -726,7 +726,7 @@ export default function ProfileScreen() {
                   Inviter, consulter ou retirer quelqu'un
                 </Text>
               </View>
-              <Feather name="chevron-right" size={18} color={colors.muted} />
+              <Feather name="chevron-right" size={18} color="#A5A58D" />
             </Pressable>
           </View>
           <Pressable style={styles.signOutButton} onPress={handleSignOut}>
@@ -782,7 +782,7 @@ export default function ProfileScreen() {
             style={modalCloseIconStyle}
             onPress={() => setProfileModalOpen(false)}
           >
-            <Feather name="x" size={18} color={colors.text} />
+            <Feather name="x" size={18} color="#2D2D2A" />
           </Pressable>
           <ScrollView
             contentContainerStyle={modalContentStyle}
@@ -793,12 +793,12 @@ export default function ProfileScreen() {
             <Text style={styles.value}>{session?.user.email}</Text>
             <Text style={[styles.label, { marginTop: 16 }]}>Pseudo unique</Text>
             {loadingProfile ? (
-              <ActivityIndicator color={colors.accentSecondary} />
+              <ActivityIndicator color="#6B705C" />
             ) : (
               <>
                 <TextInput
                   placeholder="ex: chef_lucie"
-                  placeholderTextColor={colors.muted}
+                  placeholderTextColor="#A5A58D"
                   value={pseudo}
                   onChangeText={setPseudo}
                   style={styles.input}
@@ -841,7 +841,7 @@ export default function ProfileScreen() {
             style={modalCloseIconStyle}
             onPress={() => setHouseholdActionsOpen(false)}
           >
-            <Feather name="x" size={18} color={colors.text} />
+            <Feather name="x" size={18} color="#2D2D2A" />
           </Pressable>
           <ScrollView
             contentContainerStyle={modalContentStyle}
@@ -855,7 +855,7 @@ export default function ProfileScreen() {
                 <Text style={styles.subheading}>Créer un foyer</Text>
                 <TextInput
                   placeholder="Nom du foyer (ex: Famille Durand)"
-                  placeholderTextColor={colors.muted}
+                  placeholderTextColor="#A5A58D"
                   value={householdName}
                   onChangeText={setHouseholdName}
                   style={styles.input}
@@ -886,7 +886,7 @@ export default function ProfileScreen() {
                 </Text>
                 <TextInput
                   placeholder="Pseudo de l'administrateur"
-                  placeholderTextColor={colors.muted}
+                  placeholderTextColor="#A5A58D"
                   value={joinPseudo}
                   onChangeText={setJoinPseudo}
                   style={styles.input}
@@ -925,7 +925,7 @@ export default function ProfileScreen() {
                         </Text>
                         <TextInput
                           placeholder="Email du membre"
-                          placeholderTextColor={colors.muted}
+                          placeholderTextColor="#A5A58D"
                           value={inviteEmail}
                           onChangeText={setInviteEmail}
                           style={styles.input}
@@ -978,26 +978,31 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "transparent",
   },
   container: {
     padding: spacing.screen,
-    gap: 24,
+    gap: 20,
     paddingBottom: 160,
   },
+
+  // Hero card — soft-card glassmorphism
   heroCard: {
-    borderRadius: radii.lg,
-    padding: spacing.card,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.surface,
+    borderRadius: 32,
+    padding: spacing.screen,
     gap: 16,
-    ...shadows.soft,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    shadowColor: "rgba(107, 112, 92, 1)",
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.15,
+    shadowRadius: 40,
+    elevation: 6,
   },
   heroHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 16,
   },
   avatar: {
     width: 72,
@@ -1005,45 +1010,45 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     borderWidth: 2,
     borderStyle: "dashed",
-    borderColor: colors.cardBorder,
+    borderColor: "#E4D9C8",
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(255,255,255,0.6)",
   },
   avatarLetter: {
     fontSize: 32,
-    fontWeight: "700",
-    color: colors.text,
+    fontWeight: "900",
+    color: "#BC6C25",
   },
   avatarEdit: {
     position: "absolute",
     bottom: -4,
     right: -4,
-    backgroundColor: colors.surface,
+    backgroundColor: "#FFFFFF",
     borderRadius: 999,
     padding: 6,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: "#E4D9C8",
   },
   heroText: {
     flex: 1,
-    paddingHorizontal: 16,
+    gap: 2,
   },
   heroGreeting: {
     fontSize: 24,
-    fontWeight: "700",
-    color: colors.text,
+    fontWeight: "900",
+    color: "#2D2D2A",
+    letterSpacing: -0.3,
   },
   heroEmail: {
-    marginTop: 4,
-    color: colors.muted,
-    fontWeight: "600",
+    color: "#6B705C",
+    fontSize: 13,
+    fontWeight: "500",
   },
   heroSubtitle: {
-    color: colors.muted,
-    fontSize: 14,
-    marginTop: -4,
+    color: "#A5A58D",
+    fontSize: 13,
   },
   heroUtilities: {
     flexDirection: "row",
@@ -1052,56 +1057,62 @@ const styles = StyleSheet.create({
   iconButton: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: "#E4D9C8",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.surface,
+    backgroundColor: "#FFFFFF",
   },
   heroStats: {
     flexDirection: "row",
-    justifyContent: "space-between",
     gap: 10,
-    marginTop: 4,
   },
   statPill: {
     flex: 1,
     padding: 12,
-    borderRadius: radii.md,
-    backgroundColor: colors.surfaceAlt,
+    borderRadius: 16,
+    backgroundColor: "#F5EFE4",
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: "#E4D9C8",
   },
   statValue: {
     fontSize: 18,
     fontWeight: "700",
-    color: colors.text,
+    color: "#2D2D2A",
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     textTransform: "uppercase",
-    color: colors.muted,
-    marginTop: 4,
-    fontWeight: "600",
+    color: "#6B705C",
+    marginTop: 2,
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
+
+  // Section card — soft-card
   section: {
-    padding: spacing.card,
-    borderRadius: radii.lg,
+    padding: spacing.screen,
+    borderRadius: 28,
+    gap: 14,
+    backgroundColor: "rgba(255, 255, 255, 0.82)",
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.surface,
-    gap: 12,
-    ...shadows.card,
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    shadowColor: "rgba(107, 112, 92, 1)",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.12,
+    shadowRadius: 30,
+    elevation: 5,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "600",
-    color: colors.text,
+    fontWeight: "800",
+    color: "#2D2D2A",
+    letterSpacing: -0.2,
   },
   sectionDescription: {
-    fontSize: 14,
-    color: colors.muted,
+    fontSize: 13,
+    color: "#6B705C",
   },
   quickActionsGrid: {
     flexDirection: "row",
@@ -1112,34 +1123,33 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 150,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: radii.md,
+    borderColor: "#E4D9C8",
+    borderRadius: 20,
     padding: 14,
-    backgroundColor: colors.surfaceAlt,
+    backgroundColor: "#F5EFE4",
     gap: 8,
-    ...shadows.card,
   },
   quickActionIcon: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.accent,
+    backgroundColor: "#BC6C25",
     alignItems: "center",
     justifyContent: "center",
   },
   quickActionLabel: {
-    fontWeight: "600",
-    color: colors.text,
+    fontWeight: "700",
+    color: "#2D2D2A",
   },
   quickActionHelper: {
-    fontSize: 13,
-    color: colors.muted,
+    fontSize: 12,
+    color: "#6B705C",
   },
   infoCard: {
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surfaceAlt,
+    borderColor: "#E4D9C8",
+    borderRadius: 20,
+    backgroundColor: "#F5EFE4",
     overflow: "hidden",
   },
   infoRow: {
@@ -1149,16 +1159,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   infoLabel: {
-    color: colors.muted,
-    fontSize: 14,
+    color: "#A5A58D",
+    fontSize: 13,
   },
   infoValue: {
-    color: colors.text,
+    color: "#2D2D2A",
     fontWeight: "600",
   },
   infoDivider: {
     height: 1,
-    backgroundColor: colors.cardBorder,
+    backgroundColor: "#E4D9C8",
     marginHorizontal: 16,
   },
   infoAction: {
@@ -1172,10 +1182,10 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: colors.accent,
+    borderColor: "#BC6C25",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.surface,
+    backgroundColor: "#FFFFFF",
   },
   infoActionContent: {
     flex: 1,
@@ -1183,46 +1193,56 @@ const styles = StyleSheet.create({
   },
   infoActionLabel: {
     fontWeight: "600",
-    color: colors.text,
+    color: "#2D2D2A",
   },
   infoActionHelper: {
-    fontSize: 13,
-    color: colors.muted,
+    fontSize: 12,
+    color: "#6B705C",
   },
+
+  // Action list rows
   actionList: {
     gap: 10,
   },
   actionItem: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: radii.md,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
     padding: 14,
-    gap: 12,
-    ...shadows.card,
+    gap: 14,
+    borderWidth: 1,
+    borderColor: "#E4D9C8",
+    shadowColor: "rgba(107, 112, 92, 1)",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 2,
   },
   actionIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.accent,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: "rgba(188, 108, 37, 0.3)",
+    backgroundColor: "rgba(188, 108, 37, 0.08)",
     alignItems: "center",
     justifyContent: "center",
   },
   actionContent: {
     flex: 1,
-    gap: 4,
+    gap: 3,
   },
   actionLabel: {
-    fontWeight: "600",
-    color: colors.text,
+    fontWeight: "700",
+    color: "#2D2D2A",
+    fontSize: 15,
   },
   actionHelper: {
-    fontSize: 13,
-    color: colors.muted,
+    fontSize: 12,
+    color: "#A5A58D",
   },
+
   fabWrapper: {
     position: "absolute",
     bottom: 32,
@@ -1233,21 +1253,29 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.accent,
+    backgroundColor: "#BC6C25",
     alignItems: "center",
     justifyContent: "center",
-    ...shadows.soft,
+    shadowColor: "#8B4513",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
   },
   fabMenu: {
     marginTop: 12,
-    backgroundColor: colors.surface,
-    borderRadius: radii.md,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
     paddingVertical: 6,
     width: 200,
     gap: 6,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    ...shadows.card,
+    borderColor: "#E4D9C8",
+    shadowColor: "rgba(107, 112, 92, 1)",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 4,
   },
   menuBackdrop: {
     position: "absolute",
@@ -1260,25 +1288,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   fabMenuText: {
-    color: colors.text,
+    color: "#2D2D2A",
     fontWeight: "600",
   },
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: "rgba(45, 45, 42, 0.5)",
     justifyContent: "flex-end",
   },
   menu: {
-    backgroundColor: colors.surface,
+    backgroundColor: "#FDF8F1",
     padding: 20,
-    borderTopLeftRadius: radii.lg,
-    borderTopRightRadius: radii.lg,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     gap: 12,
-    ...shadows.card,
+    borderTopWidth: 1,
+    borderColor: "#E4D9C8",
   },
   menuItem: {
     paddingVertical: 12,
@@ -1286,27 +1315,37 @@ const styles = StyleSheet.create({
   menuItemText: {
     fontSize: 16,
     fontWeight: "600",
-    color: colors.text,
+    color: "#2D2D2A",
   },
   menuFooter: {
     marginTop: 8,
   },
+
+  // Sign out — physical danger button
   signOutButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingVertical: 14,
-    borderRadius: radii.md,
-    backgroundColor: colors.danger,
+    paddingVertical: 16,
+    borderRadius: 18,
+    backgroundColor: "#C75252",
+    shadowColor: "#8B2020",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
   },
   signOutText: {
     color: "#fff",
-    fontWeight: "600",
+    fontWeight: "700",
+    fontSize: 15,
   },
+
+  // Modals
   modalScreen: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#FDF8F1",
   },
   modalCloseIcon: {
     position: "absolute",
@@ -1317,11 +1356,15 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.surface,
+    borderColor: "#E4D9C8",
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
-    ...shadows.card,
+    shadowColor: "rgba(107, 112, 92, 1)",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   modalContent: {
     paddingHorizontal: spacing.screen,
@@ -1330,99 +1373,120 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   modalHeading: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: colors.text,
+    fontSize: 26,
+    fontWeight: "900",
+    color: "#2D2D2A",
+    letterSpacing: -0.3,
   },
   modalBlock: {
-    gap: 10,
+    gap: 12,
     paddingVertical: 8,
   },
   modalClose: {
     padding: 16,
     alignItems: "center",
     borderTopWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: "#E4D9C8",
   },
   modalCloseText: {
-    color: colors.accent,
-    fontWeight: "600",
+    color: "#BC6C25",
+    fontWeight: "700",
   },
   subheading: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: colors.text,
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#2D2D2A",
   },
   label: {
-    color: colors.muted,
-    fontSize: 12,
+    color: "#A5A58D",
+    fontSize: 11,
     textTransform: "uppercase",
-    letterSpacing: 0.4,
-    fontWeight: "600",
+    letterSpacing: 1,
+    fontWeight: "700",
   },
   value: {
     fontSize: 16,
     fontWeight: "600",
-    color: colors.text,
+    color: "#2D2D2A",
   },
   input: {
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: radii.md,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: colors.surface,
-    color: colors.text,
+    borderWidth: 1.5,
+    borderColor: "#E4D9C8",
+    borderRadius: 16,
+    padding: 14,
+    fontSize: 15,
+    backgroundColor: "#FFFFFF",
+    color: "#2D2D2A",
   },
   helper: {
-    color: colors.muted,
+    color: "#A5A58D",
     fontSize: 13,
+    lineHeight: 18,
   },
   errorText: {
-    color: colors.danger,
+    color: "#C75252",
     fontSize: 13,
+    fontWeight: "600",
   },
   successText: {
-    color: colors.accentSecondary,
+    color: "#6B705C",
     fontSize: 13,
+    fontWeight: "600",
   },
+
+  // Primary — physical button
   primaryButton: {
-    backgroundColor: colors.accent,
-    borderRadius: radii.md,
-    paddingVertical: 14,
+    backgroundColor: "#BC6C25",
+    borderRadius: 16,
+    paddingVertical: 16,
     alignItems: "center",
+    shadowColor: "#8B4513",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
   },
   primaryButtonText: {
     color: "#fff",
-    fontWeight: "600",
-    fontSize: 16,
+    fontWeight: "800",
+    fontSize: 15,
   },
+
+  // Secondary — outlined
   secondaryButton: {
-    borderRadius: radii.md,
-    paddingVertical: 12,
+    borderRadius: 16,
+    paddingVertical: 14,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: colors.accent,
+    borderWidth: 1.5,
+    borderColor: "#BC6C25",
+    backgroundColor: "rgba(188, 108, 37, 0.06)",
   },
   secondaryButtonText: {
-    color: colors.accent,
-    fontWeight: "600",
+    color: "#BC6C25",
+    fontWeight: "700",
     fontSize: 15,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    opacity: 0.55,
   },
+
+  // Household card
   householdCard: {
-    gap: 12,
+    gap: 14,
+    borderRadius: 24,
+    padding: spacing.screen,
+    backgroundColor: "rgba(255, 255, 255, 0.82)",
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: radii.lg,
-    padding: spacing.card,
-    backgroundColor: colors.surface,
-    ...shadows.card,
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    shadowColor: "rgba(107, 112, 92, 1)",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 4,
   },
   householdCardEmpty: {
     borderStyle: "dashed",
+    borderColor: "#E4D9C8",
     alignItems: "stretch",
   },
   householdActions: {
@@ -1446,38 +1510,42 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   householdLabel: {
-    color: colors.muted,
-    fontSize: 12,
+    color: "#A5A58D",
+    fontSize: 11,
     textTransform: "uppercase",
-    fontWeight: "600",
-    letterSpacing: 0.4,
+    fontWeight: "700",
+    letterSpacing: 0.8,
   },
   householdName: {
     fontSize: 20,
-    fontWeight: "700",
-    color: colors.text,
+    fontWeight: "800",
+    color: "#2D2D2A",
+    letterSpacing: -0.3,
   },
   householdValue: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
-    color: colors.text,
+    color: "#2D2D2A",
   },
   statusPill: {
     paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: radii.md,
-    backgroundColor: colors.surfaceAlt,
-    color: colors.text,
-    fontWeight: "600",
-    fontSize: 13,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: "rgba(188, 108, 37, 0.1)",
+    color: "#BC6C25",
+    fontWeight: "700",
+    fontSize: 12,
+    overflow: "hidden",
   },
   membersTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.text,
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#2D2D2A",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   memberCarousel: {
-    gap: 12,
+    gap: 14,
     paddingVertical: 6,
   },
   memberBadge: {
@@ -1485,32 +1553,35 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   memberBadgeLetter: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     textAlign: "center",
     textAlignVertical: "center",
-    backgroundColor: colors.surfaceAlt,
-    color: colors.text,
-    fontWeight: "700",
-    fontSize: 18,
-    lineHeight: 44,
+    backgroundColor: "#BC6C25",
+    color: "#FFFFFF",
+    fontWeight: "800",
+    fontSize: 20,
+    lineHeight: 48,
+    overflow: "hidden",
   },
   memberBadgeLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: colors.text,
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#6B705C",
   },
   manageButton: {
-    marginTop: 8,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.accent,
+    marginTop: 6,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "#BC6C25",
     paddingVertical: 12,
     alignItems: "center",
+    backgroundColor: "rgba(188, 108, 37, 0.05)",
   },
   manageButtonText: {
-    color: colors.accent,
-    fontWeight: "600",
+    color: "#BC6C25",
+    fontWeight: "700",
+    fontSize: 14,
   },
 });

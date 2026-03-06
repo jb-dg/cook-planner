@@ -1,24 +1,24 @@
 export const colors = {
-  background: "#F9FAFB", // Modern gray-50
+  background: "#FDF8F1", // Hearth Cream
   surface: "#FFFFFF",
-  surfaceAlt: "#F9FAFB", // gray-50
-  text: "#111827", // gray-900
-  muted: "#6B7280", // gray-500
-  accent: "#F97316", // Modern orange-500
-  accentSecondary: "#10B981", // green-500
-  accentTertiary: "#A855F7", // purple-500
-  danger: "#EF4444", // red-500
-  cardBorder: "#E5E7EB", // gray-200
+  surfaceAlt: "#F5EFE4", // warm tinted alt surface
+  text: "#2D2D2A", // Hearth Warm Black
+  muted: "#6B705C", // Hearth Sage
+  accent: "#BC6C25", // Hearth Accent
+  accentSecondary: "#6B705C", // Hearth Sage
+  accentTertiary: "#A5A58D", // Hearth Clay
+  danger: "#C75252",
+  cardBorder: "#E4D9C8", // warm border
 };
 
-// Gradient definitions for modern design
+// Gradient definitions — Hearth warm palette
 export const gradients = {
-  breakfast: ["#FBBF24", "#F97316"] as [string, string], // yellow to orange
-  lunch: ["#34D399", "#10B981"] as [string, string], // light green to green
-  dinner: ["#6366F1", "#A855F7"] as [string, string], // indigo to purple
-  statsOrange: ["#FED7AA", "#FFEDD5"] as [string, string], // orange tints
-  statsGreen: ["#A7F3D0", "#D1FAE5"] as [string, string], // green tints
-  statsYellow: ["#FDE68A", "#FEF3C7"] as [string, string], // yellow tints
+  breakfast: ["#DDA15E", "#BC6C25"] as [string, string], // Soft to Accent
+  lunch: ["#A5A58D", "#6B705C"] as [string, string], // Clay to Sage
+  dinner: ["#BC6C25", "#8B4810"] as [string, string], // Accent to deep warm
+  statsOrange: ["#F2E0CB", "#DDA15E"] as [string, string], // warm tints
+  statsGreen: ["#D4DBC8", "#A5A58D"] as [string, string], // sage tints
+  statsYellow: ["#F5EFE4", "#E4D9C8"] as [string, string], // cream tints
 };
 
 export const radii = {
@@ -35,14 +35,14 @@ export const spacing = {
 
 export const shadows = {
   card: {
-    shadowColor: "rgba(92, 80, 66, 0.18)",
+    shadowColor: "rgba(45, 45, 42, 0.15)",
     shadowOpacity: 0.12,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
     elevation: 4,
   },
   soft: {
-    shadowColor: "rgba(92, 80, 66, 0.22)",
+    shadowColor: "rgba(45, 45, 42, 0.18)",
     shadowOpacity: 0.16,
     shadowRadius: 22,
     shadowOffset: { width: 0, height: 14 },

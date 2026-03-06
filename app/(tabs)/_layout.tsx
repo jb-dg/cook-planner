@@ -24,20 +24,20 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.muted,
+        tabBarActiveTintColor: "#BC6C25", // Hearth Accent
+        tabBarInactiveTintColor: "#A5A58D", // Hearth Clay
         tabBarHideOnKeyboard: true,
         tabBarBackground: () => (
           <BlurView
-            intensity={38}
+            intensity={32}
             tint="light"
             style={{ flex: 1, borderRadius: radii.xl, overflow: "hidden" }}
           >
             <LinearGradient
               colors={[
-                "rgba(255,255,255,0.65)",
-                "rgba(255,255,255,0.28)",
-                "rgba(255,255,255,0.18)",
+                "rgba(253,248,241,0.92)",
+                "rgba(245,239,228,0.80)",
+                "rgba(253,248,241,0.72)",
               ]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -49,19 +49,19 @@ export default function TabsLayout() {
           position: "absolute",
           bottom: tabBarBottom,
           marginHorizontal: 24,
-          backgroundColor: "rgba(255,255,255,0.12)",
+          backgroundColor: "rgba(253,248,241,0.15)",
           borderRadius: radii.xl,
           borderTopWidth: 1,
           borderWidth: 1,
-          borderColor: "rgba(255,255,255,0.32)",
+          borderColor: "rgba(188,108,37,0.18)",
           height: 68,
           paddingBottom: 12,
           paddingTop: 10,
-          shadowColor: "rgba(17, 24, 39, 1)",
-          shadowOpacity: 0.2,
+          shadowColor: "rgba(45,45,42,1)",
+          shadowOpacity: 0.14,
           shadowRadius: 20,
           shadowOffset: { width: 0, height: 10 },
-          elevation: 24,
+          elevation: 20,
         },
       }}
     >
