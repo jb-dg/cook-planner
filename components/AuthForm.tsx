@@ -14,12 +14,14 @@ import {
   validateEmail,
   validatePassword,
 } from "../lib/validation/auth";
-import { colors, radii, shadows, spacing } from "../theme/design";
+import { useTheme } from "../theme/useTheme";
 
 type Mode = "signin" | "signup";
 
 export default function AuthForm() {
   const { signIn, signUp } = useAuth();
+  const t = useTheme();
+
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -61,149 +63,182 @@ export default function AuthForm() {
     }
   };
 
+  // Dynamic styles built from theme tokens
+  const s = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          width: "100%",
+          gap: t.spacing.md,
+        },
+        titleRow: {
+          gap: t.spacing.xxs,
+          marginBottom: t.spacing.xs,
+        },
+        title: {
+          fontSize: t.typography.size.h2,
+          lineHeight: t.typography.lineHeight.h2,
+          fontWeight: t.typography.weight.bold,
+          color: t.colors.textPrimary,
+        },
+        kicker: {
+          fontSize: t.typography.size.bodySmall,
+          lineHeight: t.typography.lineHeight.bodySmall,
+          color: t.colors.textMuted,
+        },
+        input: {
+          height: t.components.textInput.height,
+          borderWidth: 1,
+          borderColor: t.components.textInput.borderColor,
+          borderRadius: t.components.textInput.borderRadius,
+          paddingHorizontal: t.components.textInput.paddingHorizontal,
+          fontSize: t.typography.size.body,
+          backgroundColor: t.components.textInput.backgroundColor,
+          color: t.colors.textPrimary,
+          ...t.shadow.sm,
+        },
+        inputError: {
+          borderColor: t.colors.error,
+        },
+        error: {
+          color: t.colors.error,
+          marginTop: t.spacing.xxs,
+          fontSize: t.typography.size.label,
+        },
+        message: {
+          color: t.colors.primary,
+          fontSize: t.typography.size.bodySmall,
+          fontWeight: t.typography.weight.semibold,
+        },
+        primaryButton: {
+          backgroundColor: t.components.button.primary.backgroundColor,
+          borderRadius: 18,
+          paddingVertical: 18,
+          alignItems: "center",
+          shadowColor: "#8B4513",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 1,
+          shadowRadius: 0,
+          elevation: 4,
+        },
+        primaryButtonDisabled: {
+          backgroundColor: t.colors.borderSubtle,
+          shadowOpacity: 0,
+          elevation: 0,
+        },
+        buttonText: {
+          color: t.components.button.primary.textColor,
+          fontWeight: "800",
+          fontSize: t.typography.size.body,
+          letterSpacing: 0.3,
+        },
+        link: {
+          color: t.colors.primary,
+          fontWeight: t.typography.weight.semibold,
+          fontSize: t.typography.size.bodySmall,
+          textAlign: "left",
+        },
+      }),
+    [t]
+  );
+
   return (
-    <View style={styles.container}>
-      <View style={styles.titleRow}>
-        <Text style={styles.title}>
+    <View style={s.container}>
+      {/* Header */}
+      <View style={s.titleRow}>
+        <Text style={s.title}>
           {mode === "signin" ? "Connexion" : "Créer un compte"}
         </Text>
-        <Text style={styles.kicker}>
+        <Text style={s.kicker}>
           Gère tes menus, recettes et courses au même endroit.
         </Text>
       </View>
+
+      {/* Email */}
       <View>
         <TextInput
           autoCapitalize="none"
           autoComplete="email"
           keyboardType="email-address"
           placeholder="email@exemple.com"
-          placeholderTextColor={colors.muted}
-          style={[styles.input, errors.email && styles.inputError]}
+          placeholderTextColor={t.components.textInput.placeholderColor}
+          style={[s.input, errors.email ? s.inputError : null]}
           value={email}
           onChangeText={setEmail}
           textContentType="emailAddress"
           editable={!submitting}
         />
-        {errors.email ? <Text style={styles.error}>{errors.email}</Text> : null}
+        {errors.email ? <Text style={s.error}>{errors.email}</Text> : null}
       </View>
+
+      {/* Password */}
       <View>
         <TextInput
           placeholder="Mot de passe"
           secureTextEntry
-          placeholderTextColor={colors.muted}
-          style={[styles.input, errors.password && styles.inputError]}
+          placeholderTextColor={t.components.textInput.placeholderColor}
+          style={[s.input, errors.password ? s.inputError : null]}
           value={password}
           onChangeText={setPassword}
           textContentType="password"
           editable={!submitting}
         />
-        {errors.password ? <Text style={styles.error}>{errors.password}</Text> : null}
+        {errors.password ? (
+          <Text style={s.error}>{errors.password}</Text>
+        ) : null}
       </View>
+
+      {/* Confirm password (signup only) */}
       {mode === "signup" ? (
         <View>
           <TextInput
             placeholder="Confirme ton mot de passe"
             secureTextEntry
-            placeholderTextColor={colors.muted}
-            style={[styles.input, errors.confirm && styles.inputError]}
+            placeholderTextColor={t.components.textInput.placeholderColor}
+            style={[s.input, errors.confirm ? s.inputError : null]}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             textContentType="password"
             editable={!submitting}
           />
-          {errors.confirm ? <Text style={styles.error}>{errors.confirm}</Text> : null}
+          {errors.confirm ? (
+            <Text style={s.error}>{errors.confirm}</Text>
+          ) : null}
         </View>
       ) : null}
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+
+      {/* Feedback message */}
+      {message ? <Text style={s.message}>{message}</Text> : null}
+
+      {/* Primary CTA */}
       <Pressable
         disabled={!canSubmit}
         onPress={handleSubmit}
-        style={[styles.primaryButton, !canSubmit && styles.buttonDisabled]}
+        style={[s.primaryButton, !canSubmit && s.primaryButtonDisabled]}
         accessibilityRole="button"
       >
         {submitting ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={t.components.button.primary.textColor} />
         ) : (
-          <Text style={styles.buttonText}>
+          <Text style={s.buttonText}>
             {mode === "signin" ? "Se connecter" : "Créer mon compte"}
           </Text>
         )}
       </Pressable>
+
+      {/* Mode switch */}
       <Pressable
         onPress={() =>
           setMode((prev) => (prev === "signin" ? "signup" : "signin"))
         }
         disabled={submitting}
       >
-        <Text style={styles.link}>
+        <Text style={s.link}>
           {mode === "signin"
-            ? "Nouveau compte? Inscris-toi"
+            ? "Nouveau compte ? Inscris-toi"
             : "J'ai déjà un compte"}
         </Text>
       </Pressable>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    width: "100%",
-    gap: spacing.base * 1.5,
-  },
-  titleRow: {
-    gap: 6,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: colors.text,
-  },
-  kicker: {
-    color: colors.muted,
-    lineHeight: 20,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: radii.lg,
-    padding: 14,
-    fontSize: 16,
-    backgroundColor: colors.surfaceAlt,
-    color: colors.text,
-    ...shadows.soft,
-  },
-  inputError: {
-    borderColor: colors.danger,
-  },
-  error: {
-    color: colors.danger,
-    marginTop: 4,
-    fontSize: 13,
-  },
-  message: {
-    color: colors.accent,
-    textAlign: "left",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  primaryButton: {
-    backgroundColor: colors.accent,
-    paddingVertical: 14,
-    borderRadius: radii.lg,
-    alignItems: "center",
-    ...shadows.soft,
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 16,
-  },
-  buttonDisabled: {
-    backgroundColor: colors.surfaceAlt,
-  },
-  link: {
-    textAlign: "left",
-    color: colors.accent,
-    fontWeight: "700",
-  },
-});
