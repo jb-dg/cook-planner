@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
 import { addDays, format, getISOWeek, getYear, startOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect, useRouter } from "expo-router";
 
 import { useAuth } from "../../contexts/AuthContext";
-import { supabase } from "../../lib/supabase";
 import { fetchHouseholdScope } from "../../lib/households";
+import { supabase } from "../../lib/supabase";
 import { spacing } from "../../theme/design";
 
 export default function HomeScreen() {
@@ -15,13 +15,13 @@ export default function HomeScreen() {
   const router = useRouter();
   const weekStart = useMemo(
     () => startOfWeek(new Date(), { weekStartsOn: 1 }),
-    []
+    [],
   );
   const weekNumber = getISOWeek(weekStart);
   const weekLabel = `${format(weekStart, "d MMM", { locale: fr })} – ${format(
     addDays(weekStart, 6),
     "d MMM",
-    { locale: fr }
+    { locale: fr },
   )}`;
   const username = session?.user.email?.split("@")[0] ?? "Chef";
   const [planProgress, setPlanProgress] = useState({
@@ -61,7 +61,7 @@ export default function HomeScreen() {
           throw error;
         }
 
-        const slots: Array<"lunch" | "dinner"> = ["lunch", "dinner"];
+        const slots: ("lunch" | "dinner")[] = ["lunch", "dinner"];
         const days =
           (data?.days as
             | { lunch?: { recipe?: string }; dinner?: { recipe?: string } }[]
@@ -91,7 +91,7 @@ export default function HomeScreen() {
         }
       }
     },
-    [session, weekStart]
+    [session, weekStart],
   );
 
   useEffect(() => {
@@ -109,7 +109,7 @@ export default function HomeScreen() {
       return () => {
         cancelRef.cancelled = true;
       };
-    }, [loadProgress])
+    }, [loadProgress]),
   );
 
   const missingMeals = Math.max(planProgress.total - planProgress.filled, 0);
@@ -132,12 +132,17 @@ export default function HomeScreen() {
         </View>
 
         {/* Progress soft-card — mirrors the HTML's `.soft-card` */}
-        <Pressable style={styles.softCard} onPress={() => router.push("/planner")}>
+        <Pressable
+          style={styles.softCard}
+          onPress={() => router.push("/planner")}
+        >
           <View style={styles.progressHeader}>
             <View>
               <Text style={styles.progressLabel}>Semaine en cours</Text>
               <Text style={styles.progressTitle}>
-                {progressLoading ? "Calcul en cours…" : `${planProgress.percent}% planifiés`}
+                {progressLoading
+                  ? "Calcul en cours…"
+                  : `${planProgress.percent}% planifiés`}
               </Text>
             </View>
             <Text style={styles.progressPercent}>
@@ -147,13 +152,18 @@ export default function HomeScreen() {
 
           <View style={styles.progressTrack}>
             <View
-              style={[styles.progressFill, { width: `${planProgress.percent}%` as any }]}
+              style={[
+                styles.progressFill,
+                { width: `${planProgress.percent}%` as any },
+              ]}
             />
           </View>
 
           <View style={styles.progressFooter}>
             <Text style={styles.progressFooterText}>
-              {progressError ? progressError : `${missingMeals} repas manquants`}
+              {progressError
+                ? progressError
+                : `${missingMeals} repas manquants`}
             </Text>
             <Text style={styles.footerLinkText}>Voir le planning →</Text>
           </View>
@@ -166,7 +176,12 @@ export default function HomeScreen() {
             <Text style={styles.statLabel}>Prêts</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={[styles.statValue, missingMeals > 0 && styles.statValueAccent]}>
+            <Text
+              style={[
+                styles.statValue,
+                missingMeals > 0 && styles.statValueAccent,
+              ]}
+            >
               {missingMeals}
             </Text>
             <Text style={styles.statLabel}>À planifier</Text>
@@ -178,7 +193,10 @@ export default function HomeScreen() {
         </View>
 
         {/* Physical CTA button — mirrors `.btn-physical` from HTML */}
-        <Pressable style={styles.physicalCta} onPress={() => router.push("/planner")}>
+        <Pressable
+          style={styles.physicalCta}
+          onPress={() => router.push("/planner")}
+        >
           <Text style={styles.physicalCtaText}>Ouvrir mon planning</Text>
         </Pressable>
       </ScrollView>

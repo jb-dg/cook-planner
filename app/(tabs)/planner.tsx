@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -50,13 +50,11 @@ export default function PlannerScreen() {
     usePlannerData(session, referenceDate);
   const { recipes, recipesLoading, recipesError } = useRecipes(session);
 
-  // Auto-save
-  const { saveStatus, lastSaved, error: saveError, isSaving } = useAutoSave(
+  // Save — triggered manually on blur or recipe selection
+  const { save, saveStatus, lastSaved, error: saveError, isSaving } = useAutoSave(
     days,
     session,
     referenceDate,
-    true, // enabled
-    2000  // debounce 2s
   );
 
   // UI State
@@ -130,13 +128,19 @@ export default function PlannerScreen() {
 
   const handleSelectRecipe = (recipe: Recipe) => {
     if (!recipePickerTarget) return;
-    handleDayChange(
-      recipePickerTarget.dayIndex,
-      recipePickerTarget.meal,
-      recipe.title
-    );
+    const { dayIndex, meal } = recipePickerTarget;
+
+    // Compute new days synchronously so we can pass them directly to save
+    const newDays = days.map((d, i) => {
+      if (i !== dayIndex) return d;
+      const mealState = d[meal] ?? { recipe: "" };
+      return { ...d, [meal]: { ...mealState, recipe: recipe.title } };
+    });
+
+    setDays(newDays);
     closeRecipePicker();
     showToast("Recette ajoutée au planning.", "success");
+    save(newDays);
   };
 
   const openWeekPicker = () => {
@@ -156,12 +160,18 @@ export default function PlannerScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={0}
+      >
       <ScrollView
         contentContainerStyle={[
           sharedStyles.container,
           { paddingBottom: spacing.screen + insets.bottom + 140 },
         ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <PlannerHeader
           weekNumber={weekNumber}
@@ -201,6 +211,7 @@ export default function PlannerScreen() {
               recipesLoading={recipesLoading}
               onDayChange={handleDayChange}
               onOpenRecipePicker={openRecipePicker}
+              onBlur={save}
             />
             <Pressable
               style={styles.listButton}
@@ -226,6 +237,7 @@ export default function PlannerScreen() {
             onDayChange={handleDayChange}
             onOpenRecipePicker={openRecipePicker}
             onSelectDate={setSelectedDate}
+            onBlur={save}
           />
         )}
       </ScrollView>
@@ -261,6 +273,7 @@ export default function PlannerScreen() {
       />
 
       {toast && <Toast toast={toast} />}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

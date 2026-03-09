@@ -15,6 +15,7 @@ type Props = {
   onDayChange: (dayIndex: number, meal: MealKey, value: string) => void;
   onOpenRecipePicker: (dayIndex: number, meal: MealKey) => void;
   onSelectDate: (date: Date) => void;
+  onBlur: () => void;
 };
 
 export const ListView = ({
@@ -26,6 +27,7 @@ export const ListView = ({
   onDayChange,
   onOpenRecipePicker,
   onSelectDate,
+  onBlur,
 }: Props) => {
   return (
     <View style={styles.weekList}>
@@ -90,7 +92,8 @@ export const ListView = ({
                         <TextInput
                           value={meal.recipe}
                           onChangeText={(value) => onDayChange(dayIndex, slot.key, value)}
-                          editable={!syncing && !saving}
+                          onBlur={onBlur}
+                          editable={!syncing}
                           placeholder={isLunch ? "Ajouter un déjeuner" : "Ajouter un dîner"}
                           placeholderTextColor="#A5A58D"
                           style={[styles.input, filled && styles.inputFilled]}

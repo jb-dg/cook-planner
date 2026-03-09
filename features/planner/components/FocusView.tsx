@@ -1,11 +1,11 @@
-import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Session } from "@supabase/supabase-js";
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Session } from "@supabase/supabase-js";
+import { useMemo } from "react";
+import { StyleSheet, Text, View } from "react-native";
 import { spacing } from "../../../theme/design";
-import { DayPlan, MealKey } from "../utils/types";
 import { MEAL_SLOTS } from "../utils/constants";
+import { DayPlan, MealKey } from "../utils/types";
 import { DayMealCard } from "./DayMealCard";
 
 type Props = {
@@ -19,6 +19,7 @@ type Props = {
   recipesLoading: boolean;
   onDayChange: (dayIndex: number, meal: MealKey, value: string) => void;
   onOpenRecipePicker: (dayIndex: number, meal: MealKey) => void;
+  onBlur: () => void;
 };
 
 export const FocusView = ({
@@ -32,6 +33,7 @@ export const FocusView = ({
   recipesLoading,
   onDayChange,
   onOpenRecipePicker,
+  onBlur,
 }: Props) => {
   const dayColumns = useMemo(
     () =>
@@ -44,11 +46,13 @@ export const FocusView = ({
           .slice(0, 3),
         dateNum: format(addDays(referenceDate, index), "d", { locale: fr }),
       })),
-    [referenceDate, days]
+    [referenceDate, days],
   );
 
   const selectedDayIndex = useMemo(() => {
-    const index = dayColumns.findIndex((col) => isSameDay(col.dayDate, selectedDate));
+    const index = dayColumns.findIndex((col) =>
+      isSameDay(col.dayDate, selectedDate),
+    );
     return index >= 0 ? index : 0;
   }, [dayColumns, selectedDate]);
 
@@ -57,37 +61,52 @@ export const FocusView = ({
   const filledCount = MEAL_SLOTS.filter(
     (slot) =>
       !!(
-        (dayData as Record<MealKey, { recipe?: string }>)[slot.key]?.recipe ?? ""
-      ).trim()
+        (dayData as Record<MealKey, { recipe?: string }>)[slot.key]?.recipe ??
+        ""
+      ).trim(),
   ).length;
   const isComplete = filledCount === MEAL_SLOTS.length;
 
   return (
     <View style={styles.container}>
       {/* Day row: badge left + soft-card right */}
+
       <View style={styles.dayRow}>
         {/* Day badge — inspired by the HTML left column */}
-        <View style={styles.dayBadge}>
-          <Text style={[styles.dayAbbrev, isComplete && styles.dayAbbrevComplete]}>
+        {/* <View style={styles.dayBadge}>
+          <Text
+            style={[styles.dayAbbrev, isComplete && styles.dayAbbrevComplete]}
+          >
             {day.abbrev}
           </Text>
           <Text style={styles.dayNum}>{day.dateNum}</Text>
           {isComplete && <View style={styles.completeDot} />}
-        </View>
+        </View> */}
 
         {/* Soft card: meal slots */}
         <View style={styles.softCard}>
           {/* Status chip */}
-          <View style={[styles.statusChip, isComplete && styles.statusChipComplete]}>
-            <Text style={[styles.statusText, isComplete && styles.statusTextComplete]}>
-              {isComplete ? "Complet ✓" : `${filledCount}/${MEAL_SLOTS.length} repas`}
+          <View
+            style={[styles.statusChip, isComplete && styles.statusChipComplete]}
+          >
+            <Text
+              style={[
+                styles.statusText,
+                isComplete && styles.statusTextComplete,
+              ]}
+            >
+              {isComplete
+                ? "Complet ✓"
+                : `${filledCount}/${MEAL_SLOTS.length} repas`}
             </Text>
           </View>
 
           {/* Meal slots */}
           <View style={styles.mealGrid}>
             {MEAL_SLOTS.map((slot) => {
-              const mealData = (dayData as Record<MealKey, { recipe?: string }>)[slot.key];
+              const mealData = (
+                dayData as Record<MealKey, { recipe?: string }>
+              )[slot.key];
               const meal = { recipe: mealData?.recipe ?? "" };
               return (
                 <DayMealCard
@@ -99,8 +118,13 @@ export const FocusView = ({
                   syncing={syncing}
                   saving={saving}
                   recipesLoading={recipesLoading}
-                  onChangeText={(value) => onDayChange(selectedDayIndex, slot.key, value)}
-                  onOpenRecipePicker={() => onOpenRecipePicker(selectedDayIndex, slot.key)}
+                  onChangeText={(value) =>
+                    onDayChange(selectedDayIndex, slot.key, value)
+                  }
+                  onBlur={onBlur}
+                  onOpenRecipePicker={() =>
+                    onOpenRecipePicker(selectedDayIndex, slot.key)
+                  }
                 />
               );
             })}

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { Session } from "@supabase/supabase-js";
@@ -13,6 +14,7 @@ type Props = {
   saving: boolean;
   recipesLoading: boolean;
   onChangeText: (value: string) => void;
+  onBlur: () => void;
   onOpenRecipePicker: () => void;
 };
 
@@ -25,20 +27,32 @@ export const DayMealCard = ({
   saving,
   recipesLoading,
   onChangeText,
+  onBlur,
   onOpenRecipePicker,
 }: Props) => {
+  // isEditing freezes the visual state while the keyboard is open to prevent
+  // layout changes (slotEmpty → slotFilled) from stealing focus
+  const [isEditing, setIsEditing] = useState(false);
+
   const filled = !!meal.recipe?.trim();
+  const showAsFilled = filled && !isEditing;
   const isLunch = slot.key === "lunch";
   const dotColor = isLunch ? "#DDA15E" : "#BC6C25";
 
+  const handleFocus = () => setIsEditing(true);
+  const handleBlur = () => {
+    setIsEditing(false);
+    onBlur();
+  };
+
   return (
-    <View style={[styles.slot, filled ? styles.slotFilled : styles.slotEmpty]}>
+    <View style={[styles.slot, showAsFilled ? styles.slotFilled : styles.slotEmpty]}>
       {/* Slot header */}
       <View style={styles.slotHeader}>
         <Text style={[styles.slotLabel, !isLunch && styles.slotLabelDinner]}>
           {isLunch ? "Déjeuner" : "Dîner"}
         </Text>
-        {filled && (
+        {showAsFilled && (
           <Pressable
             hitSlop={10}
             onPress={onOpenRecipePicker}
@@ -50,27 +64,10 @@ export const DayMealCard = ({
         )}
       </View>
 
-      {filled ? (
-        /* Filled state: bold recipe name + dot row */
-        <View style={styles.filledBody}>
-          <TextInput
-            value={meal.recipe}
-            onChangeText={onChangeText}
-            editable={!syncing && !saving}
-            style={styles.recipeName}
-            multiline
-            scrollEnabled={false}
-            placeholderTextColor="#A5A58D"
-          />
-          <View style={styles.dotRow}>
-            <View style={[styles.dot, { backgroundColor: dotColor }]} />
-            <View style={[styles.dot, { backgroundColor: dotColor }]} />
-            {!isLunch && <View style={[styles.dot, { backgroundColor: dotColor }]} />}
-          </View>
-        </View>
-      ) : (
-        /* Empty state: add button + free-typing input */
-        <View style={styles.emptyBody}>
+      {/* Body */}
+      <View style={styles.body}>
+        {/* Add button — visible when empty and not editing */}
+        {!filled && !isEditing && (
           <Pressable style={styles.addRow} onPress={onOpenRecipePicker}>
             <View style={styles.addCircle}>
               <Feather name="plus" size={16} color="#A5A58D" />
@@ -79,16 +76,35 @@ export const DayMealCard = ({
               Ajouter {isLunch ? "un déjeuner" : "un dîner"}
             </Text>
           </Pressable>
-          <TextInput
-            value={meal.recipe}
-            onChangeText={onChangeText}
-            editable={!syncing && !saving}
-            placeholder="Saisir directement..."
-            placeholderTextColor="#A5A58D"
-            style={styles.freeInput}
-          />
-        </View>
-      )}
+        )}
+
+        {/* Single TextInput — never unmounts, style only changes on blur */}
+        <TextInput
+          value={meal.recipe}
+          onChangeText={onChangeText}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          editable={!syncing}
+          placeholder="Saisir directement..."
+          placeholderTextColor="#A5A58D"
+          style={[
+            styles.input,
+            showAsFilled && styles.inputFilled,
+            isEditing && styles.inputEditing,
+          ]}
+          multiline
+          scrollEnabled={false}
+        />
+
+        {/* Dot row — only when filled and not editing */}
+        {showAsFilled && (
+          <View style={styles.dotRow}>
+            <View style={[styles.dot, { backgroundColor: dotColor }]} />
+            <View style={[styles.dot, { backgroundColor: dotColor }]} />
+            {!isLunch && <View style={[styles.dot, { backgroundColor: dotColor }]} />}
+          </View>
+        )}
+      </View>
     </View>
   );
 };
@@ -103,7 +119,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderStyle: "dashed",
     borderColor: "rgba(165, 165, 141, 0.4)",
-    backgroundColor: "transparent",
+    backgroundColor: "rgba(255,255,255,0.6)",
   },
   slotFilled: {
     borderWidth: 0,
@@ -138,15 +154,32 @@ const styles = StyleSheet.create({
   recipeBtnDisabled: {
     opacity: 0.4,
   },
-  filledBody: {
-    gap: 8,
+  body: {
+    gap: spacing.base * 0.75,
   },
-  recipeName: {
+  input: {
+    fontSize: 13,
+    color: "#6B705C",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(165, 165, 141, 0.2)",
+    paddingTop: spacing.base * 0.8,
+    paddingVertical: 0,
+    minHeight: 36,
+  },
+  inputFilled: {
     fontSize: 18,
     fontWeight: "700",
     color: "#2D2D2A",
     lineHeight: 24,
-    paddingVertical: 0,
+    borderTopWidth: 0,
+    paddingTop: 0,
+  },
+  inputEditing: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2D2D2A",
+    borderTopWidth: 0,
+    paddingTop: 0,
   },
   dotRow: {
     flexDirection: "row",
@@ -157,9 +190,6 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 999,
-  },
-  emptyBody: {
-    gap: spacing.base * 0.75,
   },
   addRow: {
     flexDirection: "row",
@@ -180,13 +210,5 @@ const styles = StyleSheet.create({
     color: "#A5A58D",
     fontWeight: "700",
     fontSize: 14,
-  },
-  freeInput: {
-    fontSize: 13,
-    color: "#6B705C",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(165, 165, 141, 0.2)",
-    paddingTop: spacing.base * 0.8,
-    paddingVertical: 0,
   },
 });
