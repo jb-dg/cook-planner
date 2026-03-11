@@ -16,6 +16,7 @@ import { useRecipes } from "../../features/planner/hooks/useRecipes";
 import { useWeekNavigation } from "../../features/planner/hooks/useWeekNavigation";
 import { useToast } from "../../features/planner/hooks/useToast";
 import { useAutoSave } from "../../features/planner/hooks/useAutoSave";
+import { usePlannerRealtime } from "../../features/planner/hooks/usePlannerRealtime";
 import { PlannerHeader } from "../../features/planner/components/PlannerHeader";
 import { WeekProgressCard } from "../../features/planner/components/WeekProgressCard";
 import { DayGridSelector } from "../../features/planner/components/DayGridSelector";
@@ -50,12 +51,15 @@ export default function PlannerScreen() {
     usePlannerData(session, referenceDate);
   const { recipes, recipesLoading, recipesError } = useRecipes(session);
 
-  // Save — triggered manually on blur or recipe selection
-  const { save, saveStatus, lastSaved, error: saveError, isSaving } = useAutoSave(
+  // Save — triggered on blur or recipe selection
+  const { save, saveStatus, lastSaved, error: saveError, isSaving, hasLocalChangesRef } = useAutoSave(
     days,
     session,
     referenceDate,
   );
+
+  // Real-time sync: apply updates from other household members when no local edits pending
+  usePlannerRealtime(session, referenceDate, setDays, hasLocalChangesRef);
 
   // UI State
   const [viewMode, setViewMode] = useState<ViewMode>("focus");
