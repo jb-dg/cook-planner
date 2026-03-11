@@ -3,6 +3,7 @@ import { Feather } from "@expo/vector-icons";
 import { spacing } from "../../../theme/design";
 import { ViewMode } from "../utils/types";
 import { SaveStatusIndicator } from "./SaveStatusIndicator";
+import PhysicalIconButton from "../../../components/PhysicalIconButton";
 
 type Props = {
   weekNumber: number;
@@ -34,9 +35,9 @@ export const PlannerHeader = ({
         </View>
         <View style={styles.actions}>
           {/* View toggle — physical dark button */}
-          <Pressable
-            style={[styles.physicalBtn, viewMode === "list" && styles.physicalBtnActive]}
+          <PhysicalIconButton
             onPress={onViewModeToggle}
+            active={viewMode === "list"}
             accessibilityLabel="Basculer en vue liste"
           >
             <Feather
@@ -44,7 +45,7 @@ export const PlannerHeader = ({
               size={18}
               color={viewMode === "list" ? "#FDF8F1" : "#2D2D2A"}
             />
-          </Pressable>
+          </PhysicalIconButton>
           {/* Calendar trigger */}
           <Pressable style={styles.calendarBtn} onPress={onWeekPickerOpen}>
             <Feather name="calendar" size={18} color="#BC6C25" />
@@ -94,26 +95,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.base * 0.6,
-  },
-  physicalBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: "#F5EFE4",
-    borderWidth: 1,
-    borderColor: "#E4D9C8",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#8B4513",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4,
-  },
-  physicalBtnActive: {
-    backgroundColor: "#2D2D2A",
-    borderColor: "#2D2D2A",
-    shadowColor: "#000",
   },
   calendarBtn: {
     flexDirection: "row",

@@ -25,7 +25,8 @@ import { useRouter } from "expo-router";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { validateEmail } from "../../lib/validation/auth";
-import { spacing } from "../../theme/design";
+import { colors, spacing } from "../../theme/design";
+import PhysicalButton from "../../components/PhysicalButton";
 
 type Household = {
   id: string;
@@ -729,10 +730,12 @@ export default function ProfileScreen() {
               <Feather name="chevron-right" size={18} color="#A5A58D" />
             </Pressable>
           </View>
-          <Pressable style={styles.signOutButton} onPress={handleSignOut}>
-            <Feather name="log-out" size={16} color="#fff" />
-            <Text style={styles.signOutText}>Se déconnecter</Text>
-          </Pressable>
+          <PhysicalButton variant="danger" onPress={handleSignOut}>
+            <View style={styles.signOutInner}>
+              <Feather name="log-out" size={16} color="#fff" />
+              <Text style={styles.signOutText}>Se déconnecter</Text>
+            </View>
+          </PhysicalButton>
         </View>
       </ScrollView>
 
@@ -764,9 +767,11 @@ export default function ProfileScreen() {
               <Text style={styles.menuItemText}>Informations du profil</Text>
             </Pressable>
             <View style={styles.menuFooter}>
-              <Pressable style={styles.signOutButton} onPress={handleSignOut}>
-                <Text style={styles.signOutText}>Se déconnecter</Text>
-              </Pressable>
+              <PhysicalButton variant="danger" onPress={handleSignOut}>
+                <View style={styles.signOutInner}>
+                  <Text style={styles.signOutText}>Se déconnecter</Text>
+                </View>
+              </PhysicalButton>
             </View>
           </View>
         </Pressable>
@@ -813,18 +818,14 @@ export default function ProfileScreen() {
                 {pseudoSuccess ? (
                   <Text style={styles.successText}>{pseudoSuccess}</Text>
                 ) : null}
-                <Pressable
-                  style={[
-                    styles.primaryButton,
-                    savingPseudo && styles.buttonDisabled,
-                  ]}
+                <PhysicalButton
                   onPress={handleSavePseudo}
                   disabled={savingPseudo}
                 >
                   <Text style={styles.primaryButtonText}>
                     {savingPseudo ? "Enregistrement…" : "Sauvegarder"}
                   </Text>
-                </Pressable>
+                </PhysicalButton>
               </>
             )}
           </ScrollView>
@@ -898,18 +899,14 @@ export default function ProfileScreen() {
                 {joinSuccess ? (
                   <Text style={styles.successText}>{joinSuccess}</Text>
                 ) : null}
-                <Pressable
-                  style={[
-                    styles.primaryButton,
-                    joining && styles.buttonDisabled,
-                  ]}
+                <PhysicalButton
                   onPress={handleJoinHousehold}
                   disabled={joining}
                 >
                   <Text style={styles.primaryButtonText}>
                     {joining ? "Connexion…" : "Rejoindre"}
                   </Text>
-                </Pressable>
+                </PhysicalButton>
               </View>
             )}
             {householdModalMode === "manage" && (
@@ -978,7 +975,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: colors.background,
   },
   container: {
     padding: spacing.screen,
@@ -997,7 +994,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.15,
     shadowRadius: 40,
-    elevation: 6,
   },
   heroHeader: {
     flexDirection: "row",
@@ -1102,7 +1098,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.12,
     shadowRadius: 30,
-    elevation: 5,
   },
   sectionTitle: {
     fontSize: 18,
@@ -1321,20 +1316,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  // Sign out — physical danger button
-  signOutButton: {
+  // Sign out inner layout (bg/shadow handled by PhysicalButton)
+  signOutInner: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingVertical: 16,
-    borderRadius: 18,
-    backgroundColor: "#C75252",
-    shadowColor: "#8B2020",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4,
   },
   signOutText: {
     color: "#fff",
@@ -1434,18 +1421,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  // Primary — physical button
-  primaryButton: {
-    backgroundColor: "#BC6C25",
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: "center",
-    shadowColor: "#8B4513",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4,
-  },
   primaryButtonText: {
     color: "#fff",
     fontWeight: "800",
@@ -1482,7 +1457,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.12,
     shadowRadius: 24,
-    elevation: 4,
   },
   householdCardEmpty: {
     borderStyle: "dashed",

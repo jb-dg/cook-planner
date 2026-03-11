@@ -5,10 +5,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import PhysicalButton from "../../components/PhysicalButton";
 import { useAuth } from "../../contexts/AuthContext";
 import { fetchHouseholdScope } from "../../lib/households";
 import { supabase } from "../../lib/supabase";
-import { spacing } from "../../theme/design";
+import { colors, spacing } from "../../theme/design";
 
 export default function HomeScreen() {
   const { session } = useAuth();
@@ -193,12 +194,9 @@ export default function HomeScreen() {
         </View>
 
         {/* Physical CTA button — mirrors `.btn-physical` from HTML */}
-        <Pressable
-          style={styles.physicalCta}
-          onPress={() => router.push("/planner")}
-        >
+        <PhysicalButton onPress={() => router.push("/planner")}>
           <Text style={styles.physicalCtaText}>Ouvrir mon planning</Text>
-        </Pressable>
+        </PhysicalButton>
       </ScrollView>
     </SafeAreaView>
   );
@@ -207,7 +205,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: colors.background,
   },
   container: {
     padding: spacing.screen,
@@ -253,12 +251,11 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: spacing.base * 1.2,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.95)",
+    borderColor: "rgba(255, 255, 255, 0.9)",
     shadowColor: "rgba(107, 112, 92, 1)",
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.15,
     shadowRadius: 40,
-    elevation: 6,
   },
   progressHeader: {
     flexDirection: "row",
@@ -316,7 +313,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.75)",
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
     borderRadius: 20,
     padding: 16,
     alignItems: "center",
@@ -327,7 +324,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.1,
     shadowRadius: 16,
-    elevation: 3,
   },
   statValue: {
     fontSize: 26,
@@ -344,17 +340,6 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
     textAlign: "center",
-  },
-  physicalCta: {
-    backgroundColor: "#BC6C25",
-    borderRadius: 18,
-    paddingVertical: 18,
-    alignItems: "center",
-    shadowColor: "#8B4513",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4,
   },
   physicalCtaText: {
     color: "#FFFFFF",

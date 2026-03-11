@@ -1,0 +1,40 @@
+{
+  "cli": {
+    "version": ">= 16.28.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "base": {
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://pecohqmpbohdwdkhpwzg.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlY29ocW1wYm9oZHdka2hwd3pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTM4MzksImV4cCI6MjA3ODM2OTgzOX0.qqvs-KyGsm1sndpAvOA2lcRE8GHlxJelhQ9y7eUJsgs"
+      }
+    },
+    "development": {
+      "extends": "base",
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "extends": "base",
+      "channel": "preview",
+      "ios": {
+        "simulator": false
+      }
+    },
+    "production": {
+      "extends": "base",
+      "channel": "production",
+      "distribution": "store",
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "jb-degennaro@hotmail.com",
+        "appleTeamId": "DS369U8F36"
+      }
+    }
+  }
+}

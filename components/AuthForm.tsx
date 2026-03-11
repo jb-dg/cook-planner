@@ -8,6 +8,8 @@ import {
   View,
 } from "react-native";
 
+import PhysicalButton from "./PhysicalButton";
+
 import { useAuth } from "../contexts/AuthContext";
 import {
   validateConfirmPassword,
@@ -110,22 +112,6 @@ export default function AuthForm() {
           fontSize: t.typography.size.bodySmall,
           fontWeight: t.typography.weight.semibold,
         },
-        primaryButton: {
-          backgroundColor: t.components.button.primary.backgroundColor,
-          borderRadius: 18,
-          paddingVertical: 18,
-          alignItems: "center",
-          shadowColor: "#8B4513",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 1,
-          shadowRadius: 0,
-          elevation: 4,
-        },
-        primaryButtonDisabled: {
-          backgroundColor: t.colors.borderSubtle,
-          shadowOpacity: 0,
-          elevation: 0,
-        },
         buttonText: {
           color: t.components.button.primary.textColor,
           fontWeight: "800",
@@ -211,11 +197,9 @@ export default function AuthForm() {
       {message ? <Text style={s.message}>{message}</Text> : null}
 
       {/* Primary CTA */}
-      <Pressable
-        disabled={!canSubmit}
+      <PhysicalButton
         onPress={handleSubmit}
-        style={[s.primaryButton, !canSubmit && s.primaryButtonDisabled]}
-        accessibilityRole="button"
+        disabled={!canSubmit}
       >
         {submitting ? (
           <ActivityIndicator color={t.components.button.primary.textColor} />
@@ -224,7 +208,7 @@ export default function AuthForm() {
             {mode === "signin" ? "Se connecter" : "Créer mon compte"}
           </Text>
         )}
-      </Pressable>
+      </PhysicalButton>
 
       {/* Mode switch */}
       <Pressable
