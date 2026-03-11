@@ -93,15 +93,6 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="HearthWeeklyPlanner"
-        options={{
-          title: "HWP",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="book-open" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="profile"
         options={{
           title: "Profil",
