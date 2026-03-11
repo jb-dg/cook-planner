@@ -1,10 +1,10 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { spacing } from "../../../theme/design";
-import { DayPlan, MealKey } from "../utils/types";
 import { MEAL_SLOTS } from "../utils/constants";
+import { DayPlan, MealKey } from "../utils/types";
 
 type Props = {
   days: DayPlan[];
@@ -39,7 +39,7 @@ export const ListView = ({
             !!(
               (dayData as Record<MealKey, { recipe?: string }>)[slot.key]
                 ?.recipe ?? ""
-            ).trim()
+            ).trim(),
         ).length;
         const isComplete = filledCount === MEAL_SLOTS.length;
         const abbrev = format(dayDate, "EEE", { locale: fr })
@@ -58,7 +58,12 @@ export const ListView = ({
               hitSlop={6}
               onPress={() => onSelectDate(dayDate)}
             >
-              <Text style={[styles.dayAbbrev, (isActive || isComplete) && styles.dayAbbrevAccent]}>
+              <Text
+                style={[
+                  styles.dayAbbrev,
+                  (isActive || isComplete) && styles.dayAbbrevAccent,
+                ]}
+              >
                 {abbrev}
               </Text>
               <Text style={styles.dayNum}>{dateNum}</Text>
@@ -68,33 +73,59 @@ export const ListView = ({
             {/* Soft card */}
             <View style={[styles.softCard, isActive && styles.softCardActive]}>
               {/* Status chip */}
-              <View style={[styles.statusChip, isComplete && styles.statusChipComplete]}>
-                <Text style={[styles.statusText, isComplete && styles.statusTextComplete]}>
-                  {isComplete ? "Complet" : `${filledCount}/${MEAL_SLOTS.length}`}
+              <View
+                style={[
+                  styles.statusChip,
+                  isComplete && styles.statusChipComplete,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusText,
+                    isComplete && styles.statusTextComplete,
+                  ]}
+                >
+                  {isComplete
+                    ? "Complet"
+                    : `${filledCount}/${MEAL_SLOTS.length}`}
                 </Text>
               </View>
 
               {/* Meal rows */}
               <View style={styles.meals}>
                 {MEAL_SLOTS.map((slot) => {
-                  const meal = (dayData as Record<MealKey, { recipe?: string }>)[
-                    slot.key
-                  ] ?? { recipe: "" };
+                  const meal = (
+                    dayData as Record<MealKey, { recipe?: string }>
+                  )[slot.key] ?? { recipe: "" };
                   const filled = !!meal.recipe?.trim();
                   const isLunch = slot.key === "lunch";
 
                   return (
                     <View key={slot.key} style={styles.mealRow}>
-                      <Text style={[styles.mealLabel, !isLunch && styles.mealLabelDinner]}>
+                      <Text
+                        style={[
+                          styles.mealLabel,
+                          !isLunch && styles.mealLabelDinner,
+                        ]}
+                      >
                         {isLunch ? "Déjeuner" : "Dîner"}
                       </Text>
-                      <View style={[styles.inputRow, filled && styles.inputRowFilled]}>
+                      <View
+                        style={[
+                          styles.inputRow,
+                          filled && styles.inputRowFilled,
+                        ]}
+                      >
                         <TextInput
                           value={meal.recipe}
-                          onChangeText={(value) => onDayChange(dayIndex, slot.key, value)}
+                          onChangeText={(value) =>
+                            onDayChange(dayIndex, slot.key, value)
+                          }
                           onBlur={onBlur}
                           editable={!syncing}
-                          placeholder={isLunch ? "Ajouter un déjeuner" : "Ajouter un dîner"}
+                          placeholder={
+                            isLunch ? "Ajouter un déjeuner" : "Ajouter un dîner"
+                          }
                           placeholderTextColor="#A5A58D"
                           style={[styles.input, filled && styles.inputFilled]}
                         />
@@ -170,7 +201,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.13,
     shadowRadius: 30,
-    elevation: 4,
+    elevation: 0,
   },
   softCardActive: {
     borderColor: "rgba(188, 108, 37, 0.25)",
