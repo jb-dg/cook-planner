@@ -145,40 +145,40 @@ type Palette = Theme["colors"];
 
 const palette: Record<ColorMode, Palette> = {
   light: {
-    primary: "#D97757", // terracotta-500
-    primarySoft: "#F4DDCF", // light clay wash
+    primary: "#BC6C25", // Hearth Accent
+    primarySoft: "#F2E0CB", // warm tint of accent
     primaryOn: "#FFFFFF",
-    accent: "#8A9A5B", // sage-500
-    accentOn: "#FDFBF7",
-    bg: "#FDFBF7", // stone-50
+    accent: "#6B705C", // Hearth Sage
+    accentOn: "#FDF8F1", // Hearth Cream
+    bg: "#FDF8F1", // Hearth Cream
     surface: "#FFFFFF",
-    surfaceAlt: "#F5F0E6", // stone-100
-    textPrimary: "#423A32", // stone-900
-    textSecondary: "#5C5042", // stone-800
-    textMuted: "#8C7B63", // stone-600
-    borderSubtle: "#E6DCC9", // stone-200
-    borderStrong: "#D1C2A5", // stone-300
+    surfaceAlt: "#F5EFE4", // warm alt surface
+    textPrimary: "#2D2D2A", // Hearth Warm Black
+    textSecondary: "#4A4540",
+    textMuted: "#6B705C", // Hearth Sage
+    borderSubtle: "#E4D9C8", // warm subtle border
+    borderStrong: "#CFC1A8", // warm strong border
     error: "#C75252",
     success: "#5F6F41", // sage-700
-    overlay: "rgba(66, 58, 50, 0.55)",
+    overlay: "rgba(45, 45, 42, 0.55)",
   },
   dark: {
-    primary: "#E89A7D",
-    primarySoft: "#3B2A25",
-    primaryOn: "#0F0B0A",
-    accent: "#A5B97A",
-    accentOn: "#0F0B0A",
-    bg: "#17120F",
-    surface: "#1F1915",
-    surfaceAlt: "#2A231E",
-    textPrimary: "#F6F1E8",
-    textSecondary: "#D7CCBD",
-    textMuted: "#B9AA93",
-    borderSubtle: "#3B3129",
-    borderStrong: "#5A4C40",
+    primary: "#DDA15E", // Hearth Soft (lighter for dark)
+    primarySoft: "#3D2A14",
+    primaryOn: "#0F0A06",
+    accent: "#A5A58D", // Hearth Clay (lighter in dark)
+    accentOn: "#0F0A06",
+    bg: "#1A1510", // very dark warm brown
+    surface: "#241C15",
+    surfaceAlt: "#2E2420",
+    textPrimary: "#F5EFE4", // warm white
+    textSecondary: "#D4C9B8",
+    textMuted: "#A5A58D", // Hearth Clay
+    borderSubtle: "#3D3228",
+    borderStrong: "#5A4A38",
     error: "#D27A6B",
     success: "#9FB476",
-    overlay: "rgba(12, 9, 8, 0.65)",
+    overlay: "rgba(12, 8, 4, 0.65)",
   },
 };
 

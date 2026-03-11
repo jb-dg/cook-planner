@@ -1,32 +1,28 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
 import { addDays, format, getISOWeek, getYear, startOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect, useRouter } from "expo-router";
 
+import PhysicalButton from "../../components/PhysicalButton";
 import { useAuth } from "../../contexts/AuthContext";
-import { supabase } from "../../lib/supabase";
 import { fetchHouseholdScope } from "../../lib/households";
-import { colors, radii, shadows, spacing } from "../../theme/design";
-
-const quickActions = [
-  { title: "Générer ma semaine", icon: "⚡", tone: "primary" as const },
-  { title: "Ajouter un repas", icon: "+", tone: "secondary" as const },
-  { title: "Voir ma liste de courses", icon: "☑︎", tone: "secondary" as const },
-];
+import { supabase } from "../../lib/supabase";
+import { colors, spacing } from "../../theme/design";
 
 export default function HomeScreen() {
   const { session } = useAuth();
   const router = useRouter();
   const weekStart = useMemo(
     () => startOfWeek(new Date(), { weekStartsOn: 1 }),
-    []
+    [],
   );
+  const weekNumber = getISOWeek(weekStart);
   const weekLabel = `${format(weekStart, "d MMM", { locale: fr })} – ${format(
     addDays(weekStart, 6),
     "d MMM",
-    { locale: fr }
+    { locale: fr },
   )}`;
   const username = session?.user.email?.split("@")[0] ?? "Chef";
   const [planProgress, setPlanProgress] = useState({
@@ -48,7 +44,7 @@ export default function HomeScreen() {
       setProgressError(null);
       try {
         const scope = await fetchHouseholdScope(session.user.id);
-        const weekNumber = getISOWeek(weekStart);
+        const wn = getISOWeek(weekStart);
         const month = format(weekStart, "MMMM", { locale: fr });
         const year = getYear(weekStart);
 
@@ -57,7 +53,7 @@ export default function HomeScreen() {
           .select("days")
           .eq(scope.filterColumn, scope.filterValue)
           .eq("year", year)
-          .eq("week_number", weekNumber)
+          .eq("week_number", wn)
           .eq("month", month)
           .limit(1)
           .maybeSingle();
@@ -66,7 +62,7 @@ export default function HomeScreen() {
           throw error;
         }
 
-        const slots: Array<"lunch" | "dinner"> = ["lunch", "dinner"];
+        const slots: ("lunch" | "dinner")[] = ["lunch", "dinner"];
         const days =
           (data?.days as
             | { lunch?: { recipe?: string }; dinner?: { recipe?: string } }[]
@@ -96,13 +92,12 @@ export default function HomeScreen() {
         }
       }
     },
-    [session, weekStart]
+    [session, weekStart],
   );
 
   useEffect(() => {
     let cancelled = false;
     loadProgress({ cancelled });
-
     return () => {
       cancelled = true;
     };
@@ -115,7 +110,7 @@ export default function HomeScreen() {
       return () => {
         cancelRef.cancelled = true;
       };
-    }, [loadProgress])
+    }, [loadProgress]),
   );
 
   const missingMeals = Math.max(planProgress.total - planProgress.filled, 0);
@@ -126,71 +121,82 @@ export default function HomeScreen() {
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.topBar}>
-          <View style={styles.topBarText}>
-            <Text style={styles.metaLabel}>Cette semaine</Text>
-            <Text style={styles.heading}>Bonjour {username}</Text>
+        {/* Dashboard header — mirrors HTML dashboard header */}
+        <View style={styles.dashboardHeader}>
+          <View style={styles.headerMeta}>
+            <View style={styles.weekBadge}>
+              <Text style={styles.weekBadgeText}>Semaine {weekNumber}</Text>
+            </View>
           </View>
+          <Text style={styles.heading}>{weekLabel}</Text>
+          <Text style={styles.subHeading}>Bonjour, {username}</Text>
         </View>
 
+        {/* Progress soft-card — mirrors the HTML's `.soft-card` */}
         <Pressable
-          style={styles.heroCard}
+          style={styles.softCard}
           onPress={() => router.push("/planner")}
         >
-          <View style={styles.heroHeader}>
+          <View style={styles.progressHeader}>
             <View>
-              <Text style={styles.heroLabel}>Semaine du {weekLabel}</Text>
-              <Text style={styles.heroTitle}>
+              <Text style={styles.progressLabel}>Semaine en cours</Text>
+              <Text style={styles.progressTitle}>
                 {progressLoading
                   ? "Calcul en cours…"
-                  : `${planProgress.percent} % des repas planifiés`}
+                  : `${planProgress.percent}% planifiés`}
               </Text>
             </View>
-            <Text style={styles.heroPercent}>
+            <Text style={styles.progressPercent}>
               {progressLoading ? "…" : `${planProgress.percent}%`}
             </Text>
           </View>
-          <View style={styles.progressBar}>
+
+          <View style={styles.progressTrack}>
             <View
               style={[
-                styles.progressIndicator,
-                { width: `${planProgress.percent}%` },
+                styles.progressFill,
+                { width: `${planProgress.percent}%` as any },
               ]}
             />
           </View>
-          <Text style={styles.heroFoot}>
-            {progressError ? progressError : `${missingMeals} repas manquants`}
-          </Text>
+
+          <View style={styles.progressFooter}>
+            <Text style={styles.progressFooterText}>
+              {progressError
+                ? progressError
+                : `${missingMeals} repas manquants`}
+            </Text>
+            <Text style={styles.footerLinkText}>Voir le planning →</Text>
+          </View>
         </Pressable>
 
-        {/* <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Actions rapides</Text>
-        </View>
-        <View style={styles.actionsGrid}>
-          {quickActions.map((action) => (
-            <Pressable
-              key={action.title}
+        {/* Stats row */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{planProgress.filled}</Text>
+            <Text style={styles.statLabel}>Prêts</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text
               style={[
-                styles.actionCard,
-                action.tone === "primary"
-                  ? styles.actionCardPrimary
-                  : styles.actionCardSecondary,
+                styles.statValue,
+                missingMeals > 0 && styles.statValueAccent,
               ]}
             >
-              <Text style={styles.actionIcon}>{action.icon}</Text>
-              <Text
-                style={[
-                  styles.actionText,
-                  action.tone === "primary"
-                    ? styles.actionTextPrimary
-                    : styles.actionTextSecondary,
-                ]}
-              >
-                {action.title}
-              </Text>
-            </Pressable>
-          ))}
-        </View> */}
+              {missingMeals}
+            </Text>
+            <Text style={styles.statLabel}>À planifier</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{planProgress.total}</Text>
+            <Text style={styles.statLabel}>Total</Text>
+          </View>
+        </View>
+
+        {/* Physical CTA button — mirrors `.btn-physical` from HTML */}
+        <PhysicalButton onPress={() => router.push("/planner")}>
+          <Text style={styles.physicalCtaText}>Ouvrir mon planning</Text>
+        </PhysicalButton>
       </ScrollView>
     </SafeAreaView>
   );
@@ -206,189 +212,139 @@ const styles = StyleSheet.create({
     gap: spacing.base * 2,
     paddingBottom: 140,
   },
-  topBar: {
+  dashboardHeader: {
+    gap: 6,
+  },
+  headerMeta: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 4,
   },
-  topBarText: {
-    gap: 4,
+  weekBadge: {
+    backgroundColor: "rgba(188, 108, 37, 0.1)",
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
   },
-  metaLabel: {
+  weekBadgeText: {
+    color: "#BC6C25",
+    fontWeight: "700",
     fontSize: 12,
-    color: colors.muted,
     textTransform: "uppercase",
-    fontWeight: "600",
-    letterSpacing: 0.4,
+    letterSpacing: 1,
   },
   heading: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: colors.text,
+    fontSize: 36,
+    fontWeight: "900",
+    color: "#2D2D2A",
+    letterSpacing: -0.5,
+    lineHeight: 40,
   },
-  subTitle: {
-    color: colors.muted,
-    fontSize: 14,
+  subHeading: {
+    fontSize: 15,
+    color: "#6B705C",
+    fontWeight: "500",
   },
-  topBadge: {
-    width: 56,
-    height: 56,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surface,
+  softCard: {
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    borderRadius: 32,
+    padding: 24,
+    gap: spacing.base * 1.2,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    alignItems: "center",
-    justifyContent: "center",
+    borderColor: "rgba(255, 255, 255, 0.9)",
+    shadowColor: "rgba(107, 112, 92, 1)",
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.15,
+    shadowRadius: 40,
   },
-  topBadgeText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: colors.accent,
-  },
-  heroCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.card,
-    gap: spacing.base,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    ...shadows.soft,
-  },
-  heroHeader: {
+  progressHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  heroLabel: {
-    color: colors.muted,
-    fontSize: 13,
-  },
-  heroTitle: {
-    color: colors.text,
-    fontSize: 20,
+  progressLabel: {
+    color: "#A5A58D",
+    fontSize: 12,
     fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
-  heroPercent: {
-    color: colors.accent,
+  progressTitle: {
+    color: "#2D2D2A",
+    fontSize: 18,
     fontWeight: "700",
-    fontSize: 26,
+    marginTop: 2,
   },
-  progressBar: {
+  progressPercent: {
+    color: "#BC6C25",
+    fontWeight: "900",
+    fontSize: 36,
+    letterSpacing: -1,
+  },
+  progressTrack: {
     height: 6,
-    backgroundColor: colors.surfaceAlt,
+    backgroundColor: "#F5EFE4",
     borderRadius: 999,
+    overflow: "hidden",
   },
-  progressIndicator: {
+  progressFill: {
     height: "100%",
-    backgroundColor: colors.accent,
+    backgroundColor: "#BC6C25",
     borderRadius: 999,
   },
-  heroFoot: {
-    color: colors.muted,
+  progressFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  progressFooterText: {
+    color: "#6B705C",
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  footerLinkText: {
+    color: "#BC6C25",
+    fontWeight: "700",
     fontSize: 13,
   },
-  sectionHeader: {
+  statsRow: {
     flexDirection: "row",
+    gap: spacing.base,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    borderRadius: 20,
+    padding: 16,
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.9)",
+    shadowColor: "rgba(107, 112, 92, 1)",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
   },
-  sectionHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: spacing.base,
+  statValue: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#2D2D2A",
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: colors.text,
+  statValueAccent: {
+    color: "#BC6C25",
   },
-  sectionLink: {
-    color: colors.accent,
+  statLabel: {
+    fontSize: 10,
     fontWeight: "600",
+    color: "#6B705C",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    textAlign: "center",
   },
-  actionsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.base,
-  },
-  actionCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    flexBasis: "48%",
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.surface,
-    ...shadows.card,
-  },
-  actionCardPrimary: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
-  },
-  actionCardSecondary: {
-    backgroundColor: colors.surfaceAlt,
-  },
-  actionIcon: {
-    fontSize: 18,
-    color: colors.text,
-  },
-  actionText: {
-    fontWeight: "700",
-    color: colors.text,
-    flexShrink: 1,
-  },
-  actionTextPrimary: {
-    color: "#fff",
-  },
-  actionTextSecondary: {
-    color: colors.text,
-  },
-  suggestionRow: {
-    gap: spacing.base,
-    paddingVertical: 4,
-  },
-  suggestionCard: {
-    width: 200,
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    padding: 12,
-    gap: 8,
-    ...shadows.card,
-  },
-  suggestionImage: {
-    width: "100%",
-    height: 120,
-    borderRadius: radii.md,
-  },
-  suggestionTitle: {
-    color: colors.text,
-    fontWeight: "700",
+  physicalCtaText: {
+    color: "#FFFFFF",
+    fontWeight: "800",
     fontSize: 16,
-  },
-  suggestionMeta: {
-    color: colors.muted,
-    fontSize: 12,
-  },
-  tagRow: {
-    flexDirection: "row",
-    gap: 8,
-    flexWrap: "wrap",
-  },
-  tagChip: {
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: colors.surfaceAlt,
-  },
-  tagChipText: {
-    color: colors.text,
-    fontWeight: "600",
-    fontSize: 12,
+    letterSpacing: 0.3,
   },
 });

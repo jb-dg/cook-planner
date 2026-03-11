@@ -9,7 +9,8 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <LinearGradient
-        colors={["#ffffff", colors.background]}
+        colors={["#FDF8F1", "#F5EFE4", "#FDF8F1"]}
+        locations={[0, 0.5, 1]}
         style={styles.gradient}
       >
         <Stack

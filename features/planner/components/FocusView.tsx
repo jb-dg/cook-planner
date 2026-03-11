@@ -1,12 +1,11 @@
-import { ComponentProps, useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Session } from "@supabase/supabase-js";
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Session } from "@supabase/supabase-js";
-import { colors, radii, shadows, spacing } from "../../../theme/design";
-import { DayPlan, MealKey } from "../utils/types";
+import { useMemo } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { spacing } from "../../../theme/design";
 import { MEAL_SLOTS } from "../utils/constants";
+import { DayPlan, MealKey } from "../utils/types";
 import { DayMealCard } from "./DayMealCard";
 
 type Props = {
@@ -20,6 +19,7 @@ type Props = {
   recipesLoading: boolean;
   onDayChange: (dayIndex: number, meal: MealKey, value: string) => void;
   onOpenRecipePicker: (dayIndex: number, meal: MealKey) => void;
+  onBlur: () => void;
 };
 
 export const FocusView = ({
@@ -33,24 +33,28 @@ export const FocusView = ({
   recipesLoading,
   onDayChange,
   onOpenRecipePicker,
+  onBlur,
 }: Props) => {
   const dayColumns = useMemo(
     () =>
       days.map((item, index) => ({
         ...item,
-        shortLabel: format(addDays(referenceDate, index), "EEE d MMM", {
-          locale: fr,
-        }).replace(".", ""),
+        dayDate: addDays(referenceDate, index),
+        abbrev: format(addDays(referenceDate, index), "EEE", { locale: fr })
+          .replace(".", "")
+          .toUpperCase()
+          .slice(0, 3),
+        dateNum: format(addDays(referenceDate, index), "d", { locale: fr }),
       })),
-    [referenceDate, days]
+    [referenceDate, days],
   );
 
   const selectedDayIndex = useMemo(() => {
-    const index = dayColumns.findIndex((_, dayIndex) =>
-      isSameDay(addDays(referenceDate, dayIndex), selectedDate)
+    const index = dayColumns.findIndex((col) =>
+      isSameDay(col.dayDate, selectedDate),
     );
     return index >= 0 ? index : 0;
-  }, [dayColumns, referenceDate, selectedDate]);
+  }, [dayColumns, selectedDate]);
 
   const day = dayColumns[selectedDayIndex];
   const dayData = days[selectedDayIndex] || {};
@@ -59,176 +63,179 @@ export const FocusView = ({
       !!(
         (dayData as Record<MealKey, { recipe?: string }>)[slot.key]?.recipe ??
         ""
-      ).trim()
+      ).trim(),
   ).length;
-  const missingMeals = Math.max(MEAL_SLOTS.length - filledCount, 0);
-  const dayStatusIcon: ComponentProps<typeof Feather>["name"] =
-    missingMeals === 0 ? "check" : "alert-circle";
+  const isComplete = filledCount === MEAL_SLOTS.length;
 
   return (
-    <View style={styles.dayList}>
-      <View style={[styles.modernDayCard, styles.modernDayCardActive]}>
-        <View style={styles.modernDayHeader}>
-          <View style={styles.modernDayHeaderMain}>
-            <View style={styles.modernDayInfo}>
-              <Text style={styles.modernDayDate}>{day.shortLabel}</Text>
-            </View>
-            <View
+    <View style={styles.container}>
+      {/* Day row: badge left + soft-card right */}
+
+      <View style={styles.dayRow}>
+        {/* Day badge — inspired by the HTML left column */}
+        {/* <View style={styles.dayBadge}>
+          <Text
+            style={[styles.dayAbbrev, isComplete && styles.dayAbbrevComplete]}
+          >
+            {day.abbrev}
+          </Text>
+          <Text style={styles.dayNum}>{day.dateNum}</Text>
+          {isComplete && <View style={styles.completeDot} />}
+        </View> */}
+
+        {/* Soft card: meal slots */}
+        <View style={styles.softCard}>
+          {/* Status chip */}
+          <View
+            style={[styles.statusChip, isComplete && styles.statusChipComplete]}
+          >
+            <Text
               style={[
-                styles.modernDayProgressBadge,
-                missingMeals === 0 && styles.modernDayProgressBadgeComplete,
+                styles.statusText,
+                isComplete && styles.statusTextComplete,
               ]}
             >
-              <Feather
-                name={dayStatusIcon}
-                size={12}
-                color={missingMeals === 0 ? "#FFF" : colors.text}
-              />
-              <Text
-                style={[
-                  styles.modernDayProgressText,
-                  missingMeals === 0 &&
-                    styles.modernDayProgressTextComplete,
-                ]}
-              >
-                {filledCount}/{MEAL_SLOTS.length} repas
-              </Text>
-            </View>
+              {isComplete
+                ? "Complet ✓"
+                : `${filledCount}/${MEAL_SLOTS.length} repas`}
+            </Text>
           </View>
-        </View>
 
-        <View style={styles.modernMealList}>
-          {MEAL_SLOTS.map((slot) => {
-            const mealData = (dayData as Record<MealKey, { recipe?: string }>)[
-              slot.key
-            ];
-            const meal = { recipe: mealData?.recipe ?? "" };
-            return (
-              <DayMealCard
-                key={slot.key}
-                slot={slot}
-                meal={meal}
-                session={session}
-                recipesLength={recipesLength}
-                syncing={syncing}
-                saving={saving}
-                recipesLoading={recipesLoading}
-                onChangeText={(value) =>
-                  onDayChange(selectedDayIndex, slot.key, value)
-                }
-                onOpenRecipePicker={() =>
-                  onOpenRecipePicker(selectedDayIndex, slot.key)
-                }
-              />
-            );
-          })}
-        </View>
-
-        {((dayData as DayPlan).notes ?? "").trim() ? (
-          <View style={styles.modernDayNote}>
-            <Feather name="file-text" size={14} color={colors.muted} />
-            <View style={styles.modernDayNoteContent}>
-              <Text style={styles.modernDayNoteLabel}>Note</Text>
-              <Text style={styles.modernDayNoteText}>
-                {(dayData as DayPlan).notes}
-              </Text>
-            </View>
+          {/* Meal slots */}
+          <View style={styles.mealGrid}>
+            {MEAL_SLOTS.map((slot) => {
+              const mealData = (
+                dayData as Record<MealKey, { recipe?: string }>
+              )[slot.key];
+              const meal = { recipe: mealData?.recipe ?? "" };
+              return (
+                <DayMealCard
+                  key={slot.key}
+                  slot={slot}
+                  meal={meal}
+                  session={session}
+                  recipesLength={recipesLength}
+                  syncing={syncing}
+                  saving={saving}
+                  recipesLoading={recipesLoading}
+                  onChangeText={(value) =>
+                    onDayChange(selectedDayIndex, slot.key, value)
+                  }
+                  onBlur={onBlur}
+                  onOpenRecipePicker={() =>
+                    onOpenRecipePicker(selectedDayIndex, slot.key)
+                  }
+                />
+              );
+            })}
           </View>
-        ) : null}
+
+          {((dayData as DayPlan).notes ?? "").trim() ? (
+            <View style={styles.noteBox}>
+              <Text style={styles.noteLabel}>Note</Text>
+              <Text style={styles.noteText}>{(dayData as DayPlan).notes}</Text>
+            </View>
+          ) : null}
+        </View>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  dayList: {
-    gap: spacing.base * 1.5,
-    alignItems: "center",
-  },
-  modernDayCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    gap: spacing.base * 1.5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    width: "100%",
-    maxWidth: 720,
-  },
-  modernDayCardActive: {
-    borderColor: colors.cardBorder,
-  },
-  modernDayHeader: {
-    gap: spacing.base * 0.75,
-  },
-  modernDayHeaderMain: {
-    flexDirection: "row",
-    alignItems: "center",
+  container: {
     gap: spacing.base,
   },
-  modernDayInfo: {
-    flex: 1,
-    gap: 2,
-  },
-  modernDayDate: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: colors.text,
-    textTransform: "capitalize",
-  },
-  modernDayProgressBadge: {
+  dayRow: {
     flexDirection: "row",
+    gap: spacing.base,
+    alignItems: "flex-start",
+  },
+  dayBadge: {
+    width: 52,
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
+    gap: 2,
+    paddingTop: 20,
+    flexShrink: 0,
   },
-  modernDayProgressBadgeComplete: {
-    backgroundColor: colors.accentSecondary,
-    borderColor: colors.accentSecondary,
+  dayAbbrev: {
+    fontSize: 22,
+    fontWeight: "900",
+    color: "#2D2D2A",
+    letterSpacing: -0.5,
   },
-  modernDayProgressText: {
+  dayAbbrevComplete: {
+    color: "#BC6C25",
+  },
+  dayNum: {
     fontSize: 13,
     fontWeight: "700",
-    color: colors.text,
+    color: "#A5A58D",
+    letterSpacing: 1,
   },
-  modernDayProgressTextComplete: {
-    color: "#FFF",
+  completeDot: {
+    marginTop: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: "#BC6C25",
   },
-  modernMealList: {
+  softCard: {
+    flex: 1,
+    backgroundColor: "rgba(255, 255, 255, 0.82)",
+    borderRadius: 32,
+    padding: 20,
+    gap: spacing.base * 1.2,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    shadowColor: "rgba(107, 112, 92, 1)",
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.15,
+    shadowRadius: 40,
+    elevation: 6,
+  },
+  statusChip: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: "#F5EFE4",
+    borderWidth: 1,
+    borderColor: "#E4D9C8",
+  },
+  statusChipComplete: {
+    backgroundColor: "rgba(188, 108, 37, 0.1)",
+    borderColor: "rgba(188, 108, 37, 0.22)",
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#6B705C",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  statusTextComplete: {
+    color: "#BC6C25",
+  },
+  mealGrid: {
     gap: spacing.base,
   },
-  modernDayNote: {
-    flexDirection: "row",
-    gap: spacing.base * 0.75,
-    padding: spacing.base,
-    borderRadius: radii.md,
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  modernDayNoteContent: {
-    flex: 1,
+  noteBox: {
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: "#F5EFE4",
     gap: 4,
   },
-  modernDayNoteLabel: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: colors.text,
+  noteLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#A5A58D",
     textTransform: "uppercase",
+    letterSpacing: 1,
   },
-  modernDayNoteText: {
+  noteText: {
     fontSize: 13,
-    color: colors.muted,
+    color: "#6B705C",
     lineHeight: 18,
   },
 });

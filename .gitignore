@@ -44,3 +44,10 @@ app-example
 /android
 
 eas.json
+
+#.md
+PLANNER_MODERN_MIGRATION.md
+design-system-refonte.md
+
+#.html
+weekly_planner_dashboard.html
