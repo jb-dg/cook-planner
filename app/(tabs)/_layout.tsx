@@ -6,7 +6,7 @@ import { ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../../contexts/AuthContext";
-import { colors, radii } from "../../theme/design";
+import { radii } from "../../theme/design";
 
 export default function TabsLayout() {
   const { session, initializing } = useAuth();
@@ -87,6 +87,15 @@ export default function TabsLayout() {
         name="recipes"
         options={{
           title: "Recettes",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="book-open" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="HearthWeeklyPlanner"
+        options={{
+          title: "HWP",
           tabBarIcon: ({ color, size }) => (
             <Feather name="book-open" color={color} size={size} />
           ),

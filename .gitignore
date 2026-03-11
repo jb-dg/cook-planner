@@ -38,6 +38,7 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+app/(tabs)/HearthWeeklyPlanner.tsx
 
 # generated native folders
 /ios

@@ -1,7 +1,20 @@
 import { Feather } from "@expo/vector-icons";
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+
+const shadowSoftCard = Platform.select({
+  ios: {
+    shadowColor: "#6B705C",
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.15,
+    shadowRadius: 25,
+  },
+  android: {
+    elevation: 4,
+  },
+  default: {},
+});
 import { spacing } from "../../../theme/design";
 import { MEAL_SLOTS } from "../utils/constants";
 import { DayPlan, MealKey } from "../utils/types";
@@ -197,11 +210,7 @@ const styles = StyleSheet.create({
     gap: spacing.base,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.95)",
-    shadowColor: "rgba(107, 112, 92, 1)",
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.13,
-    shadowRadius: 30,
-    elevation: 0,
+    ...shadowSoftCard,
   },
   softCardActive: {
     borderColor: "rgba(188, 108, 37, 0.25)",

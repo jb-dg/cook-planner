@@ -1,9 +1,30 @@
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { Session } from "@supabase/supabase-js";
+import { useState } from "react";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { spacing } from "../../../theme/design";
 import { MealKey } from "../utils/types";
+
+const shadowCard = Platform.select({
+  ios: {
+    shadowColor: "#000",
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  android: {
+    elevation: 4,
+    shadowColor: "#000",
+  },
+  default: {},
+});
 
 type Props = {
   slot: { key: MealKey; label: string };
@@ -46,7 +67,16 @@ export const DayMealCard = ({
   };
 
   return (
-    <View style={[styles.slot, showAsFilled ? styles.slotFilled : styles.slotEmpty]}>
+    <View
+      style={[
+        styles.mealCard,
+        showAsFilled
+          ? isLunch
+            ? styles.mealCardLunch
+            : styles.mealCardDinner
+          : styles.mealCardEmpty,
+      ]}
+    >
       {/* Slot header */}
       <View style={styles.slotHeader}>
         <Text style={[styles.slotLabel, !isLunch && styles.slotLabelDinner]}>
@@ -57,7 +87,10 @@ export const DayMealCard = ({
             hitSlop={10}
             onPress={onOpenRecipePicker}
             disabled={recipesLoading}
-            style={[styles.recipeBtn, (!session || recipesLoading) && styles.recipeBtnDisabled]}
+            style={[
+              styles.recipeBtn,
+              (!session || recipesLoading) && styles.recipeBtnDisabled,
+            ]}
           >
             <Feather name="edit-2" size={14} color="#BC6C25" />
           </Pressable>
@@ -101,7 +134,9 @@ export const DayMealCard = ({
           <View style={styles.dotRow}>
             <View style={[styles.dot, { backgroundColor: dotColor }]} />
             <View style={[styles.dot, { backgroundColor: dotColor }]} />
-            {!isLunch && <View style={[styles.dot, { backgroundColor: dotColor }]} />}
+            {!isLunch && (
+              <View style={[styles.dot, { backgroundColor: dotColor }]} />
+            )}
           </View>
         )}
       </View>
@@ -110,40 +145,45 @@ export const DayMealCard = ({
 };
 
 const styles = StyleSheet.create({
-  slot: {
-    borderRadius: 24,
-    padding: 20,
+  // mealCard mirrors HearthWeeklyPlanner's mealCard
+  mealCard: {
+    borderRadius: 32,
+    paddingHorizontal: 28,
+    paddingTop: 28,
+    paddingBottom: 22,
+    minHeight: 136,
     gap: spacing.base,
   },
-  slotEmpty: {
-    borderWidth: 2,
-    borderStyle: "dashed",
-    borderColor: "rgba(165, 165, 141, 0.4)",
-    backgroundColor: "rgba(255,255,255,0.6)",
+  mealCardLunch: {
+    backgroundColor: "#FBFBFA",
+    ...shadowCard,
   },
-  slotFilled: {
-    borderWidth: 0,
-    backgroundColor: "#FFFFFF",
-    shadowColor: "rgba(107, 112, 92, 1)",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 2,
+  mealCardDinner: {
+    backgroundColor: "#F4F0EA",
+    ...shadowCard,
+  },
+  mealCardEmpty: {
+    backgroundColor: "rgba(255,255,255,0.42)",
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: "rgba(184,179,164,0.28)",
   },
   slotHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
+  // slotLabel mirrors mealLabelMuted / mealLabelAccent
   slotLabel: {
-    fontSize: 10,
-    fontWeight: "800",
+    fontSize: 14,
+    lineHeight: 16,
+    fontWeight: "900",
+    letterSpacing: 3.1,
     textTransform: "uppercase",
-    letterSpacing: 1.5,
-    color: "#A5A58D",
+    color: "#A8A38F",
   },
   slotLabelDinner: {
-    color: "#BC6C25",
+    color: "#BF6B1F",
   },
   recipeBtn: {
     width: 28,

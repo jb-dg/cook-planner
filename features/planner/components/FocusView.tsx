@@ -2,11 +2,24 @@ import { Session } from "@supabase/supabase-js";
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { spacing } from "../../../theme/design";
 import { MEAL_SLOTS } from "../utils/constants";
 import { DayPlan, MealKey } from "../utils/types";
 import { DayMealCard } from "./DayMealCard";
+
+const shadowShell = Platform.select({
+  ios: {
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  // On Android, nested elevation clips child cards — the shell relies on its
+  // background color (#ECE9E4) for visual depth; child mealCards keep elevation: 3.
+  android: { elevation: 4, backgroundColor: "rgb(255, 255, 255)" },
+  default: {},
+});
 
 type Props = {
   days: DayPlan[];
@@ -44,7 +57,9 @@ export const FocusView = ({
           .replace(".", "")
           .toUpperCase()
           .slice(0, 3),
-        dateNum: format(addDays(referenceDate, index), "d", { locale: fr }),
+        dateNum: format(addDays(referenceDate, index), "d MMM", {
+          locale: fr,
+        }).toUpperCase(),
       })),
     [referenceDate, days],
   );
@@ -69,74 +84,65 @@ export const FocusView = ({
 
   return (
     <View style={styles.container}>
-      {/* Day row: badge left + soft-card right */}
+      {/* Day header: abbrev + date — mirrors dayHeader in HearthWeeklyPlanner */}
+      <View style={styles.dayHeader}>
+        <Text style={[styles.dayShort, isComplete && styles.dayShortComplete]}>
+          {day.abbrev}
+        </Text>
+        <Text style={styles.dayDate}>{day.dateNum}</Text>
+        {isComplete && <View style={styles.completeDot} />}
+      </View>
 
-      <View style={styles.dayRow}>
-        {/* Day badge — inspired by the HTML left column */}
-        {/* <View style={styles.dayBadge}>
+      {/* Shell card — mirrors shellCard in HearthWeeklyPlanner */}
+      <View style={styles.shellCard}>
+        {/* Status chip */}
+        <View
+          style={[styles.statusChip, isComplete && styles.statusChipComplete]}
+        >
           <Text
-            style={[styles.dayAbbrev, isComplete && styles.dayAbbrevComplete]}
+            style={[styles.statusText, isComplete && styles.statusTextComplete]}
           >
-            {day.abbrev}
+            {isComplete
+              ? "Complet ✓"
+              : `${filledCount}/${MEAL_SLOTS.length} repas`}
           </Text>
-          <Text style={styles.dayNum}>{day.dateNum}</Text>
-          {isComplete && <View style={styles.completeDot} />}
-        </View> */}
-
-        {/* Soft card: meal slots */}
-        <View style={styles.softCard}>
-          {/* Status chip */}
-          <View
-            style={[styles.statusChip, isComplete && styles.statusChipComplete]}
-          >
-            <Text
-              style={[
-                styles.statusText,
-                isComplete && styles.statusTextComplete,
-              ]}
-            >
-              {isComplete
-                ? "Complet ✓"
-                : `${filledCount}/${MEAL_SLOTS.length} repas`}
-            </Text>
-          </View>
-
-          {/* Meal slots */}
-          <View style={styles.mealGrid}>
-            {MEAL_SLOTS.map((slot) => {
-              const mealData = (
-                dayData as Record<MealKey, { recipe?: string }>
-              )[slot.key];
-              const meal = { recipe: mealData?.recipe ?? "" };
-              return (
-                <DayMealCard
-                  key={slot.key}
-                  slot={slot}
-                  meal={meal}
-                  session={session}
-                  recipesLength={recipesLength}
-                  syncing={syncing}
-                  saving={saving}
-                  recipesLoading={recipesLoading}
-                  onChangeText={(value) =>
-                    onDayChange(selectedDayIndex, slot.key, value)
-                  }
-                  onBlur={onBlur}
-                  onOpenRecipePicker={() =>
-                    onOpenRecipePicker(selectedDayIndex, slot.key)
-                  }
-                />
-              );
-            })}
-          </View>
-
-          {((dayData as DayPlan).notes ?? "").trim() ? (
-            <View style={styles.noteBox}>
-              <Text style={styles.noteLabel}>Note</Text>
-              <Text style={styles.noteText}>{(dayData as DayPlan).notes}</Text>
-            </View>
-          ) : null}
         </View>
+
+        {/* Meal slots */}
+        <View style={styles.mealGrid}>
+          {MEAL_SLOTS.map((slot) => {
+            const mealData = (dayData as Record<MealKey, { recipe?: string }>)[
+              slot.key
+            ];
+            const meal = { recipe: mealData?.recipe ?? "" };
+            return (
+              <DayMealCard
+                key={slot.key}
+                slot={slot}
+                meal={meal}
+                session={session}
+                recipesLength={recipesLength}
+                syncing={syncing}
+                saving={saving}
+                recipesLoading={recipesLoading}
+                onChangeText={(value) =>
+                  onDayChange(selectedDayIndex, slot.key, value)
+                }
+                onBlur={onBlur}
+                onOpenRecipePicker={() =>
+                  onOpenRecipePicker(selectedDayIndex, slot.key)
+                }
+              />
+            );
+          })}
+        </View>
+
+        {((dayData as DayPlan).notes ?? "").trim() ? (
+          <View style={styles.noteBox}>
+            <Text style={styles.noteLabel}>Note</Text>
+            <Text style={styles.noteText}>{(dayData as DayPlan).notes}</Text>
+          </View>
+        ) : null}
       </View>
     </View>
   );
@@ -144,55 +150,50 @@ export const FocusView = ({
 
 const styles = StyleSheet.create({
   container: {
-    gap: spacing.base,
+    gap: 12,
   },
-  dayRow: {
+  // dayHeader mirrors HearthWeeklyPlanner's dayHeader
+  dayHeader: {
     flexDirection: "row",
-    gap: spacing.base,
-    alignItems: "flex-start",
+    alignItems: "baseline",
+    gap: 12,
   },
-  dayBadge: {
-    width: 52,
-    alignItems: "center",
-    gap: 2,
-    paddingTop: 20,
-    flexShrink: 0,
-  },
-  dayAbbrev: {
-    fontSize: 22,
+  dayShort: {
+    fontSize: 34,
+    lineHeight: 38,
     fontWeight: "900",
-    color: "#2D2D2A",
-    letterSpacing: -0.5,
+    letterSpacing: -1.4,
+    color: "#2F2F2C",
   },
-  dayAbbrevComplete: {
-    color: "#BC6C25",
+  dayShortComplete: {
+    color: "#BF6B1F",
   },
-  dayNum: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#A5A58D",
-    letterSpacing: 1,
+  dayDate: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: "800",
+    letterSpacing: 2.3,
+    color: "#A8A38F",
   },
   completeDot: {
-    marginTop: 6,
     width: 8,
     height: 8,
     borderRadius: 999,
     backgroundColor: "#BC6C25",
+    marginLeft: 4,
+    marginBottom: 2,
   },
-  softCard: {
-    flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.82)",
-    borderRadius: 32,
-    padding: 20,
-    gap: spacing.base * 1.2,
+  // shellCard mirrors HearthWeeklyPlanner's shellCard
+  shellCard: {
+    borderRadius: 42,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 18,
+    backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.95)",
-    shadowColor: "rgba(107, 112, 92, 1)",
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.15,
-    shadowRadius: 40,
-    elevation: 0,
+    borderColor: "rgba(255,255,255,0.74)",
+    gap: spacing.base * 1.2,
+    ...shadowShell,
   },
   statusChip: {
     alignSelf: "flex-start",
