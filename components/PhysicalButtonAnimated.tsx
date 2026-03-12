@@ -1,9 +1,20 @@
-import React, { useState } from "react";
-import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
+import React, { useEffect, useRef } from "react";
+import {
+  Animated,
+  Easing,
+  Pressable,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from "react-native";
 import { PhysicalVariant, physicalVariants } from "../theme/shadows";
 
-const DEPTH = 4;
-const BORDER_RADIUS = 18;
+const SHADOW_OFFSET_REST = 4;
+const SHADOW_OFFSET_PRESSED = 1;
+const PRESS_TRANSLATE_Y = SHADOW_OFFSET_REST - SHADOW_OFFSET_PRESSED;
+const BORDER_RADIUS = 16;
+const TRANSITION_DURATION_MS = 200;
+const PRESS_EASING = Easing.bezier(0.175, 0.885, 0.32, 1.275);
 
 interface Props {
   onPress: () => void;
@@ -14,13 +25,6 @@ interface Props {
   children: React.ReactNode;
 }
 
-/**
- * Cross-platform "physical" button with a hard offset shadow.
- *
- * The shadow is a colored wrapper View — visible on both iOS and Android.
- * On press the wrapper's paddingBottom collapses to 0, making the shadow
- * disappear and giving the impression the button sinks into the surface.
- */
 export default function PhysicalButtonAnimated({
   onPress,
   disabled = false,
@@ -28,45 +32,93 @@ export default function PhysicalButtonAnimated({
   innerStyle,
   children,
 }: Props) {
-  const [pressed, setPressed] = useState(false);
+  const pressAnim = useRef(new Animated.Value(0)).current;
   const { bgColor, shadowColor } = physicalVariants[variant];
-  const isPressed = pressed && !disabled;
+
+  useEffect(() => {
+    if (disabled) {
+      pressAnim.stopAnimation();
+      pressAnim.setValue(0);
+    }
+  }, [disabled, pressAnim]);
+
+  const animateTo = (toValue: 0 | 1) => {
+    pressAnim.stopAnimation();
+    Animated.timing(pressAnim, {
+      toValue,
+      duration: TRANSITION_DURATION_MS,
+      easing: PRESS_EASING,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const faceTranslateY = pressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, PRESS_TRANSLATE_Y],
+  });
 
   return (
-    <View
-      style={[
-        styles.wrapper,
-        {
-          backgroundColor: disabled ? "transparent" : shadowColor,
-          borderRadius: BORDER_RADIUS,
-          paddingBottom: isPressed ? 0 : DEPTH,
-        },
-      ]}
-    >
-      <Pressable
-        onPress={onPress}
-        onPressIn={() => setPressed(true)}
-        onPressOut={() => setPressed(false)}
-        disabled={disabled}
+    <View style={styles.wrapper}>
+      <View
+        pointerEvents="none"
         style={[
-          styles.button,
+          styles.shadowBase,
           {
-            backgroundColor: disabled ? "#E4D9C8" : bgColor,
+            backgroundColor: disabled ? "transparent" : shadowColor,
             borderRadius: BORDER_RADIUS,
           },
-          innerStyle,
+        ]}
+      />
+      <Animated.View
+        style={[
+          styles.face,
+          {
+            transform: [{ translateY: faceTranslateY }],
+          },
         ]}
       >
-        {children}
-      </Pressable>
+        <Pressable
+          onPress={onPress}
+          onPressIn={() => !disabled && animateTo(1)}
+          onPressOut={() => !disabled && animateTo(0)}
+          disabled={disabled}
+          style={[
+            styles.button,
+            {
+              backgroundColor: disabled ? "#E4D9C8" : bgColor,
+              borderRadius: BORDER_RADIUS,
+            },
+            innerStyle,
+          ]}
+        >
+          {children}
+        </Pressable>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {},
+  wrapper: {
+    position: "relative",
+    paddingBottom: SHADOW_OFFSET_REST,
+  },
+  shadowBase: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: SHADOW_OFFSET_REST,
+    transform: [{ translateY: SHADOW_OFFSET_REST }],
+  },
+  face: {
+    flex: 1,
+    zIndex: 1,
+  },
   button: {
-    paddingVertical: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     alignItems: "center",
+    justifyContent: "center",
   },
 });
