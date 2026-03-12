@@ -1,9 +1,8 @@
-import { Stack } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
+import { Stack } from "expo-router";
 import { StyleSheet } from "react-native";
 
 import { AuthProvider } from "../contexts/AuthContext";
-import { colors } from "../theme/design";
 
 export default function RootLayout() {
   return (

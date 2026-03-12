@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
 import PhysicalButton from "../../components/PhysicalButton";
 import { useAuth } from "../../contexts/AuthContext";
 import { fetchHouseholdScope } from "../../lib/households";
@@ -197,6 +198,10 @@ export default function HomeScreen() {
         <PhysicalButton onPress={() => router.push("/planner")}>
           <Text style={styles.physicalCtaText}>Ouvrir mon planning</Text>
         </PhysicalButton>
+
+        <PhysicalButtonAnimated onPress={() => router.push("/")}>
+          <Text style={styles.physicalCtaText}>Ouvrir mon planning</Text>
+        </PhysicalButtonAnimated>
       </ScrollView>
     </SafeAreaView>
   );

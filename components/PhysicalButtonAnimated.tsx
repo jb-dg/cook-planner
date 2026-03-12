@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
 import { PhysicalVariant, physicalVariants } from "../theme/shadows";
 
@@ -18,16 +18,19 @@ interface Props {
  * Cross-platform "physical" button with a hard offset shadow.
  *
  * The shadow is a colored wrapper View — visible on both iOS and Android.
- * On press the button translates down to "sink" into the shadow.
+ * On press the wrapper's paddingBottom collapses to 0, making the shadow
+ * disappear and giving the impression the button sinks into the surface.
  */
-export default function PhysicalButton({
+export default function PhysicalButtonAnimated({
   onPress,
   disabled = false,
   variant = "primary",
   innerStyle,
   children,
 }: Props) {
+  const [pressed, setPressed] = useState(false);
   const { bgColor, shadowColor } = physicalVariants[variant];
+  const isPressed = pressed && !disabled;
 
   return (
     <View
@@ -36,19 +39,21 @@ export default function PhysicalButton({
         {
           backgroundColor: disabled ? "transparent" : shadowColor,
           borderRadius: BORDER_RADIUS,
+          paddingBottom: isPressed ? 0 : DEPTH,
         },
       ]}
     >
       <Pressable
         onPress={onPress}
+        onPressIn={() => setPressed(true)}
+        onPressOut={() => setPressed(false)}
         disabled={disabled}
-        style={({ pressed }) => [
+        style={[
           styles.button,
           {
             backgroundColor: disabled ? "#E4D9C8" : bgColor,
             borderRadius: BORDER_RADIUS,
           },
-          pressed && !disabled && styles.buttonPressed,
           innerStyle,
         ]}
       >
@@ -59,14 +64,9 @@ export default function PhysicalButton({
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    paddingBottom: DEPTH,
-  },
+  wrapper: {},
   button: {
     paddingVertical: 18,
     alignItems: "center",
-  },
-  buttonPressed: {
-    transform: [{ translateY: DEPTH }],
   },
 });

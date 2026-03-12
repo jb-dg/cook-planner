@@ -8,18 +8,60 @@ import { MEAL_SLOTS } from "../utils/constants";
 import { DayPlan, MealKey } from "../utils/types";
 import { DayMealCard } from "./DayMealCard";
 
-const shadowShell = Platform.select({
-  ios: {
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-  },
-  // On Android, nested elevation clips child cards — the shell relies on its
-  // background color (#ECE9E4) for visual depth; child mealCards keep elevation: 3.
-  android: { elevation: 4, backgroundColor: "rgb(255, 255, 255)" },
-  default: {},
-});
+// const shadowShell = Platform.select({
+//   ios: {
+//     shadowColor: "#000",
+//     shadowOpacity: 0.08,
+//     shadowRadius: 18,
+//     shadowOffset: { width: 0, height: 8 },
+//   },
+//   // On Android, nested elevation clips child cards — the shell relies on its
+//   // background color (#ECE9E4) for visual depth; child mealCards keep elevation: 3.
+//   android: {
+//     elevation: 4,
+//     backgroundColor: "rgb(255, 255, 255)",
+//   },
+//   default: {},
+// });
+
+const shadowShell = {
+  sm: Platform.select({
+    ios: {
+      shadowColor: "#000",
+      shadowOpacity: 0.06,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+    },
+    android: {},
+    default: {},
+  }),
+  md: Platform.select({
+    ios: {
+      shadowColor: "#000",
+      shadowOpacity: 0.07,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 4 },
+    },
+    android: {
+      elevation: 4,
+      shadowColor: "#000",
+    },
+    default: {},
+  }),
+  lg: Platform.select({
+    ios: {
+      shadowColor: "#000",
+      shadowOpacity: 0.1,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 8 },
+    },
+    android: {
+      elevation: 8,
+      shadowColor: "#000",
+    },
+    default: {},
+  }),
+};
 
 type Props = {
   days: DayPlan[];
@@ -85,64 +127,72 @@ export const FocusView = ({
   return (
     <View style={styles.container}>
       {/* Day header: abbrev + date — mirrors dayHeader in HearthWeeklyPlanner */}
-      <View style={styles.dayHeader}>
+      {/* <View style={styles.dayHeader}>
         <Text style={[styles.dayShort, isComplete && styles.dayShortComplete]}>
           {day.abbrev}
         </Text>
         <Text style={styles.dayDate}>{day.dateNum}</Text>
         {isComplete && <View style={styles.completeDot} />}
-      </View>
+      </View> */}
 
       {/* Shell card — mirrors shellCard in HearthWeeklyPlanner */}
-      <View style={styles.shellCard}>
-        {/* Status chip */}
-        <View
-          style={[styles.statusChip, isComplete && styles.statusChipComplete]}
-        >
-          <Text
-            style={[styles.statusText, isComplete && styles.statusTextComplete]}
+      <View style={styles.shellCardShadow}>
+        {Platform.OS === "android" && (
+          <View pointerEvents="none" style={styles.shellCardAndroidShadow} />
+        )}
+        <View style={styles.shellCardSurface}>
+          {/* Status chip */}
+          <View
+            style={[styles.statusChip, isComplete && styles.statusChipComplete]}
           >
-            {isComplete
-              ? "Complet ✓"
-              : `${filledCount}/${MEAL_SLOTS.length} repas`}
-          </Text>
-        </View>
-
-        {/* Meal slots */}
-        <View style={styles.mealGrid}>
-          {MEAL_SLOTS.map((slot) => {
-            const mealData = (dayData as Record<MealKey, { recipe?: string }>)[
-              slot.key
-            ];
-            const meal = { recipe: mealData?.recipe ?? "" };
-            return (
-              <DayMealCard
-                key={slot.key}
-                slot={slot}
-                meal={meal}
-                session={session}
-                recipesLength={recipesLength}
-                syncing={syncing}
-                saving={saving}
-                recipesLoading={recipesLoading}
-                onChangeText={(value) =>
-                  onDayChange(selectedDayIndex, slot.key, value)
-                }
-                onBlur={onBlur}
-                onOpenRecipePicker={() =>
-                  onOpenRecipePicker(selectedDayIndex, slot.key)
-                }
-              />
-            );
-          })}
-        </View>
-
-        {((dayData as DayPlan).notes ?? "").trim() ? (
-          <View style={styles.noteBox}>
-            <Text style={styles.noteLabel}>Note</Text>
-            <Text style={styles.noteText}>{(dayData as DayPlan).notes}</Text>
+            <Text
+              style={[
+                styles.statusText,
+                isComplete && styles.statusTextComplete,
+              ]}
+            >
+              {isComplete
+                ? "Complet ✓"
+                : `${filledCount}/${MEAL_SLOTS.length} repas`}
+            </Text>
           </View>
-        ) : null}
+
+          {/* Meal slots */}
+          <View style={styles.mealGrid}>
+            {MEAL_SLOTS.map((slot) => {
+              const mealData = (
+                dayData as Record<MealKey, { recipe?: string }>
+              )[slot.key];
+              const meal = { recipe: mealData?.recipe ?? "" };
+              return (
+                <DayMealCard
+                  key={slot.key}
+                  slot={slot}
+                  meal={meal}
+                  session={session}
+                  recipesLength={recipesLength}
+                  syncing={syncing}
+                  saving={saving}
+                  recipesLoading={recipesLoading}
+                  onChangeText={(value) =>
+                    onDayChange(selectedDayIndex, slot.key, value)
+                  }
+                  onBlur={onBlur}
+                  onOpenRecipePicker={() =>
+                    onOpenRecipePicker(selectedDayIndex, slot.key)
+                  }
+                />
+              );
+            })}
+          </View>
+
+          {((dayData as DayPlan).notes ?? "").trim() ? (
+            <View style={styles.noteBox}>
+              <Text style={styles.noteLabel}>Note</Text>
+              <Text style={styles.noteText}>{(dayData as DayPlan).notes}</Text>
+            </View>
+          ) : null}
+        </View>
       </View>
     </View>
   );
@@ -183,8 +233,23 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     marginBottom: 2,
   },
-  // shellCard mirrors HearthWeeklyPlanner's shellCard
-  shellCard: {
+  shellCardShadow: {
+    borderRadius: 42,
+    position: "relative",
+    ...shadowShell.sm,
+  },
+  shellCardAndroidShadow: {
+    ...StyleSheet.absoluteFillObject,
+    top: 1,
+    left: -1,
+    right: -1,
+    bottom: -2,
+    borderRadius: 42,
+    backgroundColor: "#000000",
+    opacity: 0.12,
+  },
+  // shellCardSurface mirrors HearthWeeklyPlanner's shellCard
+  shellCardSurface: {
     borderRadius: 42,
     paddingHorizontal: 18,
     paddingTop: 18,
@@ -193,7 +258,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.74)",
     gap: spacing.base * 1.2,
-    ...shadowShell,
   },
   statusChip: {
     alignSelf: "flex-start",
