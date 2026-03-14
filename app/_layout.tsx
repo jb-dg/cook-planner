@@ -1,10 +1,14 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack } from "expo-router";
+import { useState } from "react";
 import { StyleSheet } from "react-native";
 
+import { AnimatedSplashScreen } from "../components/AnimatedSplashScreen";
 import { AuthProvider } from "../contexts/AuthContext";
 
 export default function RootLayout() {
+  const [showAnimatedSplash, setShowAnimatedSplash] = useState(true);
+
   return (
     <AuthProvider>
       <LinearGradient
@@ -22,6 +26,9 @@ export default function RootLayout() {
           <Stack.Screen name="auth" options={{ presentation: "modal" }} />
           <Stack.Screen name="(tabs)" />
         </Stack>
+        {showAnimatedSplash ? (
+          <AnimatedSplashScreen onFinish={() => setShowAnimatedSplash(false)} />
+        ) : null}
       </LinearGradient>
     </AuthProvider>
   );
