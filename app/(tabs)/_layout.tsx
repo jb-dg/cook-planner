@@ -4,9 +4,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Redirect, Tabs } from "expo-router";
 import { ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { radii } from "../../theme/design";
 
 import { useAuth } from "../../contexts/AuthContext";
-import { radii } from "../../theme/design";
 
 export default function TabsLayout() {
   const { session, initializing } = useAuth();
@@ -25,19 +25,25 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: "#BC6C25", // Hearth Accent
-        tabBarInactiveTintColor: "#A5A58D", // Hearth Clay
+        tabBarInactiveTintColor: "#6B705C", // Hearth Sage
         tabBarHideOnKeyboard: true,
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: "600",
+          textTransform: "uppercase",
+          letterSpacing: 1,
+        },
         tabBarBackground: () => (
           <BlurView
-            intensity={32}
+            intensity={40}
             tint="light"
             style={{ flex: 1, borderRadius: radii.xl, overflow: "hidden" }}
           >
             <LinearGradient
               colors={[
-                "rgba(253,248,241,0.92)",
-                "rgba(245,239,228,0.80)",
-                "rgba(253,248,241,0.72)",
+                "rgba(255,255,255,0.72)",
+                "rgba(255,255,255,0.60)",
+                "rgba(255,255,255,0.68)",
               ]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -49,19 +55,19 @@ export default function TabsLayout() {
           position: "absolute",
           bottom: tabBarBottom,
           marginHorizontal: 24,
-          backgroundColor: "rgba(253,248,241,0.15)",
-          borderRadius: radii.xl,
+          backgroundColor: "rgba(255,255,255,0.60)",
+          borderRadius: 9999,
           borderTopWidth: 1,
           borderWidth: 1,
-          borderColor: "rgba(188,108,37,0.18)",
+          borderColor: "rgba(255,255,255,0.80)",
           height: 68,
           paddingBottom: 12,
           paddingTop: 10,
-          shadowColor: "rgba(45,45,42,1)",
-          shadowOpacity: 0.14,
-          shadowRadius: 20,
-          shadowOffset: { width: 0, height: 10 },
-          elevation: 20,
+          shadowColor: "#000",
+          shadowOpacity: 0.06,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 6,
         },
       }}
     >

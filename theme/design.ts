@@ -22,7 +22,7 @@ export const gradients = {
 };
 
 export const radii = {
-  xl: 28,
+  xl: 9999,
   lg: 20,
   md: 14,
 };
