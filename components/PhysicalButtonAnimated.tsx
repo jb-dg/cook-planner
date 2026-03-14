@@ -102,6 +102,7 @@ const styles = StyleSheet.create({
   wrapper: {
     position: "relative",
     paddingBottom: SHADOW_OFFSET_REST,
+    // alignSelf: "stretch",
   },
   shadowBase: {
     position: "absolute",
@@ -112,11 +113,10 @@ const styles = StyleSheet.create({
     transform: [{ translateY: SHADOW_OFFSET_REST }],
   },
   face: {
-    flex: 1,
     zIndex: 1,
   },
   button: {
-    paddingVertical: 16,
+    paddingVertical: 18,
     paddingHorizontal: 16,
     alignItems: "center",
     justifyContent: "center",

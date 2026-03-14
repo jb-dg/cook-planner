@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 
-import PhysicalButton from "./PhysicalButton";
+import PhysicalButtonAnimated from "./PhysicalButtonAnimated";
 
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -38,7 +38,11 @@ export default function AuthForm() {
       mode === "signup"
         ? validateConfirmPassword(password, confirmPassword)
         : null;
-    return { email: emailError, password: passwordError, confirm: confirmError };
+    return {
+      email: emailError,
+      password: passwordError,
+      confirm: confirmError,
+    };
   }, [email, password, confirmPassword, mode]);
 
   const canSubmit =
@@ -46,12 +50,16 @@ export default function AuthForm() {
     !errors.email &&
     !errors.password &&
     (mode === "signin" || !errors.confirm);
+  const submitDisabled = !canSubmit;
 
   const handleSubmit = async () => {
     setSubmitting(true);
     setMessage(null);
     const action = mode === "signin" ? signIn : signUp;
-    const { success, message: actionMessage } = await action({ email, password });
+    const { success, message: actionMessage } = await action({
+      email,
+      password,
+    });
     setSubmitting(false);
 
     if (!success) {
@@ -118,6 +126,9 @@ export default function AuthForm() {
           fontSize: t.typography.size.body,
           letterSpacing: 0.3,
         },
+        buttonTextDisabled: {
+          color: t.colors.textPrimary,
+        },
         link: {
           color: t.colors.primary,
           fontWeight: t.typography.weight.semibold,
@@ -125,7 +136,7 @@ export default function AuthForm() {
           textAlign: "left",
         },
       }),
-    [t]
+    [t],
   );
 
   return (
@@ -197,18 +208,23 @@ export default function AuthForm() {
       {message ? <Text style={s.message}>{message}</Text> : null}
 
       {/* Primary CTA */}
-      <PhysicalButton
-        onPress={handleSubmit}
-        disabled={!canSubmit}
-      >
+      <PhysicalButtonAnimated onPress={handleSubmit} disabled={submitDisabled}>
         {submitting ? (
-          <ActivityIndicator color={t.components.button.primary.textColor} />
+          <ActivityIndicator
+            color={
+              submitDisabled
+                ? t.colors.textMuted
+                : t.components.button.primary.textColor
+            }
+          />
         ) : (
-          <Text style={s.buttonText}>
+          <Text
+            style={[s.buttonText, submitDisabled ? s.buttonTextDisabled : null]}
+          >
             {mode === "signin" ? "Se connecter" : "Créer mon compte"}
           </Text>
         )}
-      </PhysicalButton>
+      </PhysicalButtonAnimated>
 
       {/* Mode switch */}
       <Pressable

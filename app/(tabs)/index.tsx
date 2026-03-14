@@ -6,7 +6,6 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
-import PhysicalButton from "../../components/PhysicalButton";
 import { useAuth } from "../../contexts/AuthContext";
 import { fetchHouseholdScope } from "../../lib/households";
 import { supabase } from "../../lib/supabase";
@@ -195,11 +194,8 @@ export default function HomeScreen() {
         </View>
 
         {/* Physical CTA button — mirrors `.btn-physical` from HTML */}
-        <PhysicalButton onPress={() => router.push("/planner")}>
-          <Text style={styles.physicalCtaText}>Ouvrir mon planning</Text>
-        </PhysicalButton>
 
-        <PhysicalButtonAnimated onPress={() => router.push("/")}>
+        <PhysicalButtonAnimated onPress={() => router.push("/planner")}>
           <Text style={styles.physicalCtaText}>Ouvrir mon planning</Text>
         </PhysicalButtonAnimated>
       </ScrollView>

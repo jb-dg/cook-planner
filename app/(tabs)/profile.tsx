@@ -1,3 +1,7 @@
+import { Feather } from "@expo/vector-icons";
+import type { PostgrestError } from "@supabase/supabase-js";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import {
   useCallback,
   useEffect,
@@ -16,17 +20,17 @@ import {
   TextInput,
   View,
 } from "react-native";
-import type { PostgrestError } from "@supabase/supabase-js";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
+import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
+import PhysicalButton from "../../components/PhysicalButton";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { validateEmail } from "../../lib/validation/auth";
 import { colors, spacing } from "../../theme/design";
-import PhysicalButton from "../../components/PhysicalButton";
 
 type Household = {
   id: string;
@@ -56,7 +60,7 @@ export default function ProfileScreen() {
 
   const [household, setHousehold] = useState<Household | null>(null);
   const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[]>(
-    []
+    [],
   );
   const [loadingHousehold, setLoadingHousehold] = useState(true);
   const [householdError, setHouseholdError] = useState<string | null>(null);
@@ -86,7 +90,7 @@ export default function ProfileScreen() {
       styles.modalContent,
       { paddingTop: spacing.screen + insets.top + 16 },
     ],
-    [insets.top]
+    [insets.top],
   );
 
   const modalCloseIconStyle = useMemo(
@@ -94,12 +98,12 @@ export default function ProfileScreen() {
       styles.modalCloseIcon,
       { top: insets.top + spacing.base, right: spacing.screen },
     ],
-    [insets.top]
+    [insets.top],
   );
 
   const isOwner = useMemo(
     () => household?.owner_id === session?.user.id,
-    [household, session?.user.id]
+    [household, session?.user.id],
   );
 
   const badgeLetter = useMemo(() => {
@@ -130,7 +134,7 @@ export default function ProfileScreen() {
         value: household ? `${householdMembers.length}` : "0",
       },
     ],
-    [household?.name, householdMembers.length, isOwner]
+    [household?.name, householdMembers.length, isOwner],
   );
 
   const openHouseholdModal = (mode: HouseholdModalMode) => {
@@ -266,7 +270,7 @@ export default function ProfileScreen() {
             profileRows?.find((profile) => profile.user_id === userId)
               ?.pseudo ?? null,
           isCurrentUser: userId === session.user.id,
-        }))
+        })),
       );
     } catch (err) {
       console.error("load household", err);
@@ -318,7 +322,7 @@ export default function ProfileScreen() {
       console.error("update pseudo", err);
       Alert.alert(
         "Erreur",
-        "Impossible d'enregistrer le pseudo. Réessaie plus tard."
+        "Impossible d'enregistrer le pseudo. Réessaie plus tard.",
       );
     } finally {
       setSavingPseudo(false);
@@ -338,7 +342,7 @@ export default function ProfileScreen() {
       if (household) {
         Alert.alert(
           "Déjà membre",
-          "Tu fais déjà partie d'un foyer. Quitte-le avant d'en créer un nouveau."
+          "Tu fais déjà partie d'un foyer. Quitte-le avant d'en créer un nouveau.",
         );
         return;
       }
@@ -363,7 +367,7 @@ export default function ProfileScreen() {
       console.error("create household", err);
       Alert.alert(
         "Erreur",
-        "Impossible de créer le foyer. Réessaie plus tard."
+        "Impossible de créer le foyer. Réessaie plus tard.",
       );
     } finally {
       setCreatingHousehold(false);
@@ -375,7 +379,7 @@ export default function ProfileScreen() {
     if (!isOwner) {
       Alert.alert(
         "Action réservée",
-        "Seul le créateur du foyer peut ajouter des membres."
+        "Seul le créateur du foyer peut ajouter des membres.",
       );
       return;
     }
@@ -441,7 +445,7 @@ export default function ProfileScreen() {
       console.error("invite member", err);
       Alert.alert(
         "Erreur",
-        "Impossible d'ajouter ce membre. Vérifie l'email et réessaie."
+        "Impossible d'ajouter ce membre. Vérifie l'email et réessaie.",
       );
     } finally {
       setInviting(false);
@@ -515,7 +519,7 @@ export default function ProfileScreen() {
       console.error("join household", err);
       Alert.alert(
         "Erreur",
-        "Impossible de rejoindre le foyer. Vérifie le pseudo communiqué."
+        "Impossible de rejoindre le foyer. Vérifie le pseudo communiqué.",
       );
     } finally {
       setJoining(false);
@@ -606,7 +610,7 @@ export default function ProfileScreen() {
                   {(member.pseudo ?? "?").charAt(0).toUpperCase()}
                 </Text>
                 <Text style={styles.memberBadgeLabel}>
-                  {member.isCurrentUser ? "Moi" : member.pseudo ?? "Invité"}
+                  {member.isCurrentUser ? "Moi" : (member.pseudo ?? "Invité")}
                 </Text>
               </View>
             ))
@@ -730,12 +734,13 @@ export default function ProfileScreen() {
               <Feather name="chevron-right" size={18} color="#A5A58D" />
             </Pressable>
           </View>
-          <PhysicalButton variant="danger" onPress={handleSignOut}>
+
+          <PhysicalButtonAnimated variant="danger" onPress={handleSignOut}>
             <View style={styles.signOutInner}>
               <Feather name="log-out" size={16} color="#fff" />
               <Text style={styles.signOutText}>Se déconnecter</Text>
             </View>
-          </PhysicalButton>
+          </PhysicalButtonAnimated>
         </View>
       </ScrollView>
 
