@@ -2,16 +2,16 @@
   "expo": {
     "name": "Cook Planner",
     "slug": "cook-planner",
-    "version": "1.0.0",
+    "version": "1.5.0",
     "scheme": "cookplanner",
     "orientation": "portrait",
     "icon": "./assets/images/book-icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/images/book-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FDFBF7"
-    },
+    // "splash": {
+    //   "image": "./assets/images/book-icon.png",
+    //   "resizeMode": "contain",
+    //   "backgroundColor": "#FDFBF7"
+    // },
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,

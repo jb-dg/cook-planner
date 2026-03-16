@@ -530,7 +530,9 @@ export default function ProfileScreen() {
     const result = await signOut();
     if (!result.success) {
       Alert.alert("Erreur", result.message ?? "Déconnexion impossible");
+      return;
     }
+    router.replace("/auth");
   };
 
   const renderHouseholdSummary = () => {
