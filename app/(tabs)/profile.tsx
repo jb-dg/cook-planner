@@ -30,7 +30,7 @@ import PhysicalButton from "../../components/PhysicalButton";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { validateEmail } from "../../lib/validation/auth";
-import { colors, spacing } from "../../theme/design";
+import { colors, radii, spacing } from "../../theme/design";
 
 type Household = {
   id: string;
@@ -990,17 +990,18 @@ const styles = StyleSheet.create({
     paddingBottom: 160,
   },
 
-  // Hero card — soft-card glassmorphism
+  // Hero card
   heroCard: {
     borderRadius: 32,
     padding: spacing.screen,
     gap: 16,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.95)",
-    shadowColor: "rgba(107, 112, 92, 1)",
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.15,
-    shadowRadius: 40,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   heroHeader: {
     flexDirection: "row",
@@ -1013,7 +1014,7 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     borderWidth: 2,
     borderStyle: "dashed",
-    borderColor: "#E4D9C8",
+    borderColor: colors.cardBorder,
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
@@ -1022,17 +1023,17 @@ const styles = StyleSheet.create({
   avatarLetter: {
     fontSize: 32,
     fontWeight: "900",
-    color: "#BC6C25",
+    color: colors.accent,
   },
   avatarEdit: {
     position: "absolute",
     bottom: -4,
     right: -4,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
     borderRadius: 999,
     padding: 6,
     borderWidth: 1,
-    borderColor: "#E4D9C8",
+    borderColor: colors.cardBorder,
   },
   heroText: {
     flex: 1,
@@ -1041,16 +1042,16 @@ const styles = StyleSheet.create({
   heroGreeting: {
     fontSize: 24,
     fontWeight: "900",
-    color: "#2D2D2A",
+    color: colors.text,
     letterSpacing: -0.3,
   },
   heroEmail: {
-    color: "#6B705C",
+    color: colors.muted,
     fontSize: 13,
     fontWeight: "500",
   },
   heroSubtitle: {
-    color: "#A5A58D",
+    color: colors.accentTertiary,
     fontSize: 13,
   },
   heroUtilities: {
@@ -1060,12 +1061,12 @@ const styles = StyleSheet.create({
   iconButton: {
     width: 36,
     height: 36,
-    borderRadius: 12,
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: "#E4D9C8",
+    borderColor: colors.cardBorder,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
   },
   heroStats: {
     flexDirection: "row",
@@ -1074,26 +1075,26 @@ const styles = StyleSheet.create({
   statPill: {
     flex: 1,
     padding: 12,
-    borderRadius: 16,
-    backgroundColor: "#F5EFE4",
+    borderRadius: radii.lg,
+    backgroundColor: colors.surfaceAlt,
     borderWidth: 1,
-    borderColor: "#E4D9C8",
+    borderColor: colors.cardBorder,
   },
   statValue: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#2D2D2A",
+    color: colors.text,
   },
   statLabel: {
     fontSize: 11,
     textTransform: "uppercase",
-    color: "#6B705C",
+    color: colors.muted,
     marginTop: 2,
     fontWeight: "700",
     letterSpacing: 0.5,
   },
 
-  // Section card — soft-card
+  // Section card
   section: {
     padding: spacing.screen,
     borderRadius: 28,
@@ -1101,20 +1102,21 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.82)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.95)",
-    shadowColor: "rgba(107, 112, 92, 1)",
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.12,
-    shadowRadius: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#2D2D2A",
+    color: colors.text,
     letterSpacing: -0.2,
   },
   sectionDescription: {
     fontSize: 13,
-    color: "#6B705C",
+    color: colors.muted,
   },
   quickActionsGrid: {
     flexDirection: "row",
@@ -1125,33 +1127,33 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 150,
     borderWidth: 1,
-    borderColor: "#E4D9C8",
-    borderRadius: 20,
+    borderColor: colors.cardBorder,
+    borderRadius: radii.lg,
     padding: 14,
-    backgroundColor: "#F5EFE4",
+    backgroundColor: colors.surfaceAlt,
     gap: 8,
   },
   quickActionIcon: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#BC6C25",
+    backgroundColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",
   },
   quickActionLabel: {
     fontWeight: "700",
-    color: "#2D2D2A",
+    color: colors.text,
   },
   quickActionHelper: {
     fontSize: 12,
-    color: "#6B705C",
+    color: colors.muted,
   },
   infoCard: {
     borderWidth: 1,
-    borderColor: "#E4D9C8",
-    borderRadius: 20,
-    backgroundColor: "#F5EFE4",
+    borderColor: colors.cardBorder,
+    borderRadius: radii.lg,
+    backgroundColor: colors.surfaceAlt,
     overflow: "hidden",
   },
   infoRow: {
@@ -1161,16 +1163,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   infoLabel: {
-    color: "#A5A58D",
+    color: colors.accentTertiary,
     fontSize: 13,
   },
   infoValue: {
-    color: "#2D2D2A",
+    color: colors.text,
     fontWeight: "600",
   },
   infoDivider: {
     height: 1,
-    backgroundColor: "#E4D9C8",
+    backgroundColor: colors.cardBorder,
     marginHorizontal: 16,
   },
   infoAction: {
@@ -1184,10 +1186,10 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#BC6C25",
+    borderColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
   },
   infoActionContent: {
     flex: 1,
@@ -1195,11 +1197,11 @@ const styles = StyleSheet.create({
   },
   infoActionLabel: {
     fontWeight: "600",
-    color: "#2D2D2A",
+    color: colors.text,
   },
   infoActionHelper: {
     fontSize: 12,
-    color: "#6B705C",
+    color: colors.muted,
   },
 
   // Action list rows
@@ -1209,16 +1211,16 @@ const styles = StyleSheet.create({
   actionItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
     padding: 14,
     gap: 14,
     borderWidth: 1,
-    borderColor: "#E4D9C8",
-    shadowColor: "rgba(107, 112, 92, 1)",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
+    borderColor: colors.cardBorder,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
     elevation: 2,
   },
   actionIcon: {
@@ -1237,12 +1239,12 @@ const styles = StyleSheet.create({
   },
   actionLabel: {
     fontWeight: "700",
-    color: "#2D2D2A",
+    color: colors.text,
     fontSize: 15,
   },
   actionHelper: {
     fontSize: 12,
-    color: "#A5A58D",
+    color: colors.accentTertiary,
   },
 
   fabWrapper: {
@@ -1255,7 +1257,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#BC6C25",
+    backgroundColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#8B4513",
@@ -1266,18 +1268,18 @@ const styles = StyleSheet.create({
   },
   fabMenu: {
     marginTop: 12,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
     paddingVertical: 6,
     width: 200,
     gap: 6,
     borderWidth: 1,
-    borderColor: "#E4D9C8",
-    shadowColor: "rgba(107, 112, 92, 1)",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 4,
+    borderColor: colors.cardBorder,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   menuBackdrop: {
     position: "absolute",
@@ -1294,7 +1296,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   fabMenuText: {
-    color: "#2D2D2A",
+    color: colors.text,
     fontWeight: "600",
   },
   overlay: {
@@ -1303,13 +1305,13 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   menu: {
-    backgroundColor: "#FDF8F1",
+    backgroundColor: colors.background,
     padding: 20,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     gap: 12,
     borderTopWidth: 1,
-    borderColor: "#E4D9C8",
+    borderColor: colors.cardBorder,
   },
   menuItem: {
     paddingVertical: 12,
@@ -1317,7 +1319,7 @@ const styles = StyleSheet.create({
   menuItemText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#2D2D2A",
+    color: colors.text,
   },
   menuFooter: {
     marginTop: 8,
@@ -1339,7 +1341,7 @@ const styles = StyleSheet.create({
   // Modals
   modalScreen: {
     flex: 1,
-    backgroundColor: "#FDF8F1",
+    backgroundColor: colors.background,
   },
   modalCloseIcon: {
     position: "absolute",
@@ -1348,17 +1350,17 @@ const styles = StyleSheet.create({
     zIndex: 10,
     width: 38,
     height: 38,
-    borderRadius: 12,
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: "#E4D9C8",
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "rgba(107, 112, 92, 1)",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 2,
   },
   modalContent: {
     paddingHorizontal: spacing.screen,
@@ -1369,7 +1371,7 @@ const styles = StyleSheet.create({
   modalHeading: {
     fontSize: 26,
     fontWeight: "900",
-    color: "#2D2D2A",
+    color: colors.text,
     letterSpacing: -0.3,
   },
   modalBlock: {
@@ -1380,19 +1382,19 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: "center",
     borderTopWidth: 1,
-    borderColor: "#E4D9C8",
+    borderColor: colors.cardBorder,
   },
   modalCloseText: {
-    color: "#BC6C25",
+    color: colors.accent,
     fontWeight: "700",
   },
   subheading: {
     fontSize: 17,
     fontWeight: "700",
-    color: "#2D2D2A",
+    color: colors.text,
   },
   label: {
-    color: "#A5A58D",
+    color: colors.accentTertiary,
     fontSize: 11,
     textTransform: "uppercase",
     letterSpacing: 1,
@@ -1401,29 +1403,29 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#2D2D2A",
+    color: colors.text,
   },
   input: {
     borderWidth: 1.5,
-    borderColor: "#E4D9C8",
-    borderRadius: 16,
+    borderColor: colors.cardBorder,
+    borderRadius: radii.lg,
     padding: 14,
     fontSize: 15,
-    backgroundColor: "#FFFFFF",
-    color: "#2D2D2A",
+    backgroundColor: colors.surface,
+    color: colors.text,
   },
   helper: {
-    color: "#A5A58D",
+    color: colors.accentTertiary,
     fontSize: 13,
     lineHeight: 18,
   },
   errorText: {
-    color: "#C75252",
+    color: colors.danger,
     fontSize: 13,
     fontWeight: "600",
   },
   successText: {
-    color: "#6B705C",
+    color: colors.muted,
     fontSize: 13,
     fontWeight: "600",
   },
@@ -1436,15 +1438,15 @@ const styles = StyleSheet.create({
 
   // Secondary — outlined
   secondaryButton: {
-    borderRadius: 16,
+    borderRadius: radii.lg,
     paddingVertical: 14,
     alignItems: "center",
     borderWidth: 1.5,
-    borderColor: "#BC6C25",
+    borderColor: colors.accent,
     backgroundColor: "rgba(188, 108, 37, 0.06)",
   },
   secondaryButtonText: {
-    color: "#BC6C25",
+    color: colors.accent,
     fontWeight: "700",
     fontSize: 15,
   },
@@ -1460,14 +1462,15 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.82)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.95)",
-    shadowColor: "rgba(107, 112, 92, 1)",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   householdCardEmpty: {
     borderStyle: "dashed",
-    borderColor: "#E4D9C8",
+    borderColor: colors.cardBorder,
     alignItems: "stretch",
   },
   householdActions: {
@@ -1491,7 +1494,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   householdLabel: {
-    color: "#A5A58D",
+    color: colors.accentTertiary,
     fontSize: 11,
     textTransform: "uppercase",
     fontWeight: "700",
@@ -1500,20 +1503,20 @@ const styles = StyleSheet.create({
   householdName: {
     fontSize: 20,
     fontWeight: "800",
-    color: "#2D2D2A",
+    color: colors.text,
     letterSpacing: -0.3,
   },
   householdValue: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#2D2D2A",
+    color: colors.text,
   },
   statusPill: {
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 999,
     backgroundColor: "rgba(188, 108, 37, 0.1)",
-    color: "#BC6C25",
+    color: colors.accent,
     fontWeight: "700",
     fontSize: 12,
     overflow: "hidden",
@@ -1521,7 +1524,7 @@ const styles = StyleSheet.create({
   membersTitle: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#2D2D2A",
+    color: colors.text,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
@@ -1539,7 +1542,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     textAlign: "center",
     textAlignVertical: "center",
-    backgroundColor: "#BC6C25",
+    backgroundColor: colors.accent,
     color: "#FFFFFF",
     fontWeight: "800",
     fontSize: 20,
@@ -1549,19 +1552,19 @@ const styles = StyleSheet.create({
   memberBadgeLabel: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#6B705C",
+    color: colors.muted,
   },
   manageButton: {
     marginTop: 6,
-    borderRadius: 14,
+    borderRadius: radii.md,
     borderWidth: 1.5,
-    borderColor: "#BC6C25",
+    borderColor: colors.accent,
     paddingVertical: 12,
     alignItems: "center",
     backgroundColor: "rgba(188, 108, 37, 0.05)",
   },
   manageButtonText: {
-    color: "#BC6C25",
+    color: colors.accent,
     fontWeight: "700",
     fontSize: 14,
   },

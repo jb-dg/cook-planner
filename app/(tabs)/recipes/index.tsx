@@ -13,7 +13,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useAuth } from "../../../contexts/AuthContext";
 import { supabase } from "../../../lib/supabase";
 import { fetchHouseholdScope } from "../../../lib/households";
-import { colors, radii, shadows, spacing } from "../../../theme/design";
+import { colors, radii, spacing } from "../../../theme/design";
 import { mapRecipe, Recipe } from "../../../features/recipes/types";
 
 export default function RecipesScreen() {
@@ -191,10 +191,11 @@ const styles = StyleSheet.create({
   listContent: {
     padding: spacing.screen,
     paddingBottom: 140,
-    gap: 12,
+    gap: 14,
   },
   header: {
-    gap: 12,
+    gap: 10,
+    marginBottom: 8,
   },
   headerRow: {
     flexDirection: "row",
@@ -202,26 +203,37 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   heading: {
-    fontSize: 22,
-    fontWeight: "600",
+    fontSize: 28,
+    fontWeight: "900",
     color: colors.text,
+    letterSpacing: -0.5,
+    lineHeight: 32,
   },
   subtitle: {
     color: colors.muted,
+    fontSize: 15,
+    fontWeight: "500",
   },
   subheading: {
     marginTop: 8,
-    fontSize: 18,
-    fontWeight: "600",
-    color: colors.text,
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.accentTertiary,
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
   addButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: 999,
     backgroundColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
   },
   addButtonText: {
     color: "#fff",
@@ -230,11 +242,15 @@ const styles = StyleSheet.create({
   },
   recipeCard: {
     padding: spacing.card,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surface,
+    borderRadius: 24,
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    ...shadows.card,
+    borderColor: "rgba(255, 255, 255, 0.9)",
+    shadowColor: "rgba(107, 112, 92, 0.15)",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 4,
   },
   recipeCardPressed: {
     opacity: 0.9,
@@ -242,38 +258,50 @@ const styles = StyleSheet.create({
   recipeHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
+    gap: 8,
   },
   recipeMeta: {
     flexDirection: "row",
     gap: 6,
   },
   badge: {
-    backgroundColor: colors.surfaceAlt,
-    color: colors.text,
-    borderRadius: radii.md,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    fontSize: 12,
-    fontWeight: "600",
+    backgroundColor: "rgba(188, 108, 37, 0.1)",
+    color: colors.accent,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    fontSize: 11,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    overflow: "hidden",
   },
   recipeTitle: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 17,
+    fontWeight: "800",
     color: colors.text,
+    letterSpacing: -0.2,
+    flex: 1,
   },
   muted: {
     color: colors.muted,
-    marginTop: 8,
+    fontSize: 13,
+    fontWeight: "500",
+    marginTop: 6,
   },
   notes: {
-    marginTop: 8,
+    marginTop: 6,
     color: colors.text,
     lineHeight: 20,
+    fontSize: 13,
   },
   ingredientsList: {
-    marginTop: 12,
-    gap: 6,
+    marginTop: 10,
+    gap: 4,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(228, 217, 200, 0.5)",
   },
   ingredientRow: {
     flexDirection: "row",
@@ -281,10 +309,12 @@ const styles = StyleSheet.create({
   },
   ingredientName: {
     color: colors.text,
-    fontWeight: "500",
+    fontWeight: "600",
+    fontSize: 13,
   },
   ingredientQty: {
     color: colors.muted,
+    fontSize: 13,
   },
   errorText: {
     color: colors.danger,
@@ -295,21 +325,22 @@ const styles = StyleSheet.create({
   emptyState: {
     marginTop: 32,
     padding: spacing.card,
-    borderRadius: radii.lg,
-    borderWidth: 1,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
     borderColor: colors.cardBorder,
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(255, 255, 255, 0.6)",
     gap: 8,
     alignItems: "center",
-    ...shadows.card,
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "700",
     color: colors.text,
   },
   emptySubtitle: {
     color: colors.muted,
     textAlign: "center",
+    fontSize: 14,
   },
 });

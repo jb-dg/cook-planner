@@ -54,15 +54,24 @@ export const DayMealCard = ({
   // isEditing freezes the visual state while the keyboard is open to prevent
   // layout changes (slotEmpty → slotFilled) from stealing focus
   const [isEditing, setIsEditing] = useState(false);
+  const [editingStartedFilled, setEditingStartedFilled] = useState(false);
 
   const filled = !!meal.recipe?.trim();
-  const showAsFilled = filled && !isEditing;
+  // Keep the card visual state stable during edition on Android:
+  // - if editing starts empty, keep empty visuals while typing
+  // - if editing starts filled, keep filled visuals while editing
+  const showAsFilled = isEditing ? editingStartedFilled : filled;
+  const showReadOnlyDecor = showAsFilled && !isEditing;
   const isLunch = slot.key === "lunch";
   const dotColor = isLunch ? "#DDA15E" : "#BC6C25";
 
-  const handleFocus = () => setIsEditing(true);
+  const handleFocus = () => {
+    setEditingStartedFilled(filled);
+    setIsEditing(true);
+  };
   const handleBlur = () => {
     setIsEditing(false);
+    setEditingStartedFilled(false);
     onBlur();
   };
 
@@ -83,7 +92,7 @@ export const DayMealCard = ({
           <Text style={[styles.slotLabel, !isLunch && styles.slotLabelDinner]}>
             {isLunch ? "Déjeuner" : "Dîner"}
           </Text>
-          {showAsFilled && (
+          {showReadOnlyDecor && (
             <Pressable
               hitSlop={10}
               onPress={onOpenRecipePicker}
@@ -131,7 +140,7 @@ export const DayMealCard = ({
           />
 
           {/* Dot row — only when filled and not editing */}
-          {showAsFilled && (
+          {showReadOnlyDecor && (
             <View style={styles.dotRow}>
               <View style={[styles.dot, { backgroundColor: dotColor }]} />
               <View style={[styles.dot, { backgroundColor: dotColor }]} />

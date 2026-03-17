@@ -1,21 +1,7 @@
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { spacing } from "../../../theme/design";
-
-const shadowActive = Platform.select({
-  ios: {
-    shadowColor: "#BC6C25",
-    shadowOpacity: 0.22,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  android: {
-    elevation: 4,
-    shadowColor: "#BC6C25",
-  },
-  default: {},
-});
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { colors, spacing } from "../../../theme/design";
 
 type Props = {
   referenceDate: Date;
@@ -92,27 +78,34 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 60,
     maxWidth: "14%",
-    borderWidth: 1.5,
-    borderStyle: "solid",
-    borderColor: "rgb(255, 255, 255)",
-    borderRadius: 16,
-    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.surface,
+    paddingVertical: 12,
     paddingHorizontal: spacing.base * 0.15,
-    backgroundColor: "rgb(255, 255, 255)",
     gap: spacing.base * 0.15,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   dayGridItemActive: {
-    borderStyle: "solid",
-    borderColor: "#BC6C25",
-    backgroundColor: "#BC6C25",
+    borderColor: colors.accent,
+    backgroundColor: colors.accent,
     transform: [{ scale: 1.05 }],
-    ...shadowActive,
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
+    elevation: 4,
   },
   dayGridTitle: {
-    fontWeight: "900",
-    color: "#A8A38F",
+    fontWeight: "700",
+    color: colors.muted,
     textTransform: "uppercase",
     textAlign: "center",
     fontSize: 10,
@@ -123,8 +116,8 @@ const styles = StyleSheet.create({
   },
   dayGridNumber: {
     fontSize: 16,
-    fontWeight: "800",
-    color: "#2D2D2A",
+    fontWeight: "700",
+    color: colors.text,
     textAlign: "center",
   },
   dayGridNumberActive: {
@@ -134,7 +127,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
     width: 5,
     height: 5,
-    borderRadius: 999,
+    borderRadius: 9999,
     backgroundColor: "transparent",
   },
   dayGridDotActive: {
