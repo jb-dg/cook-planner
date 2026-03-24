@@ -2,19 +2,10 @@ import { Feather } from "@expo/vector-icons";
 import type { PostgrestError } from "@supabase/supabase-js";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type ComponentProps,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -22,34 +13,19 @@ import {
   TextInput,
   View,
 } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
+import HouseholdSummaryCard from "@/components/profile/HouseholdSummaryCard";
+import ProfileActionRow from "@/components/profile/ProfileActionRow";
+import ProfileSlideModal from "@/components/profile/ProfileSlideModal";
+import type { Household, HouseholdModalMode, HouseholdMember, QuickActionItem } from "@/components/profile/types";
 import PhysicalButton from "../../components/PhysicalButton";
 import { useAuth } from "../../contexts/AuthContext";
 import { ensureProfileRecord } from "../../lib/profile";
 import { supabase } from "../../lib/supabase";
 import { validateEmail } from "../../lib/validation/auth";
 import { colors, radii, spacing } from "../../theme/design";
-
-type Household = {
-  id: string;
-  name: string;
-  owner_id: string;
-};
-
-type HouseholdMember = {
-  user_id: string;
-  pseudo: string | null;
-  isCurrentUser: boolean;
-};
-
-type HouseholdModalMode = "create" | "join" | "manage";
-
-type FeatherIconName = ComponentProps<typeof Feather>["name"];
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -81,12 +57,10 @@ export default function ProfileScreen() {
   const [joinSuccess, setJoinSuccess] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
 
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [householdActionsOpen, setHouseholdActionsOpen] = useState(false);
   const [householdModalMode, setHouseholdModalMode] =
     useState<HouseholdModalMode>("create");
-  const [fabMenuOpen, setFabMenuOpen] = useState(false);
 
   const profileModalContentStyle = useMemo(
     () => [
@@ -136,35 +110,10 @@ export default function ProfileScreen() {
 
   const displayName = pseudo || session?.user.email?.split("@")[0] || "Chef";
 
-  const heroSubtitle = household
-    ? `${household.name} - ${householdMembers.length} membre${
-        householdMembers.length > 1 ? "s" : ""
-      } connecté${householdMembers.length > 1 ? "s" : ""}`
-    : "Crée ton foyer pour planifier ensemble";
-
-  const profileStats = useMemo(
-    () => [
-      {
-        label: "Foyer",
-        value: household?.name ?? "Solo",
-      },
-      {
-        label: "Rôle",
-        value: household ? (isOwner ? "Admin" : "Membre") : "Individuel",
-      },
-      {
-        label: "Participants",
-        value: household ? `${householdMembers.length}` : "0",
-      },
-    ],
-    [household?.name, householdMembers.length, isOwner],
-  );
-
-  const openHouseholdModal = (mode: HouseholdModalMode) => {
+  const openHouseholdModal = useCallback((mode: HouseholdModalMode) => {
     setHouseholdModalMode(mode);
     setHouseholdActionsOpen(true);
-    setFabMenuOpen(false);
-  };
+  }, []);
 
   const loadProfile = useCallback(async () => {
     if (!session) return;
@@ -595,103 +544,39 @@ export default function ProfileScreen() {
     router.replace("/auth");
   };
 
-  const renderHouseholdSummary = () => {
-    if (loadingHousehold) {
-      return (
-        <View style={styles.householdCard}>
-          <ActivityIndicator color="#6B705C" />
-        </View>
-      );
-    }
-
-    if (!household) {
-      return (
-        <View style={[styles.householdCard, styles.householdCardEmpty]}>
-          <Text style={styles.householdName}>Aucun foyer relié</Text>
-          <Text style={styles.helper}>
-            Utilise les actions ci-dessous pour créer ou rejoindre un foyer
-            partagé.
-          </Text>
-          <View style={styles.householdActions}>
-            <Pressable
-              style={styles.secondaryButton}
-              onPress={() => openHouseholdModal("create")}
-            >
-              <Text style={styles.secondaryButtonText}>Créer un foyer</Text>
-            </Pressable>
-            <Pressable
-              style={styles.secondaryButton}
-              onPress={() => openHouseholdModal("join")}
-            >
-              <Text style={styles.secondaryButtonText}>Rejoindre</Text>
-            </Pressable>
-          </View>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.householdCard}>
-        <View style={styles.householdHeader}>
-          <View>
-            <Text style={styles.householdLabel}>Foyer actif</Text>
-            <Text style={styles.householdName}>{household.name}</Text>
-          </View>
-          <View style={styles.householdBadges}>
-            <Text style={styles.statusPill}>
-              {isOwner ? "Admin" : "Membre"}
-            </Text>
-            <Text style={styles.statusPill}>
-              {householdMembers.length} membre
-              {householdMembers.length > 1 ? "s" : ""}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.householdMetaRow}>
-          <View style={styles.householdColumn}>
-            <Text style={styles.householdLabel}>Planning</Text>
-            <Text style={styles.householdValue}>Synchronisé</Text>
-          </View>
-          <View style={styles.householdColumn}>
-            <Text style={styles.householdLabel}>Partage</Text>
-            <Text style={styles.householdValue}>En temps réel</Text>
-          </View>
-        </View>
-        <Text style={styles.membersTitle}>Membres</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.memberCarousel}
-        >
-          {householdMembers.length === 0 ? (
-            <Text style={styles.helper}>Aucun membre pour l'instant.</Text>
-          ) : (
-            householdMembers.map((member) => (
-              <View key={member.user_id} style={styles.memberBadge}>
-                <Text style={styles.memberBadgeLetter}>
-                  {(member.pseudo ?? "?").charAt(0).toUpperCase()}
-                </Text>
-                <Text style={styles.memberBadgeLabel}>
-                  {member.isCurrentUser ? "Moi" : (member.pseudo ?? "Invité")}
-                </Text>
-              </View>
-            ))
-          )}
-        </ScrollView>
-        <Pressable
-          style={styles.manageButton}
-          onPress={() => openHouseholdModal("manage")}
-        >
-          <Text style={styles.manageButtonText}>
-            {isOwner ? "Gérer le foyer" : "Voir les membres"}
-          </Text>
-        </Pressable>
-        {householdError ? (
-          <Text style={styles.errorText}>{householdError}</Text>
-        ) : null}
-      </View>
-    );
-  };
+  const quickActions = useMemo<QuickActionItem[]>(
+    () => [
+      {
+        id: "profile",
+        icon: "settings",
+        label: "Mes Informations",
+        helper: "Photo, pseudo et préférences",
+        onPress: () => setProfileModalOpen(true),
+      },
+      {
+        id: "household-create",
+        icon: "home",
+        label: "Créer un foyer",
+        helper: "Pour démarrer un espace partagé",
+        onPress: () => openHouseholdModal("create"),
+      },
+      {
+        id: "household-join",
+        icon: "link-2",
+        label: "Rejoindre un foyer",
+        helper: "Avec le pseudo de l'administrateur",
+        onPress: () => openHouseholdModal("join"),
+      },
+      {
+        id: "household-manage",
+        icon: "users",
+        label: "Gérer mes membres",
+        helper: "Inviter, consulter ou retirer quelqu'un",
+        onPress: () => openHouseholdModal("manage"),
+      },
+    ],
+    [openHouseholdModal],
+  );
 
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
@@ -723,66 +608,9 @@ export default function ProfileScreen() {
             Connecte ou adapte ton foyer en quelques secondes.
           </Text>
           <View style={styles.actionList}>
-            <Pressable
-              style={styles.actionItem}
-              onPress={() => setProfileModalOpen(true)}
-            >
-              <View style={styles.actionIcon}>
-                <Feather name="settings" size={16} color="#BC6C25" />
-              </View>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionLabel}>Mes Informations</Text>
-                <Text style={styles.actionHelper}>
-                  Photo, pseudo et préférences
-                </Text>
-              </View>
-              <Feather name="chevron-right" size={18} color="#A5A58D" />
-            </Pressable>
-            <Pressable
-              style={styles.actionItem}
-              onPress={() => openHouseholdModal("create")}
-            >
-              <View style={styles.actionIcon}>
-                <Feather name="home" size={16} color="#BC6C25" />
-              </View>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionLabel}>Créer un foyer</Text>
-                <Text style={styles.actionHelper}>
-                  Pour démarrer un espace partagé
-                </Text>
-              </View>
-              <Feather name="chevron-right" size={18} color="#A5A58D" />
-            </Pressable>
-            <Pressable
-              style={styles.actionItem}
-              onPress={() => openHouseholdModal("join")}
-            >
-              <View style={styles.actionIcon}>
-                <Feather name="link-2" size={16} color="#BC6C25" />
-              </View>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionLabel}>Rejoindre un foyer</Text>
-                <Text style={styles.actionHelper}>
-                  Avec le pseudo de l'administrateur
-                </Text>
-              </View>
-              <Feather name="chevron-right" size={18} color="#A5A58D" />
-            </Pressable>
-            <Pressable
-              style={styles.actionItem}
-              onPress={() => openHouseholdModal("manage")}
-            >
-              <View style={styles.actionIcon}>
-                <Feather name="users" size={16} color="#BC6C25" />
-              </View>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionLabel}>Gérer mes membres</Text>
-                <Text style={styles.actionHelper}>
-                  Inviter, consulter ou retirer quelqu'un
-                </Text>
-              </View>
-              <Feather name="chevron-right" size={18} color="#A5A58D" />
-            </Pressable>
+            {quickActions.map((action) => (
+              <ProfileActionRow key={action.id} {...action} />
+            ))}
           </View>
 
           <PhysicalButtonAnimated variant="danger" onPress={handleSignOut}>
@@ -794,261 +622,166 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
 
-      {fabMenuOpen ? (
-        <Pressable
-          style={styles.menuBackdrop}
-          onPress={() => setFabMenuOpen(false)}
-        />
-      ) : null}
-
-      <Modal
-        visible={settingsOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSettingsOpen(false)}
-      >
-        <Pressable
-          style={styles.overlay}
-          onPress={() => setSettingsOpen(false)}
-        >
-          <View style={styles.menu}>
-            <Pressable
-              style={styles.menuItem}
-              onPress={() => {
-                setSettingsOpen(false);
-                setProfileModalOpen(true);
-              }}
-            >
-              <Text style={styles.menuItemText}>Informations du profil</Text>
-            </Pressable>
-            <View style={styles.menuFooter}>
-              <PhysicalButton variant="danger" onPress={handleSignOut}>
-                <View style={styles.signOutInner}>
-                  <Text style={styles.signOutText}>Se déconnecter</Text>
-                </View>
-              </PhysicalButton>
-            </View>
-          </View>
-        </Pressable>
-      </Modal>
-
-      <Modal
+      <ProfileSlideModal
         visible={profileModalOpen}
-        animationType="slide"
-        onRequestClose={() => setProfileModalOpen(false)}
+        onClose={() => setProfileModalOpen(false)}
+        keyboardVerticalOffset={keyboardVerticalOffset}
+        closeIconStyle={modalCloseIconStyle}
+        contentContainerStyle={profileModalContentStyle}
+        title="Informations du profil"
       >
-        <SafeAreaView style={styles.modalScreen}>
-          <KeyboardAvoidingView
-            style={styles.modalKeyboardAvoiding}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={keyboardVerticalOffset}
-          >
-            <Pressable
-              style={modalCloseIconStyle}
-              onPress={() => setProfileModalOpen(false)}
-            >
-              <Feather name="x" size={18} color="#2D2D2A" />
-            </Pressable>
-            <ScrollView
-              contentContainerStyle={profileModalContentStyle}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              keyboardDismissMode={
-                Platform.OS === "ios" ? "interactive" : "on-drag"
-              }
-            >
-              <Text style={styles.modalHeading}>Informations du profil</Text>
-              <Text style={styles.label}>Email</Text>
-              <Text style={styles.value}>{session?.user.email}</Text>
-              <Text style={[styles.label, { marginTop: 16 }]}>
-                Pseudo unique
+        <Text style={styles.label}>Email</Text>
+        <Text style={styles.value}>{session?.user.email}</Text>
+        <Text style={[styles.label, { marginTop: 16 }]}>Pseudo unique</Text>
+        {loadingProfile ? (
+          <ActivityIndicator color="#6B705C" />
+        ) : (
+          <>
+            <TextInput
+              placeholder="ex: chef_lucie"
+              placeholderTextColor="#A5A58D"
+              value={pseudo}
+              onChangeText={setPseudo}
+              style={styles.input}
+              autoCapitalize="none"
+            />
+            <Text style={styles.helper}>
+              Ce pseudo sert à rejoindre un foyer commun.
+            </Text>
+            {pseudoError ? <Text style={styles.errorText}>{pseudoError}</Text> : null}
+            {pseudoSuccess ? (
+              <Text style={styles.successText}>{pseudoSuccess}</Text>
+            ) : null}
+            <PhysicalButton onPress={handleSavePseudo} disabled={savingPseudo}>
+              <Text style={styles.primaryButtonText}>
+                {savingPseudo ? "Enregistrement…" : "Sauvegarder"}
               </Text>
-              {loadingProfile ? (
-                <ActivityIndicator color="#6B705C" />
-              ) : (
-                <>
-                  <TextInput
-                    placeholder="ex: chef_lucie"
-                    placeholderTextColor="#A5A58D"
-                    value={pseudo}
-                    onChangeText={setPseudo}
-                    style={styles.input}
-                    autoCapitalize="none"
-                  />
-                  <Text style={styles.helper}>
-                    Ce pseudo sert à rejoindre un foyer commun.
-                  </Text>
-                  {pseudoError ? (
-                    <Text style={styles.errorText}>{pseudoError}</Text>
-                  ) : null}
-                  {pseudoSuccess ? (
-                    <Text style={styles.successText}>{pseudoSuccess}</Text>
-                  ) : null}
-                  <PhysicalButton
-                    onPress={handleSavePseudo}
-                    disabled={savingPseudo}
-                  >
-                    <Text style={styles.primaryButtonText}>
-                      {savingPseudo ? "Enregistrement…" : "Sauvegarder"}
-                    </Text>
-                  </PhysicalButton>
-                </>
-              )}
-            </ScrollView>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      </Modal>
+            </PhysicalButton>
+          </>
+        )}
+      </ProfileSlideModal>
 
-      <Modal
+      <ProfileSlideModal
         visible={householdActionsOpen}
-        animationType="slide"
-        onRequestClose={() => setHouseholdActionsOpen(false)}
+        onClose={() => setHouseholdActionsOpen(false)}
+        keyboardVerticalOffset={keyboardVerticalOffset}
+        closeIconStyle={modalCloseIconStyle}
+        contentContainerStyle={householdModalContentStyle}
+        title="Ajouter ou rejoindre un foyer"
+        automaticallyAdjustKeyboardInsets
       >
-        <SafeAreaView style={styles.modalScreen}>
-          <KeyboardAvoidingView
-            style={styles.modalKeyboardAvoiding}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={keyboardVerticalOffset}
-          >
+        {householdModalMode === "create" && (
+          <View style={styles.modalBlock}>
+            <Text style={styles.subheading}>Créer un foyer</Text>
+            <TextInput
+              placeholder="Nom du foyer (ex: Famille Durand)"
+              placeholderTextColor="#A5A58D"
+              value={householdName}
+              onChangeText={setHouseholdName}
+              style={styles.input}
+            />
+            {householdError ? <Text style={styles.errorText}>{householdError}</Text> : null}
             <Pressable
-              style={modalCloseIconStyle}
-              onPress={() => setHouseholdActionsOpen(false)}
+              style={[
+                styles.secondaryButton,
+                creatingHousehold && styles.buttonDisabled,
+              ]}
+              onPress={handleCreateHousehold}
+              disabled={creatingHousehold}
             >
-              <Feather name="x" size={18} color="#2D2D2A" />
-            </Pressable>
-            <ScrollView
-              contentContainerStyle={householdModalContentStyle}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              keyboardDismissMode={
-                Platform.OS === "ios" ? "interactive" : "on-drag"
-              }
-              automaticallyAdjustKeyboardInsets
-            >
-              <Text style={styles.modalHeading}>
-                Ajouter ou rejoindre un foyer
+              <Text style={styles.secondaryButtonText}>
+                {creatingHousehold ? "Création…" : "Créer"}
               </Text>
-              {householdModalMode === "create" && (
-                <View style={styles.modalBlock}>
-                  <Text style={styles.subheading}>Créer un foyer</Text>
-                  <TextInput
-                    placeholder="Nom du foyer (ex: Famille Durand)"
-                    placeholderTextColor="#A5A58D"
-                    value={householdName}
-                    onChangeText={setHouseholdName}
-                    style={styles.input}
-                  />
-                  {householdError ? (
-                    <Text style={styles.errorText}>{householdError}</Text>
-                  ) : null}
-                  <Pressable
-                    style={[
-                      styles.secondaryButton,
-                      creatingHousehold && styles.buttonDisabled,
-                    ]}
-                    onPress={handleCreateHousehold}
-                    disabled={creatingHousehold}
-                  >
-                    <Text style={styles.secondaryButtonText}>
-                      {creatingHousehold ? "Création…" : "Créer"}
-                    </Text>
-                  </Pressable>
-                </View>
-              )}
-              {householdModalMode === "join" && (
-                <View style={styles.modalBlock}>
-                  <Text style={styles.subheading}>Rejoindre un foyer</Text>
-                  <Text style={styles.helper}>
-                    Demande à l'admin de te partager son pseudo, puis saisis-le
-                    ici.
-                  </Text>
-                  <TextInput
-                    placeholder="Pseudo de l'administrateur"
-                    placeholderTextColor="#A5A58D"
-                    value={joinPseudo}
-                    onChangeText={setJoinPseudo}
-                    style={styles.input}
-                    autoCapitalize="none"
-                  />
-                  {joinError ? (
-                    <Text style={styles.errorText}>{joinError}</Text>
-                  ) : null}
-                  {joinSuccess ? (
-                    <Text style={styles.successText}>{joinSuccess}</Text>
-                  ) : null}
-                  <PhysicalButton
-                    onPress={handleJoinHousehold}
-                    disabled={joining}
-                  >
-                    <Text style={styles.primaryButtonText}>
-                      {joining ? "Connexion…" : "Rejoindre"}
-                    </Text>
-                  </PhysicalButton>
-                </View>
-              )}
-              {householdModalMode === "manage" && (
-                <>
-                  {household ? (
-                    <>
-                      {renderHouseholdSummary()}
-                      {isOwner ? (
-                        <View style={styles.modalBlock}>
-                          <Text style={styles.subheading}>
-                            Ajouter un membre
-                          </Text>
-                          <Text style={styles.helper}>
-                            Invite un proche en indiquant son email de
-                            connexion.
-                          </Text>
-                          <TextInput
-                            placeholder="Email du membre"
-                            placeholderTextColor="#A5A58D"
-                            value={inviteEmail}
-                            onChangeText={setInviteEmail}
-                            style={styles.input}
-                            autoCapitalize="none"
-                            keyboardType="email-address"
-                          />
-                          {inviteError ? (
-                            <Text style={styles.errorText}>{inviteError}</Text>
-                          ) : null}
-                          {inviteSuccess ? (
-                            <Text style={styles.successText}>
-                              {inviteSuccess}
-                            </Text>
-                          ) : null}
-                          <Pressable
-                            style={[
-                              styles.secondaryButton,
-                              inviting && styles.buttonDisabled,
-                            ]}
-                            onPress={handleInviteMember}
-                            disabled={inviting}
-                          >
-                            <Text style={styles.secondaryButtonText}>
-                              {inviting ? "Ajout…" : "Inviter"}
-                            </Text>
-                          </Pressable>
-                        </View>
-                      ) : (
-                        <Text style={styles.helper}>
-                          Demande à l'admin de ton foyer actuel pour ajouter
-                          quelqu'un.
-                        </Text>
-                      )}
-                    </>
-                  ) : (
+            </Pressable>
+          </View>
+        )}
+        {householdModalMode === "join" && (
+          <View style={styles.modalBlock}>
+            <Text style={styles.subheading}>Rejoindre un foyer</Text>
+            <Text style={styles.helper}>
+              {
+                "Demande à l'admin de te partager son pseudo, puis saisis-le ici."
+              }
+            </Text>
+            <TextInput
+              placeholder="Pseudo de l'administrateur"
+              placeholderTextColor="#A5A58D"
+              value={joinPseudo}
+              onChangeText={setJoinPseudo}
+              style={styles.input}
+              autoCapitalize="none"
+            />
+            {joinError ? <Text style={styles.errorText}>{joinError}</Text> : null}
+            {joinSuccess ? <Text style={styles.successText}>{joinSuccess}</Text> : null}
+            <PhysicalButton onPress={handleJoinHousehold} disabled={joining}>
+              <Text style={styles.primaryButtonText}>
+                {joining ? "Connexion…" : "Rejoindre"}
+              </Text>
+            </PhysicalButton>
+          </View>
+        )}
+        {householdModalMode === "manage" && (
+          <>
+            {household ? (
+              <>
+                <HouseholdSummaryCard
+                  loadingHousehold={loadingHousehold}
+                  household={household}
+                  householdMembers={householdMembers}
+                  householdError={householdError}
+                  isOwner={isOwner}
+                  onOpenCreate={() => openHouseholdModal("create")}
+                  onOpenJoin={() => openHouseholdModal("join")}
+                  onOpenManage={() => openHouseholdModal("manage")}
+                />
+                {isOwner ? (
+                  <View style={styles.modalBlock}>
+                    <Text style={styles.subheading}>Ajouter un membre</Text>
                     <Text style={styles.helper}>
-                      Tu n'as pas encore de foyer actif. Utilise le bouton +
-                      pour en créer un.
+                      Invite un proche en indiquant son email de connexion.
                     </Text>
-                  )}
-                </>
-              )}
-            </ScrollView>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      </Modal>
+                    <TextInput
+                      placeholder="Email du membre"
+                      placeholderTextColor="#A5A58D"
+                      value={inviteEmail}
+                      onChangeText={setInviteEmail}
+                      style={styles.input}
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                    />
+                    {inviteError ? (
+                      <Text style={styles.errorText}>{inviteError}</Text>
+                    ) : null}
+                    {inviteSuccess ? (
+                      <Text style={styles.successText}>{inviteSuccess}</Text>
+                    ) : null}
+                    <Pressable
+                      style={[
+                        styles.secondaryButton,
+                        inviting && styles.buttonDisabled,
+                      ]}
+                      onPress={handleInviteMember}
+                      disabled={inviting}
+                    >
+                      <Text style={styles.secondaryButtonText}>
+                        {inviting ? "Ajout…" : "Inviter"}
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <Text style={styles.helper}>
+                    {"Demande à l'admin de ton foyer actuel pour ajouter quelqu'un."}
+                  </Text>
+                )}
+              </>
+            ) : (
+              <Text style={styles.helper}>
+                {"Tu n'as pas encore de foyer actif. Utilise le bouton + pour en créer un."}
+              </Text>
+            )}
+          </>
+        )}
+      </ProfileSlideModal>
     </SafeAreaView>
   );
 }
@@ -1099,16 +832,6 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: "#FFFFFF",
   },
-  avatarEdit: {
-    position: "absolute",
-    bottom: -4,
-    right: -4,
-    backgroundColor: colors.surface,
-    borderRadius: 999,
-    padding: 6,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
   heroText: {
     flex: 1,
     gap: 2,
@@ -1123,49 +846,6 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 13,
     fontWeight: "500",
-  },
-  heroSubtitle: {
-    color: colors.accentTertiary,
-    fontSize: 13,
-  },
-  heroUtilities: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.surface,
-  },
-  heroStats: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  statPill: {
-    flex: 1,
-    padding: 12,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: colors.text,
-  },
-  statLabel: {
-    fontSize: 11,
-    textTransform: "uppercase",
-    color: colors.muted,
-    marginTop: 2,
-    fontWeight: "700",
-    letterSpacing: 0.5,
   },
 
   // Section card
@@ -1192,211 +872,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.muted,
   },
-  quickActionsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
-  quickActionCard: {
-    flex: 1,
-    minWidth: 150,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: radii.lg,
-    padding: 14,
-    backgroundColor: colors.surfaceAlt,
-    gap: 8,
-  },
-  quickActionIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.accent,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  quickActionLabel: {
-    fontWeight: "700",
-    color: colors.text,
-  },
-  quickActionHelper: {
-    fontSize: 12,
-    color: colors.muted,
-  },
-  infoCard: {
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surfaceAlt,
-    overflow: "hidden",
-  },
-  infoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  infoLabel: {
-    color: colors.accentTertiary,
-    fontSize: 13,
-  },
-  infoValue: {
-    color: colors.text,
-    fontWeight: "600",
-  },
-  infoDivider: {
-    height: 1,
-    backgroundColor: colors.cardBorder,
-    marginHorizontal: 16,
-  },
-  infoAction: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    gap: 12,
-  },
-  infoActionIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.accent,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.surface,
-  },
-  infoActionContent: {
-    flex: 1,
-    gap: 2,
-  },
-  infoActionLabel: {
-    fontWeight: "600",
-    color: colors.text,
-  },
-  infoActionHelper: {
-    fontSize: 12,
-    color: colors.muted,
-  },
 
   // Action list rows
   actionList: {
     gap: 10,
-  },
-  actionItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: 14,
-    gap: 14,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  actionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: "rgba(188, 108, 37, 0.3)",
-    backgroundColor: "rgba(188, 108, 37, 0.08)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  actionContent: {
-    flex: 1,
-    gap: 3,
-  },
-  actionLabel: {
-    fontWeight: "700",
-    color: colors.text,
-    fontSize: 15,
-  },
-  actionHelper: {
-    fontSize: 12,
-    color: colors.accentTertiary,
-  },
-
-  fabWrapper: {
-    position: "absolute",
-    bottom: 32,
-    right: 24,
-    alignItems: "flex-end",
-  },
-  fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.accent,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#8B4513",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4,
-  },
-  fabMenu: {
-    marginTop: 12,
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    paddingVertical: 6,
-    width: 200,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  menuBackdrop: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  fabMenuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  fabMenuText: {
-    color: colors.text,
-    fontWeight: "600",
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(45, 45, 42, 0.5)",
-    justifyContent: "flex-end",
-  },
-  menu: {
-    backgroundColor: colors.background,
-    padding: 20,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    gap: 12,
-    borderTopWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  menuItem: {
-    paddingVertical: 12,
-  },
-  menuItemText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: colors.text,
-  },
-  menuFooter: {
-    marginTop: 8,
   },
 
   // Sign out inner layout (bg/shadow handled by PhysicalButton)
@@ -1413,13 +892,6 @@ const styles = StyleSheet.create({
   },
 
   // Modals
-  modalScreen: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  modalKeyboardAvoiding: {
-    flex: 1,
-  },
   modalCloseIcon: {
     position: "absolute",
     top: spacing.screen - 6,
@@ -1448,25 +920,9 @@ const styles = StyleSheet.create({
   householdModalContent: {
     flexGrow: 1,
   },
-  modalHeading: {
-    fontSize: 26,
-    fontWeight: "900",
-    color: colors.text,
-    letterSpacing: -0.3,
-  },
   modalBlock: {
     gap: 12,
     paddingVertical: 8,
-  },
-  modalClose: {
-    padding: 16,
-    alignItems: "center",
-    borderTopWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  modalCloseText: {
-    color: colors.accent,
-    fontWeight: "700",
   },
   subheading: {
     fontSize: 17,
@@ -1532,120 +988,5 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.55,
-  },
-
-  // Household card
-  householdCard: {
-    gap: 14,
-    borderRadius: 24,
-    padding: spacing.screen,
-    backgroundColor: "rgb(255, 255, 255)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.95)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  householdCardEmpty: {
-    borderStyle: "dashed",
-    borderColor: colors.cardBorder,
-    alignItems: "stretch",
-  },
-  householdActions: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  householdHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  householdBadges: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  householdMetaRow: {
-    flexDirection: "row",
-    gap: 16,
-  },
-  householdColumn: {
-    flex: 1,
-  },
-  householdLabel: {
-    color: colors.accentTertiary,
-    fontSize: 11,
-    textTransform: "uppercase",
-    fontWeight: "700",
-    letterSpacing: 0.8,
-  },
-  householdName: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: colors.text,
-    letterSpacing: -0.3,
-  },
-  householdValue: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: colors.text,
-  },
-  statusPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: "rgba(188, 108, 37, 0.1)",
-    color: colors.accent,
-    fontWeight: "700",
-    fontSize: 12,
-    overflow: "hidden",
-  },
-  membersTitle: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: colors.text,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  memberCarousel: {
-    gap: 14,
-    paddingVertical: 6,
-  },
-  memberBadge: {
-    alignItems: "center",
-    gap: 6,
-  },
-  memberBadgeLetter: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    textAlign: "center",
-    textAlignVertical: "center",
-    backgroundColor: colors.accent,
-    color: "#FFFFFF",
-    fontWeight: "800",
-    fontSize: 20,
-    lineHeight: 48,
-    overflow: "hidden",
-  },
-  memberBadgeLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: colors.muted,
-  },
-  manageButton: {
-    marginTop: 6,
-    borderRadius: radii.md,
-    borderWidth: 1.5,
-    borderColor: colors.accent,
-    paddingVertical: 12,
-    alignItems: "center",
-    backgroundColor: "rgba(188, 108, 37, 0.05)",
-  },
-  manageButtonText: {
-    color: colors.accent,
-    fontWeight: "700",
-    fontSize: 14,
   },
 });
