@@ -132,5 +132,6 @@ const styles = StyleSheet.create({
   },
   dayGridDotActive: {
     backgroundColor: "#FFF",
+    borderRadius: 9999,
   },
 });

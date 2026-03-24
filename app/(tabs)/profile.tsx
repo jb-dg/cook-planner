@@ -12,7 +12,9 @@ import {
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -28,6 +30,7 @@ import {
 import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
 import PhysicalButton from "../../components/PhysicalButton";
 import { useAuth } from "../../contexts/AuthContext";
+import { ensureProfileRecord } from "../../lib/profile";
 import { supabase } from "../../lib/supabase";
 import { validateEmail } from "../../lib/validation/auth";
 import { colors, radii, spacing } from "../../theme/design";
@@ -85,12 +88,27 @@ export default function ProfileScreen() {
     useState<HouseholdModalMode>("create");
   const [fabMenuOpen, setFabMenuOpen] = useState(false);
 
-  const modalContentStyle = useMemo(
+  const profileModalContentStyle = useMemo(
     () => [
       styles.modalContent,
-      { paddingTop: spacing.screen + insets.top + 16 },
+      {
+        paddingTop: spacing.screen + insets.top + 16,
+        paddingBottom: Math.max(120, insets.bottom + 120),
+      },
     ],
-    [insets.top],
+    [insets.bottom, insets.top],
+  );
+
+  const householdModalContentStyle = useMemo(
+    () => [
+      styles.modalContent,
+      styles.householdModalContent,
+      {
+        paddingTop: spacing.screen + insets.top + 16,
+        paddingBottom: Math.max(220, insets.bottom + 220),
+      },
+    ],
+    [insets.bottom, insets.top],
   );
 
   const modalCloseIconStyle = useMemo(
@@ -98,6 +116,11 @@ export default function ProfileScreen() {
       styles.modalCloseIcon,
       { top: insets.top + spacing.base, right: spacing.screen },
     ],
+    [insets.top],
+  );
+
+  const keyboardVerticalOffset = useMemo(
+    () => insets.top + spacing.base,
     [insets.top],
   );
 
@@ -143,73 +166,46 @@ export default function ProfileScreen() {
     setFabMenuOpen(false);
   };
 
-  const generateDefaultPseudo = useCallback(() => {
-    const rawSource =
-      session?.user.email?.split("@")[0] ??
-      session?.user.user_metadata?.full_name ??
-      "chef";
-    const sanitized = rawSource
-      .toString()
-      .trim()
-      .replace(/[^a-zA-Z0-9]/g, "")
-      .toLowerCase();
-    if (sanitized.length >= 3) return sanitized.slice(0, 24);
-    const fallback = `chef${session?.user.id.slice(0, 5) ?? ""}`.toLowerCase();
-    return fallback;
-  }, [session]);
-
-  const ensureDefaultPseudo = useCallback(async () => {
-    if (!session) return "";
-    const base = generateDefaultPseudo();
-    let candidate = base;
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      const { data, error } = await supabase
-        .from("profiles")
-        .upsert({
-          user_id: session.user.id,
-          pseudo: candidate,
-          email: session.user.email?.toLowerCase(),
-        })
-        .select("pseudo")
-        .single();
-
-      if (!error && data?.pseudo) {
-        return data.pseudo;
-      }
-
-      if ((error as PostgrestError).code !== "23505") {
-        throw error;
-      }
-
-      candidate = `${base}${Math.floor(Math.random() * 900 + 100)}`;
-    }
-    return base;
-  }, [generateDefaultPseudo, session]);
-
   const loadProfile = useCallback(async () => {
     if (!session) return;
     setLoadingProfile(true);
     setPseudoError(null);
     setPseudoSuccess(null);
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("pseudo")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-      if (error) throw error;
-      if (!data?.pseudo) {
-        const autoPseudo = await ensureDefaultPseudo();
-        setPseudo(autoPseudo);
-        return;
-      }
-      setPseudo(data.pseudo);
+      const syncedPseudo = await ensureProfileRecord(session.user);
+      setPseudo(syncedPseudo);
     } catch (err) {
       console.error("load profile", err);
     } finally {
       setLoadingProfile(false);
     }
-  }, [ensureDefaultPseudo, session]);
+  }, [session]);
+
+  const migrateOwnerDataToHousehold = useCallback(
+    async (householdId: string) => {
+      if (!session) return;
+      try {
+        const [recipesResult, menusResult] = await Promise.all([
+          supabase
+            .from("recipes")
+            .update({ household_id: householdId })
+            .eq("user_id", session.user.id)
+            .is("household_id", null),
+          supabase
+            .from("weekly_menus")
+            .update({ household_id: householdId })
+            .eq("user_id", session.user.id)
+            .is("household_id", null),
+        ]);
+
+        if (recipesResult.error) throw recipesResult.error;
+        if (menusResult.error) throw menusResult.error;
+      } catch (error) {
+        console.warn("migrate owner data to household failed", error);
+      }
+    },
+    [session],
+  );
 
   const loadHousehold = useCallback(async () => {
     if (!session) return;
@@ -242,6 +238,10 @@ export default function ProfileScreen() {
 
       setHousehold(householdData);
 
+      if (householdData.owner_id === session.user.id) {
+        await migrateOwnerDataToHousehold(householdId);
+      }
+
       const { data: memberRows, error: memberError } = await supabase
         .from("household_members")
         .select("user_id")
@@ -256,21 +256,49 @@ export default function ProfileScreen() {
         return;
       }
 
-      const { data: profileRows, error: profileError } = await supabase
-        .from("profiles")
-        .select("user_id,pseudo")
-        .in("user_id", memberIds);
+      type MemberProfileRow = {
+        user_id: string;
+        pseudo: string | null;
+        email: string | null;
+      };
 
-      if (profileError) throw profileError;
+      // Prefer RPC to bypass RLS limitations on profiles; fallback to direct select.
+      let profileRows: MemberProfileRow[] = [];
+      const { data: memberProfiles, error: memberProfilesError } =
+        await supabase.rpc("fetch_household_member_profiles", {
+          p_household_id: householdId,
+        });
+
+      if (!memberProfilesError && Array.isArray(memberProfiles)) {
+        profileRows = memberProfiles as MemberProfileRow[];
+      } else {
+        const { data: fallbackProfiles, error: profileError } = await supabase
+          .from("profiles")
+          .select("user_id,pseudo,email")
+          .in("user_id", memberIds);
+
+        if (profileError) throw profileError;
+        profileRows = fallbackProfiles ?? [];
+      }
+
+      const profileByUserId = new Map(
+        profileRows.map((row) => [row.user_id, row]),
+      );
 
       setHouseholdMembers(
-        memberIds.map((userId) => ({
-          user_id: userId,
-          pseudo:
-            profileRows?.find((profile) => profile.user_id === userId)
-              ?.pseudo ?? null,
-          isCurrentUser: userId === session.user.id,
-        })),
+        memberIds.map((userId) => {
+          const profile = profileByUserId.get(userId);
+          // fallback sur email local si pas de pseudo, puis null
+          const resolvedPseudo =
+            profile?.pseudo?.trim() ||
+            profile?.email?.split("@")[0] ||
+            null;
+          return {
+            user_id: userId,
+            pseudo: resolvedPseudo,
+            isCurrentUser: userId === session.user.id,
+          };
+        }),
       );
     } catch (err) {
       console.error("load household", err);
@@ -280,7 +308,7 @@ export default function ProfileScreen() {
     } finally {
       setLoadingHousehold(false);
     }
-  }, [session]);
+  }, [migrateOwnerDataToHousehold, session]);
 
   useEffect(() => {
     loadProfile();
@@ -303,7 +331,7 @@ export default function ProfileScreen() {
         .upsert({
           user_id: session.user.id,
           pseudo: trimmed,
-          email: session.user.email?.toLowerCase(),
+          email: session.user.email?.trim().toLowerCase(),
         })
         .select("user_id")
         .single();
@@ -360,6 +388,8 @@ export default function ProfileScreen() {
 
       if (memberError) throw memberError;
 
+      await migrateOwnerDataToHousehold(newHousehold.id);
+
       setHouseholdName("");
       await loadHousehold();
       setHouseholdActionsOpen(false);
@@ -395,26 +425,46 @@ export default function ProfileScreen() {
     setInviteSuccess(null);
     setInviting(true);
     try {
-      if (normalizedEmail === session.user.email?.toLowerCase()) {
+      if (normalizedEmail === session.user.email?.trim().toLowerCase()) {
         setInviteError("Tu es déjà dans ce foyer.");
         return;
       }
-      const { data: targetProfile, error: targetError } = await supabase
-        .from("profiles")
-        .select("user_id")
-        .eq("email", normalizedEmail)
-        .maybeSingle();
 
-      if (targetError) throw targetError;
-      if (!targetProfile) {
-        setInviteError("Aucun utilisateur avec cet email.");
+      // Preferred path: secure server-side lookup from auth.users.
+      let targetUserId: string | null = null;
+      const { data: resolvedUserId, error: resolveError } = await supabase.rpc(
+        "resolve_household_member_by_email",
+        {
+          p_household_id: household.id,
+          p_email: normalizedEmail,
+        },
+      );
+
+      if (!resolveError && typeof resolvedUserId === "string") {
+        targetUserId = resolvedUserId;
+      } else {
+        // Fallback for environments where the SQL function isn't deployed yet.
+        const { data: targetProfile, error: targetError } = await supabase
+          .from("profiles")
+          .select("user_id")
+          .ilike("email", normalizedEmail)
+          .maybeSingle();
+
+        if (targetError) throw targetError;
+        targetUserId = targetProfile?.user_id ?? null;
+      }
+
+      if (!targetUserId) {
+        setInviteError(
+          "Email introuvable. Vérifie l'adresse et exécute la migration SQL des invitations.",
+        );
         return;
       }
       const { data: existingMembership, error: membershipLookupError } =
         await supabase
           .from("household_members")
           .select("household_id")
-          .eq("user_id", targetProfile.user_id)
+          .eq("user_id", targetUserId)
           .maybeSingle();
 
       if (membershipLookupError) throw membershipLookupError;
@@ -427,7 +477,7 @@ export default function ProfileScreen() {
         .from("household_members")
         .insert({
           household_id: household.id,
-          user_id: targetProfile.user_id,
+          user_id: targetUserId,
         });
 
       if (inviteErrorRes) {
@@ -437,6 +487,16 @@ export default function ProfileScreen() {
         }
         throw inviteErrorRes;
       }
+
+      // FIX: Crée un profil minimal pour le membre invité s'il n'en a pas encore,
+      // afin qu'il ne s'affiche pas comme "Invité" dans la liste des membres.
+      await supabase.from("profiles").upsert(
+        {
+          user_id: targetUserId,
+          email: normalizedEmail,
+        },
+        { onConflict: "user_id", ignoreDuplicates: true },
+      );
 
       setInviteEmail("");
       setInviteSuccess("Membre ajouté au foyer !");
@@ -640,7 +700,7 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         <LinearGradient
-          colors={["rgba(255,255,255,0.92)", "rgba(245,239,228,0.85)"]}
+          colors={["rgb(255, 255, 255)", "rgb(255, 255, 255)"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.heroCard}
@@ -648,9 +708,6 @@ export default function ProfileScreen() {
           <View style={styles.heroHeader}>
             <View style={styles.avatar}>
               <Text style={styles.avatarLetter}>{badgeLetter}</Text>
-              <View style={styles.avatarEdit}>
-                <Feather name="edit-3" size={14} color="#2D2D2A" />
-              </View>
             </View>
             <View style={styles.heroText}>
               <Text style={styles.helper}>Bonjour !</Text>
@@ -658,15 +715,6 @@ export default function ProfileScreen() {
               <Text style={styles.heroEmail}>{session?.user.email}</Text>
             </View>
           </View>
-          {/* <Text style={styles.heroSubtitle}>{heroSubtitle}</Text>
-          <View style={styles.heroStats}>
-            {profileStats.map((stat) => (
-              <View key={stat.label} style={styles.statPill}>
-                <Text style={styles.statValue}>{stat.value}</Text>
-                <Text style={styles.statLabel}>{stat.label}</Text>
-              </View>
-            ))}
-          </View> */}
         </LinearGradient>
 
         <View style={styles.section}>
@@ -790,52 +838,64 @@ export default function ProfileScreen() {
         onRequestClose={() => setProfileModalOpen(false)}
       >
         <SafeAreaView style={styles.modalScreen}>
-          <Pressable
-            style={modalCloseIconStyle}
-            onPress={() => setProfileModalOpen(false)}
+          <KeyboardAvoidingView
+            style={styles.modalKeyboardAvoiding}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={keyboardVerticalOffset}
           >
-            <Feather name="x" size={18} color="#2D2D2A" />
-          </Pressable>
-          <ScrollView
-            contentContainerStyle={modalContentStyle}
-            showsVerticalScrollIndicator={false}
-          >
-            <Text style={styles.modalHeading}>Informations du profil</Text>
-            <Text style={styles.label}>Email</Text>
-            <Text style={styles.value}>{session?.user.email}</Text>
-            <Text style={[styles.label, { marginTop: 16 }]}>Pseudo unique</Text>
-            {loadingProfile ? (
-              <ActivityIndicator color="#6B705C" />
-            ) : (
-              <>
-                <TextInput
-                  placeholder="ex: chef_lucie"
-                  placeholderTextColor="#A5A58D"
-                  value={pseudo}
-                  onChangeText={setPseudo}
-                  style={styles.input}
-                  autoCapitalize="none"
-                />
-                <Text style={styles.helper}>
-                  Ce pseudo sert à rejoindre un foyer commun.
-                </Text>
-                {pseudoError ? (
-                  <Text style={styles.errorText}>{pseudoError}</Text>
-                ) : null}
-                {pseudoSuccess ? (
-                  <Text style={styles.successText}>{pseudoSuccess}</Text>
-                ) : null}
-                <PhysicalButton
-                  onPress={handleSavePseudo}
-                  disabled={savingPseudo}
-                >
-                  <Text style={styles.primaryButtonText}>
-                    {savingPseudo ? "Enregistrement…" : "Sauvegarder"}
+            <Pressable
+              style={modalCloseIconStyle}
+              onPress={() => setProfileModalOpen(false)}
+            >
+              <Feather name="x" size={18} color="#2D2D2A" />
+            </Pressable>
+            <ScrollView
+              contentContainerStyle={profileModalContentStyle}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode={
+                Platform.OS === "ios" ? "interactive" : "on-drag"
+              }
+            >
+              <Text style={styles.modalHeading}>Informations du profil</Text>
+              <Text style={styles.label}>Email</Text>
+              <Text style={styles.value}>{session?.user.email}</Text>
+              <Text style={[styles.label, { marginTop: 16 }]}>
+                Pseudo unique
+              </Text>
+              {loadingProfile ? (
+                <ActivityIndicator color="#6B705C" />
+              ) : (
+                <>
+                  <TextInput
+                    placeholder="ex: chef_lucie"
+                    placeholderTextColor="#A5A58D"
+                    value={pseudo}
+                    onChangeText={setPseudo}
+                    style={styles.input}
+                    autoCapitalize="none"
+                  />
+                  <Text style={styles.helper}>
+                    Ce pseudo sert à rejoindre un foyer commun.
                   </Text>
-                </PhysicalButton>
-              </>
-            )}
-          </ScrollView>
+                  {pseudoError ? (
+                    <Text style={styles.errorText}>{pseudoError}</Text>
+                  ) : null}
+                  {pseudoSuccess ? (
+                    <Text style={styles.successText}>{pseudoSuccess}</Text>
+                  ) : null}
+                  <PhysicalButton
+                    onPress={handleSavePseudo}
+                    disabled={savingPseudo}
+                  >
+                    <Text style={styles.primaryButtonText}>
+                      {savingPseudo ? "Enregistrement…" : "Sauvegarder"}
+                    </Text>
+                  </PhysicalButton>
+                </>
+              )}
+            </ScrollView>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
 
@@ -845,134 +905,148 @@ export default function ProfileScreen() {
         onRequestClose={() => setHouseholdActionsOpen(false)}
       >
         <SafeAreaView style={styles.modalScreen}>
-          <Pressable
-            style={modalCloseIconStyle}
-            onPress={() => setHouseholdActionsOpen(false)}
+          <KeyboardAvoidingView
+            style={styles.modalKeyboardAvoiding}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={keyboardVerticalOffset}
           >
-            <Feather name="x" size={18} color="#2D2D2A" />
-          </Pressable>
-          <ScrollView
-            contentContainerStyle={modalContentStyle}
-            showsVerticalScrollIndicator={false}
-          >
-            <Text style={styles.modalHeading}>
-              Ajouter ou rejoindre un foyer
-            </Text>
-            {householdModalMode === "create" && (
-              <View style={styles.modalBlock}>
-                <Text style={styles.subheading}>Créer un foyer</Text>
-                <TextInput
-                  placeholder="Nom du foyer (ex: Famille Durand)"
-                  placeholderTextColor="#A5A58D"
-                  value={householdName}
-                  onChangeText={setHouseholdName}
-                  style={styles.input}
-                />
-                {householdError ? (
-                  <Text style={styles.errorText}>{householdError}</Text>
-                ) : null}
-                <Pressable
-                  style={[
-                    styles.secondaryButton,
-                    creatingHousehold && styles.buttonDisabled,
-                  ]}
-                  onPress={handleCreateHousehold}
-                  disabled={creatingHousehold}
-                >
-                  <Text style={styles.secondaryButtonText}>
-                    {creatingHousehold ? "Création…" : "Créer"}
-                  </Text>
-                </Pressable>
-              </View>
-            )}
-            {householdModalMode === "join" && (
-              <View style={styles.modalBlock}>
-                <Text style={styles.subheading}>Rejoindre un foyer</Text>
-                <Text style={styles.helper}>
-                  Demande à l'admin de te partager son pseudo, puis saisis-le
-                  ici.
-                </Text>
-                <TextInput
-                  placeholder="Pseudo de l'administrateur"
-                  placeholderTextColor="#A5A58D"
-                  value={joinPseudo}
-                  onChangeText={setJoinPseudo}
-                  style={styles.input}
-                  autoCapitalize="none"
-                />
-                {joinError ? (
-                  <Text style={styles.errorText}>{joinError}</Text>
-                ) : null}
-                {joinSuccess ? (
-                  <Text style={styles.successText}>{joinSuccess}</Text>
-                ) : null}
-                <PhysicalButton
-                  onPress={handleJoinHousehold}
-                  disabled={joining}
-                >
-                  <Text style={styles.primaryButtonText}>
-                    {joining ? "Connexion…" : "Rejoindre"}
-                  </Text>
-                </PhysicalButton>
-              </View>
-            )}
-            {householdModalMode === "manage" && (
-              <>
-                {household ? (
-                  <>
-                    {renderHouseholdSummary()}
-                    {isOwner ? (
-                      <View style={styles.modalBlock}>
-                        <Text style={styles.subheading}>Ajouter un membre</Text>
-                        <Text style={styles.helper}>
-                          Invite un proche en indiquant son email de connexion.
-                        </Text>
-                        <TextInput
-                          placeholder="Email du membre"
-                          placeholderTextColor="#A5A58D"
-                          value={inviteEmail}
-                          onChangeText={setInviteEmail}
-                          style={styles.input}
-                          autoCapitalize="none"
-                          keyboardType="email-address"
-                        />
-                        {inviteError ? (
-                          <Text style={styles.errorText}>{inviteError}</Text>
-                        ) : null}
-                        {inviteSuccess ? (
-                          <Text style={styles.successText}>
-                            {inviteSuccess}
-                          </Text>
-                        ) : null}
-                        <Pressable
-                          style={[
-                            styles.secondaryButton,
-                            inviting && styles.buttonDisabled,
-                          ]}
-                          onPress={handleInviteMember}
-                          disabled={inviting}
-                        >
-                          <Text style={styles.secondaryButtonText}>
-                            {inviting ? "Ajout…" : "Inviter"}
-                          </Text>
-                        </Pressable>
-                      </View>
-                    ) : (
-                      <Text style={styles.helper}>
-                        Demande à l'admin de ton foyer actuel pour ajouter
-                        quelqu'un.
-                      </Text>
-                    )}
-                  </>
-                ) : (
+            <Pressable
+              style={modalCloseIconStyle}
+              onPress={() => setHouseholdActionsOpen(false)}
+            >
+              <Feather name="x" size={18} color="#2D2D2A" />
+            </Pressable>
+            <ScrollView
+              contentContainerStyle={householdModalContentStyle}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode={
+                Platform.OS === "ios" ? "interactive" : "on-drag"
+              }
+              automaticallyAdjustKeyboardInsets
+            >
+              <Text style={styles.modalHeading}>
+                Ajouter ou rejoindre un foyer
+              </Text>
+              {householdModalMode === "create" && (
+                <View style={styles.modalBlock}>
+                  <Text style={styles.subheading}>Créer un foyer</Text>
+                  <TextInput
+                    placeholder="Nom du foyer (ex: Famille Durand)"
+                    placeholderTextColor="#A5A58D"
+                    value={householdName}
+                    onChangeText={setHouseholdName}
+                    style={styles.input}
+                  />
+                  {householdError ? (
+                    <Text style={styles.errorText}>{householdError}</Text>
+                  ) : null}
+                  <Pressable
+                    style={[
+                      styles.secondaryButton,
+                      creatingHousehold && styles.buttonDisabled,
+                    ]}
+                    onPress={handleCreateHousehold}
+                    disabled={creatingHousehold}
+                  >
+                    <Text style={styles.secondaryButtonText}>
+                      {creatingHousehold ? "Création…" : "Créer"}
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
+              {householdModalMode === "join" && (
+                <View style={styles.modalBlock}>
+                  <Text style={styles.subheading}>Rejoindre un foyer</Text>
                   <Text style={styles.helper}>
-                    Tu n'as pas encore de foyer actif. Utilise le bouton + pour
-                    en créer un.
+                    Demande à l'admin de te partager son pseudo, puis saisis-le
+                    ici.
                   </Text>
-                )}
-              </>
-            )}
-          </ScrollView>
+                  <TextInput
+                    placeholder="Pseudo de l'administrateur"
+                    placeholderTextColor="#A5A58D"
+                    value={joinPseudo}
+                    onChangeText={setJoinPseudo}
+                    style={styles.input}
+                    autoCapitalize="none"
+                  />
+                  {joinError ? (
+                    <Text style={styles.errorText}>{joinError}</Text>
+                  ) : null}
+                  {joinSuccess ? (
+                    <Text style={styles.successText}>{joinSuccess}</Text>
+                  ) : null}
+                  <PhysicalButton
+                    onPress={handleJoinHousehold}
+                    disabled={joining}
+                  >
+                    <Text style={styles.primaryButtonText}>
+                      {joining ? "Connexion…" : "Rejoindre"}
+                    </Text>
+                  </PhysicalButton>
+                </View>
+              )}
+              {householdModalMode === "manage" && (
+                <>
+                  {household ? (
+                    <>
+                      {renderHouseholdSummary()}
+                      {isOwner ? (
+                        <View style={styles.modalBlock}>
+                          <Text style={styles.subheading}>
+                            Ajouter un membre
+                          </Text>
+                          <Text style={styles.helper}>
+                            Invite un proche en indiquant son email de
+                            connexion.
+                          </Text>
+                          <TextInput
+                            placeholder="Email du membre"
+                            placeholderTextColor="#A5A58D"
+                            value={inviteEmail}
+                            onChangeText={setInviteEmail}
+                            style={styles.input}
+                            autoCapitalize="none"
+                            keyboardType="email-address"
+                          />
+                          {inviteError ? (
+                            <Text style={styles.errorText}>{inviteError}</Text>
+                          ) : null}
+                          {inviteSuccess ? (
+                            <Text style={styles.successText}>
+                              {inviteSuccess}
+                            </Text>
+                          ) : null}
+                          <Pressable
+                            style={[
+                              styles.secondaryButton,
+                              inviting && styles.buttonDisabled,
+                            ]}
+                            onPress={handleInviteMember}
+                            disabled={inviting}
+                          >
+                            <Text style={styles.secondaryButtonText}>
+                              {inviting ? "Ajout…" : "Inviter"}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      ) : (
+                        <Text style={styles.helper}>
+                          Demande à l'admin de ton foyer actuel pour ajouter
+                          quelqu'un.
+                        </Text>
+                      )}
+                    </>
+                  ) : (
+                    <Text style={styles.helper}>
+                      Tu n'as pas encore de foyer actif. Utilise le bouton +
+                      pour en créer un.
+                    </Text>
+                  )}
+                </>
+              )}
+            </ScrollView>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -1013,17 +1087,17 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 36,
     borderWidth: 2,
-    borderStyle: "dashed",
+    borderStyle: "solid",
     borderColor: colors.cardBorder,
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
-    backgroundColor: "rgba(255,255,255,0.6)",
+    backgroundColor: "#BC6C25",
   },
   avatarLetter: {
     fontSize: 32,
     fontWeight: "900",
-    color: colors.accent,
+    color: "#FFFFFF",
   },
   avatarEdit: {
     position: "absolute",
@@ -1099,7 +1173,7 @@ const styles = StyleSheet.create({
     padding: spacing.screen,
     borderRadius: 28,
     gap: 14,
-    backgroundColor: "rgba(255, 255, 255, 0.82)",
+    backgroundColor: "rgb(255, 255, 255)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.95)",
     shadowColor: "#000",
@@ -1343,6 +1417,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  modalKeyboardAvoiding: {
+    flex: 1,
+  },
   modalCloseIcon: {
     position: "absolute",
     top: spacing.screen - 6,
@@ -1367,6 +1444,9 @@ const styles = StyleSheet.create({
     paddingTop: spacing.screen,
     gap: 16,
     paddingBottom: 120,
+  },
+  householdModalContent: {
+    flexGrow: 1,
   },
   modalHeading: {
     fontSize: 26,
@@ -1459,7 +1539,7 @@ const styles = StyleSheet.create({
     gap: 14,
     borderRadius: 24,
     padding: spacing.screen,
-    backgroundColor: "rgba(255, 255, 255, 0.82)",
+    backgroundColor: "rgb(255, 255, 255)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.95)",
     shadowColor: "#000",

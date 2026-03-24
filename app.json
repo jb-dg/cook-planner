@@ -23,8 +23,8 @@
     "android": {
       "package": "com.jbdg.cookplanner",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundColor": "#FDFBF7"
+        "foregroundImage": "./assets/images/book-icon.png",
+        "backgroundColor": "#BB6F2B"
       }
     },
     "web": {
