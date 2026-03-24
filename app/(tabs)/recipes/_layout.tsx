@@ -13,7 +13,13 @@ export default function RecipesLayout() {
       <Stack.Screen
         name="[id]"
         options={{
-          title: "Modifier une recette",
+          title: "Recette",
+        }}
+      />
+      <Stack.Screen
+        name="books/[bookId]"
+        options={{
+          title: "Livre de recettes",
         }}
       />
     </Stack>

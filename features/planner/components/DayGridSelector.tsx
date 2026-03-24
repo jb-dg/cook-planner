@@ -1,7 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
-import { colors, shadows, spacing } from "../../../theme/design";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { colors, spacing } from "../../../theme/design";
 
 type Props = {
   referenceDate: Date;
@@ -78,15 +78,20 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 60,
     maxWidth: "14%",
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    borderRadius: 12,
+    backgroundColor: colors.surface,
     paddingVertical: 12,
     paddingHorizontal: spacing.base * 0.15,
-    backgroundColor: colors.surfaceAlt,
     gap: spacing.base * 0.15,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   dayGridItemActive: {
     borderColor: colors.accent,
@@ -94,23 +99,24 @@ const styles = StyleSheet.create({
     transform: [{ scale: 1.05 }],
     shadowColor: colors.accent,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.22,
     shadowRadius: 8,
-    elevation: 5,
+    elevation: 4,
   },
   dayGridTitle: {
     fontWeight: "700",
     color: colors.muted,
     textTransform: "uppercase",
     textAlign: "center",
-    fontSize: 11,
+    fontSize: 10,
+    letterSpacing: 0.5,
   },
   dayGridTitleActive: {
     color: "#FFF",
   },
   dayGridNumber: {
     fontSize: 16,
-    fontWeight: "800",
+    fontWeight: "700",
     color: colors.text,
     textAlign: "center",
   },
@@ -119,12 +125,13 @@ const styles = StyleSheet.create({
   },
   dayGridDot: {
     marginTop: 2,
-    width: 6,
-    height: 6,
-    borderRadius: 999,
+    width: 5,
+    height: 5,
+    borderRadius: 9999,
     backgroundColor: "transparent",
   },
   dayGridDotActive: {
     backgroundColor: "#FFF",
+    borderRadius: 9999,
   },
 });

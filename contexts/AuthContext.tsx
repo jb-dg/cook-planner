@@ -9,6 +9,7 @@ import {
 import type { AuthError, Session } from "@supabase/supabase-js";
 import * as Linking from "expo-linking";
 
+import { ensureProfileRecord } from "../lib/profile";
 import { supabase } from "../lib/supabase";
 
 type AuthCredentials = {
@@ -53,6 +54,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [initializing, setInitializing] = useState(true);
 
+  const syncProfile = useCallback(async (currentSession: Session | null) => {
+    if (!currentSession?.user) return;
+    try {
+      await ensureProfileRecord(currentSession.user);
+    } catch (error) {
+      console.warn("profile sync failed", error);
+    }
+  }, []);
+
   useEffect(() => {
     let mounted = true;
 
@@ -60,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!mounted) return;
       setSession(data.session ?? null);
       setInitializing(false);
+      syncProfile(data.session ?? null);
     });
 
     const {
@@ -67,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event, currentSession) => {
       setSession(currentSession);
       setInitializing(false);
+      syncProfile(currentSession);
     });
 
     const handleDeepLink = async ({ url }: { url: string }) => {
@@ -84,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
       linkingSub.remove();
     };
-  }, []);
+  }, [syncProfile]);
 
   const signIn = useCallback(async (credentials: AuthCredentials) => {
     try {

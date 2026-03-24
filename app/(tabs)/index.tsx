@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import PhysicalButton from "../../components/PhysicalButton";
+import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
 import { useAuth } from "../../contexts/AuthContext";
 import { fetchHouseholdScope } from "../../lib/households";
 import { supabase } from "../../lib/supabase";
@@ -194,9 +194,10 @@ export default function HomeScreen() {
         </View>
 
         {/* Physical CTA button — mirrors `.btn-physical` from HTML */}
-        <PhysicalButton onPress={() => router.push("/planner")}>
+
+        <PhysicalButtonAnimated onPress={() => router.push("/planner")}>
           <Text style={styles.physicalCtaText}>Ouvrir mon planning</Text>
-        </PhysicalButton>
+        </PhysicalButtonAnimated>
       </ScrollView>
     </SafeAreaView>
   );
@@ -252,10 +253,12 @@ const styles = StyleSheet.create({
     gap: spacing.base * 1.2,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.9)",
-    shadowColor: "rgba(107, 112, 92, 1)",
-    shadowOffset: { width: 0, height: 16 },
+    // shadowColor: "#6B705C",
+    shadowColor: "rgba(107, 112, 92, 0.15)",
+    shadowOffset: { width: 0, height: 20 },
     shadowOpacity: 0.15,
-    shadowRadius: 40,
+    shadowRadius: 25,
+    elevation: 25,
   },
   progressHeader: {
     flexDirection: "row",

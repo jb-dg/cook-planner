@@ -64,8 +64,9 @@ const styles = StyleSheet.create({
     paddingBottom: 180,
   },
   heading: {
-    fontSize: 24,
-    fontWeight: "700",
+    fontSize: 28,
+    fontWeight: "900",
     color: colors.text,
+    letterSpacing: -0.5,
   },
 });

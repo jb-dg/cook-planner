@@ -1,6 +1,6 @@
+import React from "react";
 import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
-
-import { physicalVariants, PhysicalVariant } from "../theme/shadows";
+import { PhysicalVariant, physicalVariants } from "../theme/shadows";
 
 const DEPTH = 4;
 const BORDER_RADIUS = 18;
@@ -33,7 +33,10 @@ export default function PhysicalButton({
     <View
       style={[
         styles.wrapper,
-        { backgroundColor: disabled ? "transparent" : shadowColor, borderRadius: BORDER_RADIUS },
+        {
+          backgroundColor: disabled ? "transparent" : shadowColor,
+          borderRadius: BORDER_RADIUS,
+        },
       ]}
     >
       <Pressable
@@ -41,7 +44,10 @@ export default function PhysicalButton({
         disabled={disabled}
         style={({ pressed }) => [
           styles.button,
-          { backgroundColor: disabled ? "#E4D9C8" : bgColor, borderRadius: BORDER_RADIUS },
+          {
+            backgroundColor: disabled ? "#E4D9C8" : bgColor,
+            borderRadius: BORDER_RADIUS,
+          },
           pressed && !disabled && styles.buttonPressed,
           innerStyle,
         ]}

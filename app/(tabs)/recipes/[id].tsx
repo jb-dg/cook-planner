@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -23,8 +23,13 @@ import {
   RecipeInput,
 } from "../../../features/recipes/types";
 
-export default function EditRecipeScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+type ScreenMode = "view" | "edit";
+
+const getScreenMode = (mode?: string): ScreenMode =>
+  mode === "edit" ? "edit" : "view";
+
+export default function RecipeScreen() {
+  const { id, mode } = useLocalSearchParams<{ id: string; mode?: string }>();
   const router = useRouter();
   const { session } = useAuth();
   const [initialValues, setInitialValues] = useState<RecipeFormState | null>(
@@ -33,6 +38,18 @@ export default function EditRecipeScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [screenMode, setScreenMode] = useState<ScreenMode>(getScreenMode(mode));
+
+  useEffect(() => {
+    setScreenMode(getScreenMode(mode));
+  }, [mode]);
+
+  const displayIngredients = useMemo(() => {
+    if (!initialValues) return [];
+    return initialValues.ingredients.filter(
+      (item) => item.name.trim() || item.quantity.trim()
+    );
+  }, [initialValues]);
 
   const loadRecipe = useCallback(async () => {
     if (!session || !id) return;
@@ -166,24 +183,122 @@ export default function EditRecipeScreen() {
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.heading}>Modifier la recette</Text>
-          <RecipeForm
-            initialValues={initialValues}
-            submitLabel="Mettre à jour"
-            onSubmit={handleUpdate}
-          />
-          <View style={styles.deleteWrapper}>
-            <Text style={styles.deleteLabel}>Danger</Text>
+          <Text style={styles.heading}>
+            {screenMode === "view" ? "Afficher la recette" : "Modifier la recette"}
+          </Text>
+
+          <View style={styles.modeSwitch}>
             <Pressable
-              style={[styles.deleteButton, deleting && styles.deleteDisabled]}
-              onPress={handleDelete}
-              disabled={deleting}
+              style={[
+                styles.modeButton,
+                screenMode === "view" && styles.modeButtonActive,
+              ]}
+              onPress={() => setScreenMode("view")}
             >
-              <Text style={styles.deleteButtonText}>
-                {deleting ? "Suppression…" : "Supprimer cette recette"}
+              <Text
+                style={[
+                  styles.modeButtonText,
+                  screenMode === "view" && styles.modeButtonTextActive,
+                ]}
+              >
+                Afficher
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.modeButton,
+                screenMode === "edit" && styles.modeButtonActive,
+              ]}
+              onPress={() => setScreenMode("edit")}
+            >
+              <Text
+                style={[
+                  styles.modeButtonText,
+                  screenMode === "edit" && styles.modeButtonTextActive,
+                ]}
+              >
+                Modifier
               </Text>
             </Pressable>
           </View>
+
+          {screenMode === "view" ? (
+            <View style={styles.recipeCard}>
+              <Text style={styles.recipeTitle}>{initialValues.title}</Text>
+
+              <View style={styles.recipeMetaRow}>
+                <View style={styles.recipeMetaChip}>
+                  <Text style={styles.recipeMetaChipText}>
+                    {initialValues.difficulty}
+                  </Text>
+                </View>
+                <View style={styles.recipeMetaChip}>
+                  <Text style={styles.recipeMetaChipText}>
+                    {initialValues.servings} pers.
+                  </Text>
+                </View>
+                {initialValues.duration ? (
+                  <View style={styles.recipeMetaChip}>
+                    <Text style={styles.recipeMetaChipText}>
+                      {initialValues.duration}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+
+              <View style={styles.recipeSection}>
+                <Text style={styles.recipeSectionLabel}>Description</Text>
+                <Text style={styles.recipeDescription}>
+                  {initialValues.description || "Aucune description."}
+                </Text>
+              </View>
+
+              <View style={styles.recipeSection}>
+                <Text style={styles.recipeSectionLabel}>Ingrédients</Text>
+                {displayIngredients.length ? (
+                  displayIngredients.map((item) => (
+                    <View style={styles.ingredientRow} key={item.id}>
+                      <Text style={styles.ingredientName}>{item.name}</Text>
+                      <Text style={styles.ingredientValue}>
+                        {item.quantity} {item.unit}
+                      </Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.recipeDescription}>
+                    Aucun ingrédient renseigné.
+                  </Text>
+                )}
+              </View>
+
+              <Pressable
+                style={styles.editFromViewButton}
+                onPress={() => setScreenMode("edit")}
+              >
+                <Text style={styles.editFromViewButtonText}>Modifier la recette</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <>
+              <RecipeForm
+                initialValues={initialValues}
+                submitLabel="Mettre à jour"
+                onSubmit={handleUpdate}
+              />
+              <View style={styles.deleteWrapper}>
+                <Text style={styles.deleteLabel}>Danger</Text>
+                <Pressable
+                  style={[styles.deleteButton, deleting && styles.deleteDisabled]}
+                  onPress={handleDelete}
+                  disabled={deleting}
+                >
+                  <Text style={styles.deleteButtonText}>
+                    {deleting ? "Suppression…" : "Supprimer cette recette"}
+                  </Text>
+                </Pressable>
+              </View>
+            </>
+          )}
         </ScrollView>
       ) : null}
     </SafeAreaView>
@@ -206,9 +321,118 @@ const styles = StyleSheet.create({
     paddingBottom: 160,
   },
   heading: {
-    fontSize: 24,
-    fontWeight: "700",
+    fontSize: 28,
+    fontWeight: "900",
     color: colors.text,
+    letterSpacing: -0.5,
+  },
+  modeSwitch: {
+    flexDirection: "row",
+    gap: 8,
+    padding: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(228, 217, 200, 0.9)",
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
+  },
+  modeButton: {
+    flex: 1,
+    borderRadius: 999,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  modeButtonActive: {
+    backgroundColor: colors.accent,
+  },
+  modeButtonText: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 13,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  modeButtonTextActive: {
+    color: "#FFFFFF",
+  },
+  recipeCard: {
+    padding: spacing.card,
+    borderRadius: 24,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.9)",
+    gap: 14,
+  },
+  recipeTitle: {
+    fontSize: 24,
+    fontWeight: "900",
+    color: colors.text,
+    letterSpacing: -0.5,
+  },
+  recipeMetaRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  recipeMetaChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(188, 108, 37, 0.2)",
+    backgroundColor: "rgba(188, 108, 37, 0.09)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  recipeMetaChipText: {
+    color: colors.accent,
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    fontWeight: "700",
+  },
+  recipeSection: {
+    gap: 8,
+  },
+  recipeSectionLabel: {
+    color: colors.accentTertiary,
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  recipeDescription: {
+    color: colors.text,
+    lineHeight: 20,
+    fontSize: 14,
+  },
+  ingredientRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+    paddingVertical: 2,
+  },
+  ingredientName: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: "600",
+    flex: 1,
+  },
+  ingredientValue: {
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  editFromViewButton: {
+    marginTop: 6,
+    borderWidth: 1.5,
+    borderColor: colors.accent,
+    borderRadius: radii.lg,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  editFromViewButtonText: {
+    color: colors.accent,
+    fontWeight: "700",
+    fontSize: 14,
   },
   errorText: {
     color: colors.danger,
@@ -216,24 +440,30 @@ const styles = StyleSheet.create({
   },
   deleteWrapper: {
     marginTop: 24,
-    gap: 8,
+    gap: 10,
+    padding: spacing.card,
+    borderRadius: 20,
+    backgroundColor: "rgba(199, 82, 82, 0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(199, 82, 82, 0.15)",
   },
   deleteLabel: {
-    color: colors.muted,
-    fontSize: 12,
+    color: colors.danger,
+    fontSize: 11,
     textTransform: "uppercase",
-    fontWeight: "600",
+    fontWeight: "700",
+    letterSpacing: 1,
   },
   deleteButton: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.danger,
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
     paddingVertical: 14,
     alignItems: "center",
   },
   deleteButtonText: {
     color: colors.danger,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   deleteDisabled: {
     opacity: 0.6,

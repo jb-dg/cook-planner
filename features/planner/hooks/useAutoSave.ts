@@ -91,17 +91,91 @@ export const useAutoSave = (
           .eq(scope.filterColumn, scope.filterValue)
           .eq("year", year)
           .eq("week_number", weekNumber)
-          .eq("month", month)
           .limit(1)
           .maybeSingle();
 
         if (fetchError && fetchError.code !== "PGRST116") throw fetchError;
+        let existingId = existing?.id ?? null;
 
-        const mutation = existing?.id
-          ? supabase.from("weekly_menus").update(payload).eq("id", existing.id)
-          : supabase.from("weekly_menus").insert(payload);
+        // Legacy compatibility: row may already exist for this user/week
+        // but with another scope (e.g. household_id was null before migration).
+        if (!existingId) {
+          const { data: userWeekExisting, error: userWeekError } = await supabase
+            .from("weekly_menus")
+            .select("id")
+            .eq("user_id", session.user.id)
+            .eq("year", year)
+            .eq("week_number", weekNumber)
+            .limit(1)
+            .maybeSingle();
 
-        const { error: saveError } = await mutation;
+          if (userWeekError && userWeekError.code !== "PGRST116") {
+            throw userWeekError;
+          }
+
+          existingId = userWeekExisting?.id ?? null;
+        }
+
+        let { error: saveError } = existingId
+          ? await supabase.from("weekly_menus").update(payload).eq("id", existingId)
+          : await supabase.from("weekly_menus").insert(payload);
+
+        // Race/constraint safety: if insert collided with unique week key,
+        // fetch that row (even if the stored month differs) and update it instead.
+        if (saveError?.code === "23505") {
+          const fetchDuplicateByScope = async (
+            column: "household_id" | "user_id",
+            value: string,
+            withMonth: boolean,
+          ) => {
+            let query = supabase
+              .from("weekly_menus")
+              .select("id")
+              .eq(column, value)
+              .eq("year", year)
+              .eq("week_number", weekNumber);
+
+            if (withMonth) {
+              query = query.eq("month", month);
+            }
+
+            return query.limit(1).maybeSingle();
+          };
+
+          const findDuplicateId = async (
+            column: "household_id" | "user_id",
+            value: string,
+          ) => {
+            for (const withMonth of [true, false]) {
+              const { data, error } = await fetchDuplicateByScope(
+                column,
+                value,
+                withMonth,
+              );
+              if (error && error.code !== "PGRST116") throw error;
+              if (data?.id) return data.id;
+            }
+            return null;
+          };
+
+          let duplicateId = await findDuplicateId(
+            scope.filterColumn,
+            scope.filterValue,
+          );
+
+          if (!duplicateId && scope.filterColumn === "user_id") {
+            duplicateId = await findDuplicateId("user_id", session.user.id);
+          }
+
+          if (duplicateId) {
+            const { error: updateAfterDuplicateError } = await supabase
+              .from("weekly_menus")
+              .update(payload)
+              .eq("id", duplicateId);
+            saveError = updateAfterDuplicateError ?? null;
+          }
+        }
+
         if (saveError) throw saveError;
 
         lastSavedDaysRef.current = dataToSave;

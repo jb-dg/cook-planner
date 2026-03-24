@@ -1,5 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { spacing } from "../../../theme/design";
 
 type Props = {
@@ -31,7 +31,7 @@ export const WeekProgressCard = ({
             <Feather name="chevron-left" size={16} color="#2D2D2A" />
           </Pressable>
           <Pressable style={styles.todayBtn} onPress={onGoToToday}>
-            <Text style={styles.todayText}>Aujourd'hui</Text>
+            <Text style={styles.todayText}>Aujourd&apos;hui</Text>
           </Pressable>
           <Pressable style={styles.navBtn} onPress={() => onNavigate("next")}>
             <Feather name="chevron-right" size={16} color="#2D2D2A" />
@@ -41,7 +41,12 @@ export const WeekProgressCard = ({
 
       {/* Progress bar */}
       <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: `${progress.percent}%` as any }]} />
+        <View
+          style={[
+            styles.progressFill,
+            { width: `${progress.percent}%` as any },
+          ]}
+        />
       </View>
 
       {/* Stats row */}
@@ -57,7 +62,9 @@ export const WeekProgressCard = ({
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={[styles.statValue, missing > 0 && styles.statValueMissing]}>
+          <Text
+            style={[styles.statValue, missing > 0 && styles.statValueMissing]}
+          >
             {missing}
           </Text>
           <Text style={styles.statLabel}>À planifier</Text>
@@ -75,11 +82,11 @@ const styles = StyleSheet.create({
     gap: spacing.base * 1.2,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.9)",
-    shadowColor: "rgba(107, 112, 92, 1)",
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.18,
-    shadowRadius: 30,
-    elevation: 6,
+    shadowColor: "#6B705C",
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.15,
+    shadowRadius: 25,
+    elevation: 4,
   },
   header: {
     flexDirection: "row",

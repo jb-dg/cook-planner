@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 
-import PhysicalButton from "./PhysicalButton";
+import PhysicalButtonAnimated from "./PhysicalButtonAnimated";
 
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -38,7 +38,11 @@ export default function AuthForm() {
       mode === "signup"
         ? validateConfirmPassword(password, confirmPassword)
         : null;
-    return { email: emailError, password: passwordError, confirm: confirmError };
+    return {
+      email: emailError,
+      password: passwordError,
+      confirm: confirmError,
+    };
   }, [email, password, confirmPassword, mode]);
 
   const canSubmit =
@@ -46,12 +50,16 @@ export default function AuthForm() {
     !errors.email &&
     !errors.password &&
     (mode === "signin" || !errors.confirm);
+  const submitDisabled = !canSubmit;
 
   const handleSubmit = async () => {
     setSubmitting(true);
     setMessage(null);
     const action = mode === "signin" ? signIn : signUp;
-    const { success, message: actionMessage } = await action({ email, password });
+    const { success, message: actionMessage } = await action({
+      email,
+      password,
+    });
     setSubmitting(false);
 
     if (!success) {
@@ -88,16 +96,42 @@ export default function AuthForm() {
           lineHeight: t.typography.lineHeight.bodySmall,
           color: t.colors.textMuted,
         },
+        fieldGroup: {
+          gap: t.spacing.xxs,
+        },
+        fieldHeader: {
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginLeft: 2,
+        },
+        label: {
+          fontSize: 10,
+          fontWeight: "700",
+          letterSpacing: 1.2,
+          textTransform: "uppercase",
+          color: "#A5A58D",
+        },
+        forgotLink: {
+          fontSize: 10,
+          fontWeight: "700",
+          letterSpacing: 1.2,
+          textTransform: "uppercase",
+          color: t.colors.primary,
+        },
         input: {
-          height: t.components.textInput.height,
-          borderWidth: 1,
-          borderColor: t.components.textInput.borderColor,
-          borderRadius: t.components.textInput.borderRadius,
+          height: 52,
+          borderWidth: 2,
+          borderColor: "rgba(165, 165, 141, 0.25)",
+          borderRadius: t.radius.lg,
           paddingHorizontal: t.components.textInput.paddingHorizontal,
           fontSize: t.typography.size.body,
-          backgroundColor: t.components.textInput.backgroundColor,
+          backgroundColor: "rgba(255, 255, 255, 0.55)",
           color: t.colors.textPrimary,
-          ...t.shadow.sm,
+        },
+        inputFocused: {
+          backgroundColor: "#FFFFFF",
+          borderColor: t.colors.primary,
         },
         inputError: {
           borderColor: t.colors.error,
@@ -118,14 +152,68 @@ export default function AuthForm() {
           fontSize: t.typography.size.body,
           letterSpacing: 0.3,
         },
+        buttonTextDisabled: {
+          color: t.colors.textPrimary,
+        },
+        // Divider
+        dividerRow: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: t.spacing.sm,
+          marginVertical: t.spacing.xs,
+        },
+        dividerLine: {
+          flex: 1,
+          height: 1,
+          backgroundColor: "rgba(165, 165, 141, 0.25)",
+        },
+        dividerText: {
+          fontSize: 10,
+          fontWeight: "700",
+          letterSpacing: 1.2,
+          textTransform: "uppercase",
+          color: "#A5A58D",
+        },
+        // Social buttons
+        socialRow: {
+          flexDirection: "row",
+          gap: t.spacing.sm,
+        },
+        socialBtn: {
+          flex: 1,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: t.spacing.xs,
+          height: 52,
+          borderRadius: t.radius.lg,
+          backgroundColor: "rgba(255, 255, 255, 0.6)",
+          borderWidth: 1,
+          borderColor: "rgba(165, 165, 141, 0.25)",
+        },
+        socialBtnText: {
+          fontSize: t.typography.size.bodySmall,
+          fontWeight: "700",
+          color: t.colors.textPrimary,
+        },
+        // Mode switch link
         link: {
           color: t.colors.primary,
           fontWeight: t.typography.weight.semibold,
           fontSize: t.typography.size.bodySmall,
           textAlign: "left",
         },
+        switchRow: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 4,
+        },
+        switchLabel: {
+          fontSize: t.typography.size.bodySmall,
+          color: t.colors.textMuted,
+        },
       }),
-    [t]
+    [t],
   );
 
   return (
@@ -141,7 +229,8 @@ export default function AuthForm() {
       </View>
 
       {/* Email */}
-      <View>
+      <View style={s.fieldGroup}>
+        <Text style={s.label}>Adresse e-mail</Text>
         <TextInput
           autoCapitalize="none"
           autoComplete="email"
@@ -158,9 +247,17 @@ export default function AuthForm() {
       </View>
 
       {/* Password */}
-      <View>
+      <View style={s.fieldGroup}>
+        <View style={s.fieldHeader}>
+          <Text style={s.label}>Mot de passe</Text>
+          {mode === "signin" ? (
+            <Pressable>
+              <Text style={s.forgotLink}>Oublié ?</Text>
+            </Pressable>
+          ) : null}
+        </View>
         <TextInput
-          placeholder="Mot de passe"
+          placeholder="••••••••"
           secureTextEntry
           placeholderTextColor={t.components.textInput.placeholderColor}
           style={[s.input, errors.password ? s.inputError : null]}
@@ -176,9 +273,10 @@ export default function AuthForm() {
 
       {/* Confirm password (signup only) */}
       {mode === "signup" ? (
-        <View>
+        <View style={s.fieldGroup}>
+          <Text style={s.label}>Confirme le mot de passe</Text>
           <TextInput
-            placeholder="Confirme ton mot de passe"
+            placeholder="••••••••"
             secureTextEntry
             placeholderTextColor={t.components.textInput.placeholderColor}
             style={[s.input, errors.confirm ? s.inputError : null]}
@@ -197,32 +295,59 @@ export default function AuthForm() {
       {message ? <Text style={s.message}>{message}</Text> : null}
 
       {/* Primary CTA */}
-      <PhysicalButton
-        onPress={handleSubmit}
-        disabled={!canSubmit}
-      >
+      <PhysicalButtonAnimated onPress={handleSubmit} disabled={submitDisabled}>
         {submitting ? (
-          <ActivityIndicator color={t.components.button.primary.textColor} />
+          <ActivityIndicator
+            color={
+              submitDisabled
+                ? t.colors.textMuted
+                : t.components.button.primary.textColor
+            }
+          />
         ) : (
-          <Text style={s.buttonText}>
+          <Text
+            style={[s.buttonText, submitDisabled ? s.buttonTextDisabled : null]}
+          >
             {mode === "signin" ? "Se connecter" : "Créer mon compte"}
           </Text>
         )}
-      </PhysicalButton>
+      </PhysicalButtonAnimated>
+
+      {/* Divider */}
+      {/* <View style={s.dividerRow}>
+        <View style={s.dividerLine} />
+        <Text style={s.dividerText}>Ou continuer avec</Text>
+        <View style={s.dividerLine} />
+      </View> */}
+
+      {/* Social buttons */}
+      {/* <View style={s.socialRow}>
+        <Pressable style={s.socialBtn}>
+          <AntDesign name="google" size={18} color="#EA4335" />
+          <Text style={s.socialBtnText}>Google</Text>
+        </Pressable>
+        <Pressable style={s.socialBtn}>
+          <AntDesign name="apple1" size={18} color={t.colors.textPrimary} />
+          <Text style={s.socialBtnText}>Apple</Text>
+        </Pressable>
+      </View> */}
 
       {/* Mode switch */}
-      <Pressable
-        onPress={() =>
-          setMode((prev) => (prev === "signin" ? "signup" : "signin"))
-        }
-        disabled={submitting}
-      >
-        <Text style={s.link}>
-          {mode === "signin"
-            ? "Nouveau compte ? Inscris-toi"
-            : "J'ai déjà un compte"}
+      <View style={s.switchRow}>
+        <Text style={s.switchLabel}>
+          {mode === "signin" ? "Nouveau ici ?" : "Déjà un compte ?"}
         </Text>
-      </Pressable>
+        <Pressable
+          onPress={() =>
+            setMode((prev) => (prev === "signin" ? "signup" : "signin"))
+          }
+          disabled={submitting}
+        >
+          <Text style={s.link}>
+            {mode === "signin" ? "Créer un compte" : "Se connecter"}
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }

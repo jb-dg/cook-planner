@@ -1,31 +1,42 @@
+import { Feather } from "@expo/vector-icons";
+import { addMonths, format, startOfMonth } from "date-fns";
+import { fr } from "date-fns/locale";
 import { useMemo, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+} from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
-import { addMonths, format, startOfMonth } from "date-fns";
-import { fr } from "date-fns/locale";
 import { useAuth } from "../../contexts/AuthContext";
-import { Recipe } from "../../features/recipes/types";
-import { colors, spacing } from "../../theme/design";
-import { MealKey, RecipePickerTarget, ViewMode } from "../../features/planner/utils/types";
-import { usePlannerData } from "../../features/planner/hooks/usePlannerData";
-import { useRecipes } from "../../features/planner/hooks/useRecipes";
-import { useWeekNavigation } from "../../features/planner/hooks/useWeekNavigation";
-import { useToast } from "../../features/planner/hooks/useToast";
-import { useAutoSave } from "../../features/planner/hooks/useAutoSave";
-import { usePlannerRealtime } from "../../features/planner/hooks/usePlannerRealtime";
-import { PlannerHeader } from "../../features/planner/components/PlannerHeader";
-import { WeekProgressCard } from "../../features/planner/components/WeekProgressCard";
 import { DayGridSelector } from "../../features/planner/components/DayGridSelector";
 import { FocusView } from "../../features/planner/components/FocusView";
 import { ListView } from "../../features/planner/components/ListView";
-import { WeekPickerModal } from "../../features/planner/components/WeekPickerModal";
+import { PlannerHeader } from "../../features/planner/components/PlannerHeader";
 import { RecipePickerModal } from "../../features/planner/components/RecipePickerModal";
 import { Toast } from "../../features/planner/components/Toast";
+import { WeekPickerModal } from "../../features/planner/components/WeekPickerModal";
+import { WeekProgressCard } from "../../features/planner/components/WeekProgressCard";
+import { useAutoSave } from "../../features/planner/hooks/useAutoSave";
+import { usePlannerData } from "../../features/planner/hooks/usePlannerData";
+import { usePlannerRealtime } from "../../features/planner/hooks/usePlannerRealtime";
+import { useRecipes } from "../../features/planner/hooks/useRecipes";
+import { useToast } from "../../features/planner/hooks/useToast";
+import { useWeekNavigation } from "../../features/planner/hooks/useWeekNavigation";
 import { styles as sharedStyles } from "../../features/planner/styles";
+import {
+  MealKey,
+  RecipePickerTarget,
+  ViewMode,
+} from "../../features/planner/utils/types";
+import { Recipe } from "../../features/recipes/types";
+import { colors, spacing } from "../../theme/design";
 
 export default function PlannerScreen() {
   const { session } = useAuth();
@@ -47,16 +58,21 @@ export default function PlannerScreen() {
   } = useWeekNavigation();
 
   // Data
-  const { days, setDays, syncing, weekNumber } =
-    usePlannerData(session, referenceDate);
-  const { recipes, recipesLoading, recipesError } = useRecipes(session);
-
-  // Save — triggered on blur or recipe selection
-  const { save, saveStatus, lastSaved, error: saveError, isSaving, hasLocalChangesRef } = useAutoSave(
-    days,
+  const { days, setDays, syncing, weekNumber } = usePlannerData(
     session,
     referenceDate,
   );
+  const { recipes, recipesLoading, recipesError } = useRecipes(session);
+
+  // Save — triggered on blur or recipe selection
+  const {
+    save,
+    saveStatus,
+    lastSaved,
+    error: saveError,
+    isSaving,
+    hasLocalChangesRef,
+  } = useAutoSave(days, session, referenceDate);
 
   // Real-time sync: apply updates from other household members when no local edits pending
   usePlannerRealtime(session, referenceDate, setDays, hasLocalChangesRef);
@@ -76,13 +92,13 @@ export default function PlannerScreen() {
           new Date(
             referenceDate.getFullYear(),
             referenceDate.getMonth(),
-            referenceDate.getDate() + index
+            referenceDate.getDate() + index,
           ),
           "EEEE d MMM",
-          { locale: fr }
+          { locale: fr },
         ),
       })),
-    [days, referenceDate]
+    [days, referenceDate],
   );
 
   const progress = useMemo(() => {
@@ -92,8 +108,9 @@ export default function PlannerScreen() {
         acc +
         trackedMeals.filter(
           (slot) =>
-            !!(day as Record<MealKey, { recipe?: string } | undefined>)[slot]
-              ?.recipe?.trim()
+            !!(day as Record<MealKey, { recipe?: string } | undefined>)[
+              slot
+            ]?.recipe?.trim(),
         ).length
       );
     }, 0);
@@ -107,7 +124,7 @@ export default function PlannerScreen() {
 
   const sheetPaddingBottom = useMemo(
     () => spacing.card + Math.max(insets.bottom, 12),
-    [insets.bottom]
+    [insets.bottom],
   );
 
   const handleDayChange = (index: number, meal: MealKey, value: string) => {
@@ -158,7 +175,7 @@ export default function PlannerScreen() {
 
   const handleMonthNavigate = (direction: "prev" | "next") => {
     setCalendarMonth((current) =>
-      addMonths(current, direction === "next" ? 1 : -1)
+      addMonths(current, direction === "next" ? 1 : -1),
     );
   };
 
@@ -169,114 +186,114 @@ export default function PlannerScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={0}
       >
-      <ScrollView
-        contentContainerStyle={[
-          sharedStyles.container,
-          { paddingBottom: spacing.screen + insets.bottom + 140 },
-        ]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <PlannerHeader
-          weekNumber={weekNumber}
-          weekRangeLabel={weekRangeLabel}
-          viewMode={viewMode}
-          saveStatus={saveStatus}
-          lastSaved={lastSaved}
-          saveError={saveError}
-          onWeekPickerOpen={openWeekPicker}
-          onViewModeToggle={() =>
-            setViewMode((prev) => (prev === "list" ? "focus" : "list"))
-          }
-        />
+        <ScrollView
+          contentContainerStyle={[
+            sharedStyles.container,
+            { paddingBottom: spacing.screen + insets.bottom + 140 },
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <PlannerHeader
+            weekNumber={weekNumber}
+            weekRangeLabel={weekRangeLabel}
+            viewMode={viewMode}
+            saveStatus={saveStatus}
+            lastSaved={lastSaved}
+            saveError={saveError}
+            onWeekPickerOpen={openWeekPicker}
+            onViewModeToggle={() =>
+              setViewMode((prev) => (prev === "list" ? "focus" : "list"))
+            }
+          />
 
-        {viewMode === "focus" && (
-          <>
-            <WeekProgressCard
-              weekNumber={weekNumber}
-              selectedDayLabel={selectedDayLabel}
-              progress={progress}
-              onNavigate={handleNavigate}
-              onGoToToday={handleGoToToday}
-            />
-            <DayGridSelector
-              referenceDate={referenceDate}
-              selectedDate={selectedDate}
-              onSelectDate={setSelectedDate}
-            />
-            <FocusView
+          {viewMode === "focus" && (
+            <>
+              <WeekProgressCard
+                weekNumber={weekNumber}
+                selectedDayLabel={selectedDayLabel}
+                progress={progress}
+                onNavigate={handleNavigate}
+                onGoToToday={handleGoToToday}
+              />
+              <DayGridSelector
+                referenceDate={referenceDate}
+                selectedDate={selectedDate}
+                onSelectDate={setSelectedDate}
+              />
+              <FocusView
+                days={days}
+                referenceDate={referenceDate}
+                selectedDate={selectedDate}
+                session={session}
+                recipesLength={recipes.length}
+                syncing={syncing}
+                saving={isSaving}
+                recipesLoading={recipesLoading}
+                onDayChange={handleDayChange}
+                onOpenRecipePicker={openRecipePicker}
+                onBlur={save}
+              />
+              <Pressable
+                style={styles.listButton}
+                onPress={() => setViewMode("list")}
+                accessibilityRole="button"
+                accessibilityLabel="Voir la semaine en liste"
+              >
+                <Feather name="list" size={16} color={colors.accent} />
+                <Text style={styles.listButtonText}>
+                  Voir la semaine en liste
+                </Text>
+              </Pressable>
+            </>
+          )}
+
+          {viewMode === "list" && (
+            <ListView
               days={days}
               referenceDate={referenceDate}
               selectedDate={selectedDate}
-              session={session}
-              recipesLength={recipes.length}
               syncing={syncing}
               saving={isSaving}
-              recipesLoading={recipesLoading}
               onDayChange={handleDayChange}
               onOpenRecipePicker={openRecipePicker}
+              onSelectDate={setSelectedDate}
               onBlur={save}
             />
-            <Pressable
-              style={styles.listButton}
-              onPress={() => setViewMode("list")}
-              accessibilityRole="button"
-              accessibilityLabel="Voir la semaine en liste"
-            >
-              <Feather name="list" size={16} color={colors.accent} />
-              <Text style={styles.listButtonText}>
-                Voir la semaine en liste
-              </Text>
-            </Pressable>
-          </>
-        )}
+          )}
+        </ScrollView>
 
-        {viewMode === "list" && (
-          <ListView
-            days={days}
-            referenceDate={referenceDate}
-            selectedDate={selectedDate}
-            syncing={syncing}
-            saving={isSaving}
-            onDayChange={handleDayChange}
-            onOpenRecipePicker={openRecipePicker}
-            onSelectDate={setSelectedDate}
-            onBlur={save}
-          />
-        )}
-      </ScrollView>
+        <WeekPickerModal
+          visible={weekPickerVisible}
+          selectedDate={selectedDate}
+          referenceDate={referenceDate}
+          calendarMonth={calendarMonth}
+          timeframe={timeframe}
+          days={days}
+          sheetPaddingBottom={sheetPaddingBottom}
+          onClose={closeWeekPicker}
+          onSelectTimeframe={handleSelectTimeframe}
+          onMonthNavigate={handleMonthNavigate}
+          onSelectDate={setSelectedDate}
+          setCalendarMonth={setCalendarMonth}
+        />
 
-      <WeekPickerModal
-        visible={weekPickerVisible}
-        selectedDate={selectedDate}
-        referenceDate={referenceDate}
-        calendarMonth={calendarMonth}
-        timeframe={timeframe}
-        days={days}
-        sheetPaddingBottom={sheetPaddingBottom}
-        onClose={closeWeekPicker}
-        onSelectTimeframe={handleSelectTimeframe}
-        onMonthNavigate={handleMonthNavigate}
-        onSelectDate={setSelectedDate}
-        setCalendarMonth={setCalendarMonth}
-      />
+        <RecipePickerModal
+          visible={!!recipePickerTarget}
+          session={session}
+          target={recipePickerTarget}
+          days={days}
+          weekDays={weekDays}
+          recipes={recipes}
+          recipesLoading={recipesLoading}
+          recipesError={recipesError}
+          sheetPaddingBottom={sheetPaddingBottom}
+          onClose={closeRecipePicker}
+          onSelectRecipe={handleSelectRecipe}
+          onDayChange={handleDayChange}
+        />
 
-      <RecipePickerModal
-        visible={!!recipePickerTarget}
-        session={session}
-        target={recipePickerTarget}
-        days={days}
-        weekDays={weekDays}
-        recipes={recipes}
-        recipesLoading={recipesLoading}
-        recipesError={recipesError}
-        sheetPaddingBottom={sheetPaddingBottom}
-        onClose={closeRecipePicker}
-        onSelectRecipe={handleSelectRecipe}
-        onDayChange={handleDayChange}
-      />
-
-      {toast && <Toast toast={toast} />}
+        {toast && <Toast toast={toast} />}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

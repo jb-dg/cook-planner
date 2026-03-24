@@ -1,9 +1,30 @@
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { Session } from "@supabase/supabase-js";
+import { useState } from "react";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { spacing } from "../../../theme/design";
 import { MealKey } from "../utils/types";
+
+const shadowCard = Platform.select({
+  ios: {
+    shadowColor: "#000",
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  android: {
+    elevation: 2,
+    shadowColor: "#000000",
+  },
+  default: {},
+});
 
 type Props = {
   slot: { key: MealKey; label: string };
@@ -33,117 +54,151 @@ export const DayMealCard = ({
   // isEditing freezes the visual state while the keyboard is open to prevent
   // layout changes (slotEmpty → slotFilled) from stealing focus
   const [isEditing, setIsEditing] = useState(false);
+  const [editingStartedFilled, setEditingStartedFilled] = useState(false);
 
   const filled = !!meal.recipe?.trim();
-  const showAsFilled = filled && !isEditing;
+  // Keep the card visual state stable during edition on Android:
+  // - if editing starts empty, keep empty visuals while typing
+  // - if editing starts filled, keep filled visuals while editing
+  const showAsFilled = isEditing ? editingStartedFilled : filled;
+  const showReadOnlyDecor = showAsFilled && !isEditing;
   const isLunch = slot.key === "lunch";
   const dotColor = isLunch ? "#DDA15E" : "#BC6C25";
 
-  const handleFocus = () => setIsEditing(true);
+  const handleFocus = () => {
+    setEditingStartedFilled(filled);
+    setIsEditing(true);
+  };
   const handleBlur = () => {
     setIsEditing(false);
+    setEditingStartedFilled(false);
     onBlur();
   };
 
   return (
-    <View style={[styles.slot, showAsFilled ? styles.slotFilled : styles.slotEmpty]}>
-      {/* Slot header */}
-      <View style={styles.slotHeader}>
-        <Text style={[styles.slotLabel, !isLunch && styles.slotLabelDinner]}>
-          {isLunch ? "Déjeuner" : "Dîner"}
-        </Text>
-        {showAsFilled && (
-          <Pressable
-            hitSlop={10}
-            onPress={onOpenRecipePicker}
-            disabled={recipesLoading}
-            style={[styles.recipeBtn, (!session || recipesLoading) && styles.recipeBtnDisabled]}
-          >
-            <Feather name="edit-2" size={14} color="#BC6C25" />
-          </Pressable>
-        )}
-      </View>
+    <View style={[styles.mealCardShadow, showAsFilled && styles.mealCardRaised]}>
+      <View
+        style={[
+          styles.mealCardSurface,
+          showAsFilled
+            ? isLunch
+              ? styles.mealCardLunch
+              : styles.mealCardDinner
+            : styles.mealCardEmpty,
+        ]}
+      >
+        {/* Slot header */}
+        <View style={styles.slotHeader}>
+          <Text style={[styles.slotLabel, !isLunch && styles.slotLabelDinner]}>
+            {isLunch ? "Déjeuner" : "Dîner"}
+          </Text>
+          {showReadOnlyDecor && (
+            <Pressable
+              hitSlop={10}
+              onPress={onOpenRecipePicker}
+              disabled={recipesLoading}
+              style={[
+                styles.recipeBtn,
+                (!session || recipesLoading) && styles.recipeBtnDisabled,
+              ]}
+            >
+              <Feather name="edit-2" size={14} color="#BC6C25" />
+            </Pressable>
+          )}
+        </View>
 
-      {/* Body */}
-      <View style={styles.body}>
-        {/* Add button — visible when empty and not editing */}
-        {!filled && !isEditing && (
-          <Pressable style={styles.addRow} onPress={onOpenRecipePicker}>
-            <View style={styles.addCircle}>
-              <Feather name="plus" size={16} color="#A5A58D" />
+        {/* Body */}
+        <View style={styles.body}>
+          {/* Add button — visible when empty and not editing */}
+          {!filled && !isEditing && (
+            <Pressable style={styles.addRow} onPress={onOpenRecipePicker}>
+              <View style={styles.addCircle}>
+                <Feather name="plus" size={16} color="#A5A58D" />
+              </View>
+              <Text style={styles.addText}>
+                Ajouter {isLunch ? "un déjeuner" : "un dîner"}
+              </Text>
+            </Pressable>
+          )}
+
+          {/* Single TextInput — never unmounts, style only changes on blur */}
+          <TextInput
+            value={meal.recipe}
+            onChangeText={onChangeText}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            editable={!syncing}
+            placeholder="Saisir directement..."
+            placeholderTextColor="#A5A58D"
+            style={[
+              styles.input,
+              showAsFilled && styles.inputFilled,
+              isEditing && styles.inputEditing,
+            ]}
+            multiline
+            scrollEnabled={false}
+          />
+
+          {/* Dot row — only when filled and not editing */}
+          {showReadOnlyDecor && (
+            <View style={styles.dotRow}>
+              <View style={[styles.dot, { backgroundColor: dotColor }]} />
+              <View style={[styles.dot, { backgroundColor: dotColor }]} />
+              {!isLunch && (
+                <View style={[styles.dot, { backgroundColor: dotColor }]} />
+              )}
             </View>
-            <Text style={styles.addText}>
-              Ajouter {isLunch ? "un déjeuner" : "un dîner"}
-            </Text>
-          </Pressable>
-        )}
-
-        {/* Single TextInput — never unmounts, style only changes on blur */}
-        <TextInput
-          value={meal.recipe}
-          onChangeText={onChangeText}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          editable={!syncing}
-          placeholder="Saisir directement..."
-          placeholderTextColor="#A5A58D"
-          style={[
-            styles.input,
-            showAsFilled && styles.inputFilled,
-            isEditing && styles.inputEditing,
-          ]}
-          multiline
-          scrollEnabled={false}
-        />
-
-        {/* Dot row — only when filled and not editing */}
-        {showAsFilled && (
-          <View style={styles.dotRow}>
-            <View style={[styles.dot, { backgroundColor: dotColor }]} />
-            <View style={[styles.dot, { backgroundColor: dotColor }]} />
-            {!isLunch && <View style={[styles.dot, { backgroundColor: dotColor }]} />}
-          </View>
-        )}
+          )}
+        </View>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  slot: {
-    borderRadius: 24,
-    padding: 20,
+  mealCardShadow: {
+    borderRadius: 32,
+  },
+  mealCardRaised: {
+    ...shadowCard,
+  },
+  // mealCardSurface mirrors HearthWeeklyPlanner's mealCard
+  mealCardSurface: {
+    borderRadius: 32,
+    paddingHorizontal: 28,
+    paddingTop: 28,
+    paddingBottom: 22,
+    minHeight: 136,
     gap: spacing.base,
   },
-  slotEmpty: {
-    borderWidth: 2,
-    borderStyle: "dashed",
-    borderColor: "rgba(165, 165, 141, 0.4)",
-    backgroundColor: "rgba(255,255,255,0.6)",
+  mealCardLunch: {
+    backgroundColor: "#FBFBFA",
   },
-  slotFilled: {
-    borderWidth: 0,
-    backgroundColor: "#FFFFFF",
-    shadowColor: "rgba(107, 112, 92, 1)",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 2,
+  mealCardDinner: {
+    backgroundColor: "#F4F0EA",
+  },
+  mealCardEmpty: {
+    backgroundColor: "rgba(255,255,255,0.42)",
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: "rgba(184,179,164,0.28)",
   },
   slotHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
+  // slotLabel mirrors mealLabelMuted / mealLabelAccent
   slotLabel: {
-    fontSize: 10,
-    fontWeight: "800",
+    fontSize: 14,
+    lineHeight: 16,
+    fontWeight: "900",
+    letterSpacing: 3.1,
     textTransform: "uppercase",
-    letterSpacing: 1.5,
-    color: "#A5A58D",
+    color: "#A8A38F",
   },
   slotLabelDinner: {
-    color: "#BC6C25",
+    color: "#BF6B1F",
   },
   recipeBtn: {
     width: 28,

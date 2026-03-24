@@ -1,10 +1,28 @@
 import { Feather } from "@expo/vector-icons";
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { spacing } from "../../../theme/design";
 import { MEAL_SLOTS } from "../utils/constants";
 import { DayPlan, MealKey } from "../utils/types";
+
+const shadowSoftCard = Platform.select({
+  ios: {
+    shadowColor: "#6B705C",
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.15,
+    shadowRadius: 25,
+  },
+  android: {},
+  default: {},
+});
 
 type Props = {
   days: DayPlan[];
@@ -71,75 +89,104 @@ export const ListView = ({
             </Pressable>
 
             {/* Soft card */}
-            <View style={[styles.softCard, isActive && styles.softCardActive]}>
-              {/* Status chip */}
+            <View
+              style={[
+                styles.softCardShadow,
+                isActive && styles.softCardShadowActive,
+              ]}
+            >
+              {Platform.OS === "android" && (
+                <View
+                  pointerEvents="none"
+                  style={[
+                    styles.softCardAndroidShadow,
+                    isActive && styles.softCardAndroidShadowActive,
+                  ]}
+                />
+              )}
               <View
                 style={[
-                  styles.statusChip,
-                  isComplete && styles.statusChipComplete,
+                  styles.softCardSurface,
+                  isActive && styles.softCardSurfaceActive,
                 ]}
               >
-                <Text
+                {/* Status chip */}
+                <View
                   style={[
-                    styles.statusText,
-                    isComplete && styles.statusTextComplete,
+                    styles.statusChip,
+                    isComplete && styles.statusChipComplete,
                   ]}
                 >
-                  {isComplete
-                    ? "Complet"
-                    : `${filledCount}/${MEAL_SLOTS.length}`}
-                </Text>
-              </View>
+                  <Text
+                    style={[
+                      styles.statusText,
+                      isComplete && styles.statusTextComplete,
+                    ]}
+                  >
+                    {isComplete
+                      ? "Complet"
+                      : `${filledCount}/${MEAL_SLOTS.length}`}
+                  </Text>
+                </View>
 
-              {/* Meal rows */}
-              <View style={styles.meals}>
-                {MEAL_SLOTS.map((slot) => {
-                  const meal = (
-                    dayData as Record<MealKey, { recipe?: string }>
-                  )[slot.key] ?? { recipe: "" };
-                  const filled = !!meal.recipe?.trim();
-                  const isLunch = slot.key === "lunch";
+                {/* Meal rows */}
+                <View style={styles.meals}>
+                  {MEAL_SLOTS.map((slot) => {
+                    const meal = (
+                      dayData as Record<MealKey, { recipe?: string }>
+                    )[slot.key] ?? { recipe: "" };
+                    const filled = !!meal.recipe?.trim();
+                    const isLunch = slot.key === "lunch";
 
-                  return (
-                    <View key={slot.key} style={styles.mealRow}>
-                      <Text
-                        style={[
-                          styles.mealLabel,
-                          !isLunch && styles.mealLabelDinner,
-                        ]}
-                      >
-                        {isLunch ? "Déjeuner" : "Dîner"}
-                      </Text>
-                      <View
-                        style={[
-                          styles.inputRow,
-                          filled && styles.inputRowFilled,
-                        ]}
-                      >
-                        <TextInput
-                          value={meal.recipe}
-                          onChangeText={(value) =>
-                            onDayChange(dayIndex, slot.key, value)
-                          }
-                          onBlur={onBlur}
-                          editable={!syncing}
-                          placeholder={
-                            isLunch ? "Ajouter un déjeuner" : "Ajouter un dîner"
-                          }
-                          placeholderTextColor="#A5A58D"
-                          style={[styles.input, filled && styles.inputFilled]}
-                        />
-                        <Pressable
-                          hitSlop={8}
-                          style={styles.recipeBtn}
-                          onPress={() => onOpenRecipePicker(dayIndex, slot.key)}
+                    return (
+                      <View key={slot.key} style={styles.mealRow}>
+                        <Text
+                          style={[
+                            styles.mealLabel,
+                            !isLunch && styles.mealLabelDinner,
+                          ]}
                         >
-                          <Feather name="book-open" size={14} color="#BC6C25" />
-                        </Pressable>
+                          {isLunch ? "Déjeuner" : "Dîner"}
+                        </Text>
+                        <View
+                          style={[
+                            styles.inputRow,
+                            filled && styles.inputRowFilled,
+                          ]}
+                        >
+                          <TextInput
+                            value={meal.recipe}
+                            onChangeText={(value) =>
+                              onDayChange(dayIndex, slot.key, value)
+                            }
+                            onBlur={onBlur}
+                            editable={!syncing}
+                            placeholder={
+                              isLunch
+                                ? "Ajouter un déjeuner"
+                                : "Ajouter un dîner"
+                            }
+                            placeholderTextColor="#A5A58D"
+                            style={[styles.input, filled && styles.inputFilled]}
+                          />
+                          <Pressable
+                            hitSlop={8}
+                            style={styles.recipeBtn}
+                            onPress={() =>
+                              onOpenRecipePicker(dayIndex, slot.key)
+                            }
+                          >
+                            <Feather
+                              name="book-open"
+                              size={14}
+                              color="#BC6C25"
+                            />
+                          </Pressable>
+                        </View>
                       </View>
-                    </View>
-                  );
-                })}
+                    );
+                  })}
+                </View>
               </View>
             </View>
           </View>
@@ -189,24 +236,40 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
-  softCard: {
+  softCardShadow: {
     flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.82)",
+    borderRadius: 28,
+    position: "relative",
+    ...shadowSoftCard,
+  },
+  softCardShadowActive: {
+    shadowColor: "rgba(188, 108, 37, 1)",
+    shadowOpacity: 0.15,
+  },
+  softCardAndroidShadow: {
+    ...StyleSheet.absoluteFillObject,
+    top: 1,
+    left: -1,
+    right: -1,
+    bottom: -2,
+    borderRadius: 28,
+    backgroundColor: "#000000",
+    opacity: 0.12,
+  },
+  softCardAndroidShadowActive: {
+    opacity: 0.16,
+  },
+  softCardSurface: {
+    flex: 1,
+    backgroundColor: "rgb(255, 255, 255)",
     borderRadius: 28,
     padding: 18,
     gap: spacing.base,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.95)",
-    shadowColor: "rgba(107, 112, 92, 1)",
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.13,
-    shadowRadius: 30,
-    elevation: 0,
   },
-  softCardActive: {
+  softCardSurfaceActive: {
     borderColor: "rgba(188, 108, 37, 0.25)",
-    shadowColor: "rgba(188, 108, 37, 1)",
-    shadowOpacity: 0.15,
   },
   statusChip: {
     alignSelf: "flex-start",
