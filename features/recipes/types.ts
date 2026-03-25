@@ -1,5 +1,5 @@
 export type Difficulty = "Facile" | "Moyen" | "Expert";
-export type IngredientUnit = "pièce" | "ml" | "gr";
+export type IngredientUnit = "pièce" | "unité" | "ml" | "gr";
 
 export type Ingredient = {
   id: string;
@@ -37,7 +37,7 @@ export type RecipeInput = {
 };
 
 export const DIFFICULTIES: Difficulty[] = ["Facile", "Moyen", "Expert"];
-export const INGREDIENT_UNITS: IngredientUnit[] = ["pièce", "ml", "gr"];
+export const INGREDIENT_UNITS: IngredientUnit[] = ["pièce", "unité", "ml", "gr"];
 
 export const createIngredient = (): Ingredient => ({
   id: String(Date.now() + Math.random()),

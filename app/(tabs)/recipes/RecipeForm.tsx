@@ -6,7 +6,6 @@ import {
   createIngredient,
   DIFFICULTIES,
   INGREDIENT_UNITS,
-  Ingredient,
   RecipeFormState,
   RecipeInput,
 } from "../../../features/recipes/types";

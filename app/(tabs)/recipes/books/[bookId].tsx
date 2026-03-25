@@ -207,6 +207,14 @@ export default function RecipeBookScreen() {
     });
   };
 
+  const handleCreateRecipeInBook = () => {
+    if (!selectedBook) return;
+    router.push({
+      pathname: "/(tabs)/recipes/create",
+      params: { bookId: selectedBook.id },
+    });
+  };
+
   const handleAddRecipeToBook = (recipeId: string) => {
     if (!activeCustomBook) return;
     setCustomBooks((prev) =>
@@ -311,11 +319,23 @@ export default function RecipeBookScreen() {
             <Text style={styles.heading}>{selectedBook?.name ?? "Livre"}</Text>
             <Text style={styles.subtitle}>
               {selectedBook
-                ? `${displayedRecipes.length} recette${
+                  ? `${displayedRecipes.length} recette${
                     displayedRecipes.length > 1 ? "s" : ""
                   } dans ce livre`
                 : "Livre introuvable"}
             </Text>
+            {selectedBook ? (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.createRecipeButton,
+                  pressed && styles.cardPressed,
+                ]}
+                onPress={handleCreateRecipeInBook}
+              >
+                <Feather name="plus" size={14} color="#FFFFFF" />
+                <Text style={styles.createRecipeButtonText}>Nouvelle recette</Text>
+              </Pressable>
+            ) : null}
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
           </View>
         }
@@ -401,6 +421,25 @@ const styles = StyleSheet.create({
     color: colors.danger,
     fontSize: 12,
     fontWeight: "600",
+  },
+  createRecipeButton: {
+    marginTop: 6,
+    minHeight: 40,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#BC6C25",
+    backgroundColor: "#BC6C25",
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 6,
+    paddingHorizontal: 14,
+    alignSelf: "flex-start",
+  },
+  createRecipeButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
   },
   recipeCardShadow: {
     borderRadius: 32,
