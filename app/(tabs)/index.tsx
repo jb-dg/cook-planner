@@ -2,18 +2,26 @@ import { addDays, format, getISOWeek, getYear, startOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
 import { useAuth } from "../../contexts/AuthContext";
 import { fetchHouseholdScope } from "../../lib/households";
 import { supabase } from "../../lib/supabase";
-import { colors, spacing } from "../../theme/design";
+import { colors, layout, spacing } from "../../theme/design";
 
 export default function HomeScreen() {
   const { session } = useAuth();
   const router = useRouter();
+  const isWeb = Platform.OS === "web";
   const weekStart = useMemo(
     () => startOfWeek(new Date(), { weekStartsOn: 1 }),
     [],
@@ -118,18 +126,23 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container, isWeb && styles.containerWeb]}
         showsVerticalScrollIndicator={false}
       >
         {/* Dashboard header — mirrors HTML dashboard header */}
-        <View style={styles.dashboardHeader}>
+        <View style={[styles.dashboardHeader, isWeb && styles.dashboardHeaderWeb]}>
           <View style={styles.headerMeta}>
             <View style={styles.weekBadge}>
               <Text style={styles.weekBadgeText}>Semaine {weekNumber}</Text>
             </View>
+            {isWeb && <Text style={styles.weekSeasonText}>Autumn Menu</Text>}
           </View>
-          <Text style={styles.heading}>{weekLabel}</Text>
-          <Text style={styles.subHeading}>Bonjour, {username}</Text>
+          <Text style={[styles.heading, isWeb && styles.headingWeb]}>
+            {weekLabel}
+          </Text>
+          <Text style={[styles.subHeading, isWeb && styles.subHeadingWeb]}>
+            Bonjour, {username}
+          </Text>
         </View>
 
         {/* Progress soft-card — mirrors the HTML's `.soft-card` */}
@@ -213,13 +226,24 @@ const styles = StyleSheet.create({
     gap: spacing.base * 2,
     paddingBottom: 140,
   },
+  containerWeb: {
+    paddingTop: layout.webNavOffset + spacing.screen,
+    paddingBottom: 40,
+    maxWidth: 1120,
+    width: "100%",
+    alignSelf: "center",
+  },
   dashboardHeader: {
     gap: 6,
+  },
+  dashboardHeaderWeb: {
+    marginBottom: 4,
   },
   headerMeta: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 4,
+    gap: 10,
   },
   weekBadge: {
     backgroundColor: "rgba(188, 108, 37, 0.1)",
@@ -234,6 +258,13 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 1,
   },
+  weekSeasonText: {
+    color: "#A5A58D",
+    fontSize: 32,
+    lineHeight: 36,
+    fontWeight: "500",
+    fontStyle: "italic",
+  },
   heading: {
     fontSize: 36,
     fontWeight: "900",
@@ -241,10 +272,19 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     lineHeight: 40,
   },
+  headingWeb: {
+    fontSize: 64,
+    lineHeight: 64,
+    letterSpacing: -1.3,
+    fontWeight: "900",
+  },
   subHeading: {
     fontSize: 15,
     color: "#6B705C",
     fontWeight: "500",
+  },
+  subHeadingWeb: {
+    fontSize: 17,
   },
   softCard: {
     backgroundColor: "rgba(255, 255, 255, 0.85)",

@@ -25,7 +25,7 @@ import {
 import { mapRecipe, Recipe } from "../../../features/recipes/types";
 import { fetchHouseholdScope, HouseholdScope } from "../../../lib/households";
 import { supabase } from "../../../lib/supabase";
-import { colors, spacing } from "../../../theme/design";
+import { colors, layout, spacing } from "../../../theme/design";
 
 const shadowHero = Platform.select({
   ios: {
@@ -58,6 +58,7 @@ const shadowCard = Platform.select({
 export default function RecipeBooksScreen() {
   const { session } = useAuth();
   const router = useRouter();
+  const isWeb = Platform.OS === "web";
   const [scope, setScope] = useState<HouseholdScope | null>(null);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [customBooks, setCustomBooks] = useState<CustomBook[]>([]);
@@ -327,7 +328,7 @@ export default function RecipeBooksScreen() {
             />
           ) : null
         }
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, isWeb && styles.listContentWeb]}
       />
     </SafeAreaView>
   );
@@ -342,6 +343,9 @@ const styles = StyleSheet.create({
     padding: spacing.screen,
     paddingBottom: 140,
     gap: 14,
+  },
+  listContentWeb: {
+    paddingTop: layout.webNavOffset + spacing.screen,
   },
   header: {
     marginBottom: 2,

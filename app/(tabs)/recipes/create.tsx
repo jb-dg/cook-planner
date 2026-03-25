@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -34,7 +35,7 @@ import {
 import { createIngredient, DIFFICULTIES, INGREDIENT_UNITS } from "../../../features/recipes/types";
 import { fetchHouseholdScope, HouseholdScope } from "../../../lib/households";
 import { supabase } from "../../../lib/supabase";
-import { colors, radii, spacing } from "../../../theme/design";
+import { colors, layout, radii, spacing } from "../../../theme/design";
 
 type Step = 1 | 2 | 3;
 
@@ -105,6 +106,7 @@ const stepTitle = (step: Step) => {
 export default function CreateRecipeScreen() {
   const { session } = useAuth();
   const router = useRouter();
+  const isWeb = Platform.OS === "web";
   const { bookId } = useLocalSearchParams<{ bookId?: string | string[] }>();
   const routeBookId = toRouteParam(bookId);
 
@@ -537,7 +539,10 @@ export default function CreateRecipeScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[styles.container, isWeb && styles.containerWeb]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.headerBlock}>
           <Text style={styles.heading}>Ajouter une recette</Text>
           <Text style={styles.subheading}>{stepTitle(step)}</Text>
@@ -952,6 +957,9 @@ const styles = StyleSheet.create({
     padding: spacing.screen,
     gap: 18,
     paddingBottom: 180,
+  },
+  containerWeb: {
+    paddingTop: layout.webNavOffset + spacing.screen,
   },
   centerState: {
     flex: 1,

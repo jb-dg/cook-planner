@@ -33,6 +33,10 @@ export const spacing = {
   card: 18,
 };
 
+export const layout = {
+  webNavOffset: 126,
+};
+
 export const shadows = {
   card: {
     shadowColor: "rgba(45, 45, 42, 0.15)",

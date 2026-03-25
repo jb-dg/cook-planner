@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,7 +15,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth } from "../../../contexts/AuthContext";
 import { supabase } from "../../../lib/supabase";
 import { fetchHouseholdScope } from "../../../lib/households";
-import { colors, spacing, radii } from "../../../theme/design";
+import { colors, layout, spacing, radii } from "../../../theme/design";
 import RecipeForm from "./RecipeForm";
 import {
   mapRecipe,
@@ -32,6 +33,7 @@ export default function RecipeScreen() {
   const { id, mode } = useLocalSearchParams<{ id: string; mode?: string }>();
   const router = useRouter();
   const { session } = useAuth();
+  const isWeb = Platform.OS === "web";
   const [initialValues, setInitialValues] = useState<RecipeFormState | null>(
     null
   );
@@ -180,7 +182,7 @@ export default function RecipeScreen() {
         </View>
       ) : initialValues ? (
         <ScrollView
-          contentContainerStyle={styles.container}
+          contentContainerStyle={[styles.container, isWeb && styles.containerWeb]}
           showsVerticalScrollIndicator={false}
         >
           <Text style={styles.heading}>
@@ -319,6 +321,9 @@ const styles = StyleSheet.create({
     padding: spacing.screen,
     gap: 16,
     paddingBottom: 160,
+  },
+  containerWeb: {
+    paddingTop: layout.webNavOffset + spacing.screen,
   },
   heading: {
     fontSize: 28,

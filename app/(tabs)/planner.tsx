@@ -36,11 +36,12 @@ import {
   ViewMode,
 } from "../../features/planner/utils/types";
 import { Recipe } from "../../features/recipes/types";
-import { colors, spacing } from "../../theme/design";
+import { colors, layout, spacing } from "../../theme/design";
 
 export default function PlannerScreen() {
   const { session } = useAuth();
   const insets = useSafeAreaInsets();
+  const isWeb = Platform.OS === "web";
 
   // Navigation
   const {
@@ -189,6 +190,7 @@ export default function PlannerScreen() {
         <ScrollView
           contentContainerStyle={[
             sharedStyles.container,
+            isWeb && styles.containerWeb,
             { paddingBottom: spacing.screen + insets.bottom + 140 },
           ]}
           showsVerticalScrollIndicator={false}
@@ -253,6 +255,9 @@ export default function PlannerScreen() {
               days={days}
               referenceDate={referenceDate}
               selectedDate={selectedDate}
+              session={session}
+              recipesLength={recipes.length}
+              recipesLoading={recipesLoading}
               syncing={syncing}
               saving={isSaving}
               onDayChange={handleDayChange}
@@ -324,5 +329,8 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: "700",
     fontSize: 14,
+  },
+  containerWeb: {
+    paddingTop: layout.webNavOffset + spacing.screen,
   },
 });

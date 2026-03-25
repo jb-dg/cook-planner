@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -25,12 +26,13 @@ import { useAuth } from "../../contexts/AuthContext";
 import { ensureProfileRecord } from "../../lib/profile";
 import { supabase } from "../../lib/supabase";
 import { validateEmail } from "../../lib/validation/auth";
-import { colors, radii, spacing } from "../../theme/design";
+import { colors, layout, radii, spacing } from "../../theme/design";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { session, signOut } = useAuth();
   const insets = useSafeAreaInsets();
+  const isWeb = Platform.OS === "web";
   const [pseudo, setPseudo] = useState("");
   const [pseudoError, setPseudoError] = useState<string | null>(null);
   const [pseudoSuccess, setPseudoSuccess] = useState<string | null>(null);
@@ -581,7 +583,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container, isWeb && styles.containerWeb]}
         showsVerticalScrollIndicator={false}
       >
         <LinearGradient
@@ -795,6 +797,9 @@ const styles = StyleSheet.create({
     padding: spacing.screen,
     gap: 20,
     paddingBottom: 160,
+  },
+  containerWeb: {
+    paddingTop: layout.webNavOffset + spacing.screen,
   },
 
   // Hero card

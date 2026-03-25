@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { Session } from "@supabase/supabase-js";
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -8,10 +9,12 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { spacing } from "../../../theme/design";
 import { MEAL_SLOTS } from "../utils/constants";
 import { DayPlan, MealKey } from "../utils/types";
+import { DayMealCard } from "./DayMealCard";
 
 const shadowSoftCard = Platform.select({
   ios: {
@@ -28,6 +31,9 @@ type Props = {
   days: DayPlan[];
   referenceDate: Date;
   selectedDate: Date;
+  session: Session | null;
+  recipesLength: number;
+  recipesLoading: boolean;
   syncing: boolean;
   saving: boolean;
   onDayChange: (dayIndex: number, meal: MealKey, value: string) => void;
@@ -40,6 +46,9 @@ export const ListView = ({
   days,
   referenceDate,
   selectedDate,
+  session,
+  recipesLength,
+  recipesLoading,
   syncing,
   saving,
   onDayChange,
@@ -47,6 +56,10 @@ export const ListView = ({
   onSelectDate,
   onBlur,
 }: Props) => {
+  const { width } = useWindowDimensions();
+  const isWeb = Platform.OS === "web";
+  const isWideWeb = Platform.OS === "web" && width >= 1100;
+
   return (
     <View style={styles.weekList}>
       {days.map((day, dayIndex) => {
@@ -107,6 +120,7 @@ export const ListView = ({
               <View
                 style={[
                   styles.softCardSurface,
+                  isWeb && styles.softCardSurfaceWeb,
                   isActive && styles.softCardSurfaceActive,
                 ]}
               >
@@ -130,16 +144,54 @@ export const ListView = ({
                 </View>
 
                 {/* Meal rows */}
-                <View style={styles.meals}>
+                <View style={[styles.meals, isWideWeb && styles.mealsWebWide]}>
                   {MEAL_SLOTS.map((slot) => {
                     const meal = (
                       dayData as Record<MealKey, { recipe?: string }>
                     )[slot.key] ?? { recipe: "" };
+
+                    if (isWeb) {
+                      return (
+                        <View
+                          key={slot.key}
+                          style={isWideWeb ? styles.mealCardWebWide : undefined}
+                        >
+                          <DayMealCard
+                            slot={slot}
+                            meal={{ recipe: meal.recipe ?? "" }}
+                            session={session}
+                            recipesLength={recipesLength}
+                            syncing={syncing}
+                            saving={saving}
+                            recipesLoading={recipesLoading}
+                            onChangeText={(value) =>
+                              onDayChange(dayIndex, slot.key, value)
+                            }
+                            onBlur={onBlur}
+                            onOpenRecipePicker={() =>
+                              onOpenRecipePicker(dayIndex, slot.key)
+                            }
+                          />
+                        </View>
+                      );
+                    }
+
                     const filled = !!meal.recipe?.trim();
                     const isLunch = slot.key === "lunch";
 
                     return (
-                      <View key={slot.key} style={styles.mealRow}>
+                      <View
+                        key={slot.key}
+                        style={[
+                          styles.mealRow,
+                          isWideWeb && styles.mealRowWebWide,
+                          isWideWeb &&
+                            filled &&
+                            (isLunch
+                              ? styles.mealRowWebWideFilledLunch
+                              : styles.mealRowWebWideFilledDinner),
+                        ]}
+                      >
                         <Text
                           style={[
                             styles.mealLabel,
@@ -151,6 +203,7 @@ export const ListView = ({
                         <View
                           style={[
                             styles.inputRow,
+                            isWideWeb && styles.inputRowWebWide,
                             filled && styles.inputRowFilled,
                           ]}
                         >
@@ -167,7 +220,11 @@ export const ListView = ({
                                 : "Ajouter un dîner"
                             }
                             placeholderTextColor="#A5A58D"
-                            style={[styles.input, filled && styles.inputFilled]}
+                            style={[
+                              styles.input,
+                              isWideWeb && styles.inputWebWide,
+                              filled && styles.inputFilled,
+                            ]}
                           />
                           <Pressable
                             hitSlop={8}
@@ -268,6 +325,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.95)",
   },
+  softCardSurfaceWeb: {
+    backgroundColor: "rgba(255, 255, 255, 0.72)",
+    borderRadius: 40,
+    borderColor: "rgba(255,255,255,1)",
+    padding: 20,
+  },
   softCardSurfaceActive: {
     borderColor: "rgba(188, 108, 37, 0.25)",
   },
@@ -297,8 +360,38 @@ const styles = StyleSheet.create({
   meals: {
     gap: spacing.base * 0.9,
   },
+  mealsWebWide: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: spacing.base,
+  },
+  mealCardWebWide: {
+    flex: 1,
+  },
   mealRow: {
     gap: 5,
+  },
+  mealRowWebWide: {
+    flex: 1,
+    minHeight: 150,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    borderColor: "rgba(165, 165, 141, 0.3)",
+    backgroundColor: "rgba(255, 255, 255, 0.35)",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  mealRowWebWideFilledLunch: {
+    borderWidth: 0,
+    borderStyle: "solid",
+    backgroundColor: "#FFFFFF",
+  },
+  mealRowWebWideFilledDinner: {
+    borderWidth: 0,
+    borderStyle: "solid",
+    backgroundColor: "#FDF8F1",
   },
   mealLabel: {
     fontSize: 10,
@@ -321,6 +414,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
+  inputRowWebWide: {
+    flex: 1,
+    borderWidth: 0,
+    borderStyle: "solid",
+    backgroundColor: "transparent",
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    alignItems: "flex-start",
+  },
   inputRowFilled: {
     borderStyle: "solid",
     borderColor: "transparent",
@@ -331,6 +433,13 @@ const styles = StyleSheet.create({
     color: "#6B705C",
     fontSize: 13,
     paddingVertical: 0,
+  },
+  inputWebWide: {
+    borderTopWidth: 1,
+    borderTopColor: "rgba(165, 165, 141, 0.2)",
+    width: "100%",
+    paddingTop: 8,
+    minHeight: 48,
   },
   inputFilled: {
     color: "#2D2D2A",

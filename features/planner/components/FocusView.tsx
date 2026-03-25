@@ -2,7 +2,13 @@ import { Session } from "@supabase/supabase-js";
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useMemo } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { spacing } from "../../../theme/design";
 import { MEAL_SLOTS } from "../utils/constants";
 import { DayPlan, MealKey } from "../utils/types";
@@ -90,6 +96,8 @@ export const FocusView = ({
   onOpenRecipePicker,
   onBlur,
 }: Props) => {
+  const { width } = useWindowDimensions();
+  const isWideWeb = Platform.OS === "web" && width >= 1100;
   const dayColumns = useMemo(
     () =>
       days.map((item, index) => ({
@@ -158,30 +166,34 @@ export const FocusView = ({
           </View>
 
           {/* Meal slots */}
-          <View style={styles.mealGrid}>
+          <View style={[styles.mealGrid, isWideWeb && styles.mealGridWebWide]}>
             {MEAL_SLOTS.map((slot) => {
               const mealData = (
                 dayData as Record<MealKey, { recipe?: string }>
               )[slot.key];
               const meal = { recipe: mealData?.recipe ?? "" };
               return (
-                <DayMealCard
+                <View
                   key={slot.key}
-                  slot={slot}
-                  meal={meal}
-                  session={session}
-                  recipesLength={recipesLength}
-                  syncing={syncing}
-                  saving={saving}
-                  recipesLoading={recipesLoading}
-                  onChangeText={(value) =>
-                    onDayChange(selectedDayIndex, slot.key, value)
-                  }
-                  onBlur={onBlur}
-                  onOpenRecipePicker={() =>
-                    onOpenRecipePicker(selectedDayIndex, slot.key)
-                  }
-                />
+                  style={isWideWeb ? styles.mealGridItemWebWide : undefined}
+                >
+                  <DayMealCard
+                    slot={slot}
+                    meal={meal}
+                    session={session}
+                    recipesLength={recipesLength}
+                    syncing={syncing}
+                    saving={saving}
+                    recipesLoading={recipesLoading}
+                    onChangeText={(value) =>
+                      onDayChange(selectedDayIndex, slot.key, value)
+                    }
+                    onBlur={onBlur}
+                    onOpenRecipePicker={() =>
+                      onOpenRecipePicker(selectedDayIndex, slot.key)
+                    }
+                  />
+                </View>
               );
             })}
           </View>
@@ -284,6 +296,13 @@ const styles = StyleSheet.create({
   },
   mealGrid: {
     gap: spacing.base,
+  },
+  mealGridWebWide: {
+    flexDirection: "row",
+    alignItems: "stretch",
+  },
+  mealGridItemWebWide: {
+    flex: 1,
   },
   noteBox: {
     padding: 14,
