@@ -1,6 +1,14 @@
 import { Feather } from "@expo/vector-icons";
 import { Redirect } from "expo-router";
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import AuthForm from "../components/AuthForm";
@@ -10,6 +18,8 @@ import { useTheme } from "../theme/useTheme";
 export default function AuthScreen() {
   const { session, initializing, needsPasswordReset } = useAuth();
   const t = useTheme();
+  const { width } = useWindowDimensions();
+  const isWideWeb = Platform.OS === "web" && width >= 980;
 
   if (initializing) {
     return (
@@ -32,59 +42,71 @@ export default function AuthScreen() {
       <View style={styles.blobBottomRight} />
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          isWideWeb && styles.scrollContentWide,
+        ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* ── Branding header ── */}
-        <View style={styles.brandRow}>
-          <View style={styles.brandIcon}>
-            <Image
-              source={require("../assets/images/book-icon.png")}
-              style={styles.brandIconImage}
-              resizeMode="contain"
-            />
-          </View>
-          <Text style={styles.brandName}>Weatly</Text>
-        </View>
-
-        {/* ── Marketing copy ── */}
-        <View style={styles.heroSection}>
-          <Text style={styles.kicker}>Installe-toi confortablement.</Text>
-          <Text style={styles.heroTitle}>
-            Le prochain grand repas de ta famille{" "}
-            <Text style={styles.heroTitleAccent}>commence ici.</Text>
-          </Text>
-          <Text style={styles.heroSubtitle}>
-            Synchronise ta cuisine sur tous tes appareils — du bureau au marché.
-          </Text>
-        </View>
-
-        {/* ── Soft form card ── */}
-        <View style={styles.card}>
-          {/* Decorative tag */}
-          <View style={styles.decorTag}>
-            <Text style={styles.decorTagText}>Bienvenue !</Text>
+        <View style={[styles.shell, isWideWeb && styles.shellWide]}>
+          {/* ── Branding header ── */}
+          <View style={styles.brandRow}>
+            <View style={styles.brandIcon}>
+              <Image
+                source={require("../assets/images/book-icon.png")}
+                style={styles.brandIconImage}
+                resizeMode="contain"
+              />
+            </View>
+            <Text style={styles.brandName}>Weatly</Text>
           </View>
 
-          <AuthForm />
-        </View>
+          <View style={[styles.authMain, isWideWeb && styles.authMainWide]}>
+            {/* ── Marketing copy ── */}
+            <View
+              style={[styles.heroSection, isWideWeb && styles.heroSectionWide]}
+            >
+              <Text style={styles.kicker}>Installe-toi confortablement.</Text>
+              <Text style={styles.heroTitle}>
+                Le prochain grand repas de ta famille{" "}
+                <Text style={styles.heroTitleAccent}>commence ici.</Text>
+              </Text>
+              <Text style={styles.heroSubtitle}>
+                Synchronise ta cuisine sur tous tes appareils — du bureau au
+                marché.
+              </Text>
+            </View>
 
-        {/* ── Security microcopy ── */}
-        <View style={styles.securityRow}>
-          <Feather name="lock" size={12} color="#A5A58D" />
-          <Text style={styles.securityText}>
-            Sécurisé comme une recette de famille
-          </Text>
-        </View>
+            {/* ── Soft form card ── */}
+            <View style={[styles.cardWrap, isWideWeb && styles.cardWrapWide]}>
+              <View style={styles.card}>
+                {/* Decorative tag */}
+                <View style={styles.decorTag}>
+                  <Text style={styles.decorTagText}>Bienvenue !</Text>
+                </View>
 
-        {/* ── Footer links ── */}
-        <View style={styles.footerRow}>
-          <Text style={styles.footerText}>Confidentialité</Text>
-          <Text style={styles.footerDot}>·</Text>
-          <Text style={styles.footerText}>Conditions</Text>
-          <Text style={styles.footerDot}>·</Text>
-          <Text style={styles.footerText}>Aide</Text>
+                <AuthForm />
+              </View>
+            </View>
+          </View>
+
+          {/* ── Security microcopy ── */}
+          <View style={styles.securityRow}>
+            <Feather name="lock" size={12} color="#A5A58D" />
+            <Text style={styles.securityText}>
+              Sécurisé comme une recette de famille
+            </Text>
+          </View>
+
+          {/* ── Footer links ── */}
+          <View style={styles.footerRow}>
+            <Text style={styles.footerText}>Confidentialité</Text>
+            <Text style={styles.footerDot}>·</Text>
+            <Text style={styles.footerText}>Conditions</Text>
+            <Text style={styles.footerDot}>·</Text>
+            <Text style={styles.footerText}>Aide</Text>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -129,6 +151,26 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 32,
   },
+  scrollContentWide: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  shell: {
+    width: "100%",
+    maxWidth: 520,
+    alignSelf: "center",
+  },
+  shellWide: {
+    maxWidth: 1040,
+  },
+  authMain: {
+    gap: 28,
+  },
+  authMainWide: {
+    flexDirection: "row",
+    gap: 28,
+    alignItems: "stretch",
+  },
   // Branding
   brandRow: {
     flexDirection: "row",
@@ -165,6 +207,11 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 28,
   },
+  heroSectionWide: {
+    flex: 1,
+    marginBottom: 0,
+    justifyContent: "center",
+  },
   kicker: {
     fontSize: 18,
     fontStyle: "italic",
@@ -200,6 +247,13 @@ const styles = StyleSheet.create({
     shadowRadius: 40,
     elevation: 10,
     overflow: "hidden",
+  },
+  cardWrap: {
+    width: "100%",
+  },
+  cardWrapWide: {
+    flex: 1,
+    maxWidth: 500,
   },
   // Decorative tag
   decorTag: {

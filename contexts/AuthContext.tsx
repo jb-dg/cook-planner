@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -72,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [initializing, setInitializing] = useState(true);
   const [needsPasswordReset, setNeedsPasswordReset] = useState(false);
+  const handledAuthUrlsRef = useRef(new Set<string>());
 
   const syncProfile = useCallback(async (currentSession: Session | null) => {
     if (!currentSession?.user) return;
@@ -79,6 +81,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await ensureProfileRecord(currentSession.user);
     } catch (error) {
       console.warn("profile sync failed", error);
+    }
+  }, []);
+
+  const handleAuthUrl = useCallback(async (url?: string | null) => {
+    if (!url) return;
+
+    const normalizedUrl = url.trim();
+    if (!normalizedUrl) return;
+
+    const { queryParams } = Linking.parse(normalizedUrl);
+    const code = typeof queryParams?.code === "string" ? queryParams.code : null;
+    const tokenHash =
+      typeof queryParams?.token_hash === "string" ? queryParams.token_hash : null;
+    const type = typeof queryParams?.type === "string" ? queryParams.type : null;
+    const canVerifyOtp = !!tokenHash && !!type && isEmailOtpType(type);
+
+    if (!code && !canVerifyOtp) {
+      return;
+    }
+
+    if (handledAuthUrlsRef.current.has(normalizedUrl)) {
+      return;
+    }
+    handledAuthUrlsRef.current.add(normalizedUrl);
+
+    try {
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) throw error;
+        if (type === "recovery") {
+          setNeedsPasswordReset(true);
+        }
+        return;
+      }
+
+      if (tokenHash && type && isEmailOtpType(type)) {
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type,
+        });
+        if (error) throw error;
+        if (type === "recovery") {
+          setNeedsPasswordReset(true);
+        }
+      }
+    } catch (error) {
+      // Allow retry if the first attempt failed for transient reasons.
+      handledAuthUrlsRef.current.delete(normalizedUrl);
+      console.error("Supabase deep-link error", error);
     }
   }, []);
 
@@ -107,48 +158,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    const handleDeepLink = async ({ url }: { url: string }) => {
-      try {
-        const { queryParams } = Linking.parse(url);
-        const code =
-          typeof queryParams?.code === "string" ? queryParams.code : null;
-        const tokenHash =
-          typeof queryParams?.token_hash === "string"
-            ? queryParams.token_hash
-            : null;
-        const type =
-          typeof queryParams?.type === "string" ? queryParams.type : null;
+    Linking.getInitialURL()
+      .then((initialUrl) => {
+        if (!mounted || !initialUrl) return;
+        return handleAuthUrl(initialUrl);
+      })
+      .catch((error) => {
+        console.error("Supabase initial URL error", error);
+      });
 
-        if (code) {
-          await supabase.auth.exchangeCodeForSession(url);
-          if (type === "recovery") {
-            setNeedsPasswordReset(true);
-          }
-          return;
-        }
-
-        if (tokenHash && type && isEmailOtpType(type)) {
-          const { error } = await supabase.auth.verifyOtp({
-            token_hash: tokenHash,
-            type,
-          });
-          if (!error && type === "recovery") {
-            setNeedsPasswordReset(true);
-          }
-        }
-      } catch (error) {
-        console.error("Supabase deep-link error", error);
-      }
-    };
-
-    const linkingSub = Linking.addEventListener("url", handleDeepLink);
+    const linkingSub = Linking.addEventListener("url", ({ url }) => {
+      void handleAuthUrl(url);
+    });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
       linkingSub.remove();
     };
-  }, [syncProfile]);
+  }, [handleAuthUrl, syncProfile]);
 
   const signIn = useCallback(async (credentials: AuthCredentials) => {
     try {
