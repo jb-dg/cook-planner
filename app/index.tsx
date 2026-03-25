@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function Index() {
-  const { session, initializing } = useAuth();
+  const { session, initializing, needsPasswordReset } = useAuth();
 
   if (initializing) {
     return (
@@ -16,7 +16,11 @@ export default function Index() {
     );
   }
 
-  return session ? <Redirect href="/(tabs)" /> : <Redirect href="/auth" />;
+  return session && !needsPasswordReset ? (
+    <Redirect href="/(tabs)" />
+  ) : (
+    <Redirect href="/auth" />
+  );
 }
 
 const styles = StyleSheet.create({

@@ -8,7 +8,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../theme/useTheme";
 
 export default function AuthScreen() {
-  const { session, initializing } = useAuth();
+  const { session, initializing, needsPasswordReset } = useAuth();
   const t = useTheme();
 
   if (initializing) {
@@ -21,7 +21,7 @@ export default function AuthScreen() {
     );
   }
 
-  if (session) {
+  if (session && !needsPasswordReset) {
     return <Redirect href="/(tabs)" />;
   }
 
@@ -45,7 +45,7 @@ export default function AuthScreen() {
               resizeMode="contain"
             />
           </View>
-          <Text style={styles.brandName}>Cook planner</Text>
+          <Text style={styles.brandName}>Weatly</Text>
         </View>
 
         {/* ── Marketing copy ── */}

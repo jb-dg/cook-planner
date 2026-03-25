@@ -18,10 +18,21 @@ import {
 } from "../lib/validation/auth";
 import { useTheme } from "../theme/useTheme";
 
-type Mode = "signin" | "signup";
+type Mode = "signin" | "signup" | "forgot";
+type ActiveMode = Mode | "recovery";
+type FeedbackMessage = {
+  text: string;
+  tone: "error" | "success";
+};
 
 export default function AuthForm() {
-  const { signIn, signUp } = useAuth();
+  const {
+    signIn,
+    signUp,
+    requestPasswordReset,
+    updatePassword,
+    needsPasswordReset,
+  } = useAuth();
   const t = useTheme();
 
   const [mode, setMode] = useState<Mode>("signin");
@@ -29,13 +40,16 @@ export default function AuthForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<FeedbackMessage | null>(null);
+
+  const activeMode: ActiveMode = needsPasswordReset ? "recovery" : mode;
 
   const errors = useMemo(() => {
-    const emailError = validateEmail(email);
-    const passwordError = validatePassword(password);
+    const emailError = activeMode === "recovery" ? null : validateEmail(email);
+    const passwordError =
+      activeMode === "forgot" ? null : validatePassword(password);
     const confirmError =
-      mode === "signup"
+      activeMode === "signup" || activeMode === "recovery"
         ? validateConfirmPassword(password, confirmPassword)
         : null;
     return {
@@ -43,34 +57,114 @@ export default function AuthForm() {
       password: passwordError,
       confirm: confirmError,
     };
-  }, [email, password, confirmPassword, mode]);
+  }, [activeMode, email, password, confirmPassword]);
 
-  const canSubmit =
-    !submitting &&
-    !errors.email &&
-    !errors.password &&
-    (mode === "signin" || !errors.confirm);
+  const canSubmit = useMemo(() => {
+    if (submitting) return false;
+
+    if (activeMode === "forgot") {
+      return !errors.email;
+    }
+    if (activeMode === "recovery") {
+      return !errors.password && !errors.confirm;
+    }
+    if (activeMode === "signup") {
+      return !errors.email && !errors.password && !errors.confirm;
+    }
+
+    return !errors.email && !errors.password;
+  }, [activeMode, errors.confirm, errors.email, errors.password, submitting]);
+
   const submitDisabled = !canSubmit;
+
+  const clearSensitiveFields = () => {
+    setPassword("");
+    setConfirmPassword("");
+  };
+
+  const switchMode = (nextMode: Mode) => {
+    setMode(nextMode);
+    setMessage(null);
+    clearSensitiveFields();
+  };
 
   const handleSubmit = async () => {
     setSubmitting(true);
     setMessage(null);
-    const action = mode === "signin" ? signIn : signUp;
-    const { success, message: actionMessage } = await action({
-      email,
-      password,
-    });
+    let result: { success: boolean; message?: string };
+
+    if (activeMode === "signin") {
+      result = await signIn({
+        email: email.trim(),
+        password,
+      });
+    } else if (activeMode === "signup") {
+      result = await signUp({
+        email: email.trim(),
+        password,
+      });
+    } else if (activeMode === "forgot") {
+      result = await requestPasswordReset(email.trim());
+    } else {
+      result = await updatePassword(password);
+    }
+
+    const { success, message: actionMessage } = result;
     setSubmitting(false);
 
     if (!success) {
-      setMessage(actionMessage ?? "Une erreur inattendue est survenue.");
+      setMessage({
+        text: actionMessage ?? "Une erreur inattendue est survenue.",
+        tone: "error",
+      });
       return;
     }
 
-    if (mode === "signup") {
-      setMessage("Vérifie ta boîte mail pour confirmer ton compte.");
+    if (activeMode === "signup") {
+      setMessage({
+        text: "Vérifie ta boîte mail pour confirmer ton compte.",
+        tone: "success",
+      });
       setConfirmPassword("");
+      return;
     }
+
+    if (activeMode === "forgot") {
+      setMessage({
+        text: "Email envoyé. Vérifie ta boîte mail pour réinitialiser ton mot de passe.",
+        tone: "success",
+      });
+      return;
+    }
+
+    if (activeMode === "recovery") {
+      setMessage({
+        text: "Mot de passe mis à jour. Tu peux continuer.",
+        tone: "success",
+      });
+      clearSensitiveFields();
+    }
+  };
+
+  const titleByMode: Record<ActiveMode, string> = {
+    signin: "Connexion",
+    signup: "Créer un compte",
+    forgot: "Mot de passe oublié",
+    recovery: "Nouveau mot de passe",
+  };
+
+  const subtitleByMode: Record<ActiveMode, string> = {
+    signin: "Gère tes menus, recettes et courses au même endroit.",
+    signup: "Crée ton espace cuisine et invite ta famille.",
+    forgot: "On t'envoie un lien pour récupérer ton compte.",
+    recovery: "Définis un nouveau mot de passe sécurisé.",
+  };
+
+  const ctaByMode: Record<ActiveMode, string> = {
+    signin: "Se connecter",
+    signup: "Créer mon compte",
+    forgot: "Envoyer le lien",
+    recovery: "Mettre à jour le mot de passe",
   };
 
   // Dynamic styles built from theme tokens
@@ -142,9 +236,14 @@ export default function AuthForm() {
           fontSize: t.typography.size.label,
         },
         message: {
-          color: t.colors.primary,
           fontSize: t.typography.size.bodySmall,
           fontWeight: t.typography.weight.semibold,
+        },
+        messageSuccess: {
+          color: t.colors.primary,
+        },
+        messageError: {
+          color: t.colors.error,
         },
         buttonText: {
           color: t.components.button.primary.textColor,
@@ -220,61 +319,70 @@ export default function AuthForm() {
     <View style={s.container}>
       {/* Header */}
       <View style={s.titleRow}>
-        <Text style={s.title}>
-          {mode === "signin" ? "Connexion" : "Créer un compte"}
-        </Text>
-        <Text style={s.kicker}>
-          Gère tes menus, recettes et courses au même endroit.
-        </Text>
+        <Text style={s.title}>{titleByMode[activeMode]}</Text>
+        <Text style={s.kicker}>{subtitleByMode[activeMode]}</Text>
       </View>
 
       {/* Email */}
-      <View style={s.fieldGroup}>
-        <Text style={s.label}>Adresse e-mail</Text>
-        <TextInput
-          autoCapitalize="none"
-          autoComplete="email"
-          keyboardType="email-address"
-          placeholder="email@exemple.com"
-          placeholderTextColor={t.components.textInput.placeholderColor}
-          style={[s.input, errors.email ? s.inputError : null]}
-          value={email}
-          onChangeText={setEmail}
-          textContentType="emailAddress"
-          editable={!submitting}
-        />
-        {errors.email ? <Text style={s.error}>{errors.email}</Text> : null}
-      </View>
+      {activeMode !== "recovery" ? (
+        <View style={s.fieldGroup}>
+          <Text style={s.label}>Adresse e-mail</Text>
+          <TextInput
+            autoCapitalize="none"
+            autoComplete="email"
+            keyboardType="email-address"
+            placeholder="email@exemple.com"
+            placeholderTextColor={t.components.textInput.placeholderColor}
+            style={[s.input, errors.email ? s.inputError : null]}
+            value={email}
+            onChangeText={setEmail}
+            textContentType="emailAddress"
+            editable={!submitting}
+          />
+          {errors.email ? <Text style={s.error}>{errors.email}</Text> : null}
+        </View>
+      ) : null}
 
       {/* Password */}
-      <View style={s.fieldGroup}>
-        <View style={s.fieldHeader}>
-          <Text style={s.label}>Mot de passe</Text>
-          {mode === "signin" ? (
-            <Pressable>
-              <Text style={s.forgotLink}>Oublié ?</Text>
-            </Pressable>
+      {activeMode !== "forgot" ? (
+        <View style={s.fieldGroup}>
+          <View style={s.fieldHeader}>
+            <Text style={s.label}>
+              {activeMode === "recovery" ? "Nouveau mot de passe" : "Mot de passe"}
+            </Text>
+            {activeMode === "signin" ? (
+              <Pressable
+                onPress={() => switchMode("forgot")}
+                disabled={submitting}
+              >
+                <Text style={s.forgotLink}>Oublié ?</Text>
+              </Pressable>
+            ) : null}
+          </View>
+          <TextInput
+            placeholder="••••••••"
+            secureTextEntry
+            placeholderTextColor={t.components.textInput.placeholderColor}
+            style={[s.input, errors.password ? s.inputError : null]}
+            value={password}
+            onChangeText={setPassword}
+            textContentType={activeMode === "recovery" ? "newPassword" : "password"}
+            editable={!submitting}
+          />
+          {errors.password ? (
+            <Text style={s.error}>{errors.password}</Text>
           ) : null}
         </View>
-        <TextInput
-          placeholder="••••••••"
-          secureTextEntry
-          placeholderTextColor={t.components.textInput.placeholderColor}
-          style={[s.input, errors.password ? s.inputError : null]}
-          value={password}
-          onChangeText={setPassword}
-          textContentType="password"
-          editable={!submitting}
-        />
-        {errors.password ? (
-          <Text style={s.error}>{errors.password}</Text>
-        ) : null}
-      </View>
+      ) : null}
 
-      {/* Confirm password (signup only) */}
-      {mode === "signup" ? (
+      {/* Confirm password */}
+      {activeMode === "signup" || activeMode === "recovery" ? (
         <View style={s.fieldGroup}>
-          <Text style={s.label}>Confirme le mot de passe</Text>
+          <Text style={s.label}>
+            {activeMode === "recovery"
+              ? "Confirme le nouveau mot de passe"
+              : "Confirme le mot de passe"}
+          </Text>
           <TextInput
             placeholder="••••••••"
             secureTextEntry
@@ -282,7 +390,7 @@ export default function AuthForm() {
             style={[s.input, errors.confirm ? s.inputError : null]}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
-            textContentType="password"
+            textContentType="newPassword"
             editable={!submitting}
           />
           {errors.confirm ? (
@@ -292,7 +400,16 @@ export default function AuthForm() {
       ) : null}
 
       {/* Feedback message */}
-      {message ? <Text style={s.message}>{message}</Text> : null}
+      {message ? (
+        <Text
+          style={[
+            s.message,
+            message.tone === "error" ? s.messageError : s.messageSuccess,
+          ]}
+        >
+          {message.text}
+        </Text>
+      ) : null}
 
       {/* Primary CTA */}
       <PhysicalButtonAnimated onPress={handleSubmit} disabled={submitDisabled}>
@@ -308,7 +425,7 @@ export default function AuthForm() {
           <Text
             style={[s.buttonText, submitDisabled ? s.buttonTextDisabled : null]}
           >
-            {mode === "signin" ? "Se connecter" : "Créer mon compte"}
+            {ctaByMode[activeMode]}
           </Text>
         )}
       </PhysicalButtonAnimated>
@@ -333,21 +450,37 @@ export default function AuthForm() {
       </View> */}
 
       {/* Mode switch */}
-      <View style={s.switchRow}>
-        <Text style={s.switchLabel}>
-          {mode === "signin" ? "Nouveau ici ?" : "Déjà un compte ?"}
-        </Text>
-        <Pressable
-          onPress={() =>
-            setMode((prev) => (prev === "signin" ? "signup" : "signin"))
-          }
-          disabled={submitting}
-        >
-          <Text style={s.link}>
-            {mode === "signin" ? "Créer un compte" : "Se connecter"}
-          </Text>
-        </Pressable>
-      </View>
+      {activeMode === "recovery" ? null : (
+        <View style={s.switchRow}>
+          {activeMode === "forgot" ? (
+            <>
+              <Text style={s.switchLabel}>Tu te souviens du mot de passe ?</Text>
+              <Pressable
+                onPress={() => switchMode("signin")}
+                disabled={submitting}
+              >
+                <Text style={s.link}>Se connecter</Text>
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <Text style={s.switchLabel}>
+                {activeMode === "signin" ? "Nouveau ici ?" : "Déjà un compte ?"}
+              </Text>
+              <Pressable
+                onPress={() =>
+                  switchMode(activeMode === "signin" ? "signup" : "signin")
+                }
+                disabled={submitting}
+              >
+                <Text style={s.link}>
+                  {activeMode === "signin" ? "Créer un compte" : "Se connecter"}
+                </Text>
+              </Pressable>
+            </>
+          )}
+        </View>
+      )}
     </View>
   );
 }

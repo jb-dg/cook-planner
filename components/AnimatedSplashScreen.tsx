@@ -65,13 +65,7 @@ export function AnimatedSplashScreen({ onFinish }: AnimatedSplashScreenProps) {
           useNativeDriver: true,
         }),
       ]),
-    [
-      containerOpacity,
-      logoOpacity,
-      logoScale,
-      logoTranslateY,
-      titleOpacity,
-    ]
+    [containerOpacity, logoOpacity, logoScale, logoTranslateY, titleOpacity],
   );
 
   useEffect(() => {
@@ -110,7 +104,7 @@ export function AnimatedSplashScreen({ onFinish }: AnimatedSplashScreenProps) {
         </Animated.View>
 
         <Animated.View style={{ opacity: titleOpacity }}>
-          <Text style={styles.title}>Cook Planner</Text>
+          <Text style={styles.title}>Weatly</Text>
         </Animated.View>
       </View>
     </Animated.View>

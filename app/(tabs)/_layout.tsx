@@ -9,14 +9,14 @@ import { radii } from "../../theme/design";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function TabsLayout() {
-  const { session, initializing } = useAuth();
+  const { session, initializing, needsPasswordReset } = useAuth();
   const insets = useSafeAreaInsets();
   const tabBarBottom = Math.max(insets.bottom + 10, 16);
   if (initializing) {
     return <ActivityIndicator style={{ flex: 1 }} size="large" />;
   }
 
-  if (!session) {
+  if (!session || needsPasswordReset) {
     return <Redirect href="/auth" />;
   }
 
