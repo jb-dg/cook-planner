@@ -1,4 +1,4 @@
-📦 Cook Planner - Module Planner (Refactorisé)
+📦 Weatly - Module Planner (Refactorisé)
 ═══════════════════════════════════════════════
 
 📊 MÉTRIQUES GLOBALES

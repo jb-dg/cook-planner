@@ -1,22 +1,22 @@
 {
   "expo": {
-    "name": "Cook Planner",
-    "slug": "cook-planner",
+    "name": "Weatly",
+    "slug": "weatly",
     "version": "1.5.0",
-    "scheme": "cookplanner",
+    "scheme": "weatly",
     "orientation": "portrait",
     "icon": "./assets/images/book-icon.png",
     "userInterfaceStyle": "light",
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.jbdg.cookplanner",
+      "bundleIdentifier": "com.jbdg.weatly",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.jbdg.cookplanner",
+      "package": "com.jbdg.weatly",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/book-icon.png",
         "backgroundColor": "#BB6F2B"
