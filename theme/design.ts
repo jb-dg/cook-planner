@@ -35,6 +35,7 @@ export const spacing = {
 
 export const layout = {
   webNavOffset: 126,
+  webFooterOffset: 140,
 };
 
 export const shadows = {

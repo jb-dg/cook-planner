@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
+import WebFooter from "@/components/WebFooter";
 import { useAuth } from "../../contexts/AuthContext";
 import { fetchHouseholdScope } from "../../lib/households";
 import { supabase } from "../../lib/supabase";
@@ -211,6 +212,8 @@ export default function HomeScreen() {
         <PhysicalButtonAnimated onPress={() => router.push("/planner")}>
           <Text style={styles.physicalCtaText}>Ouvrir mon planning</Text>
         </PhysicalButtonAnimated>
+
+        {isWeb && <WebFooter />}
       </ScrollView>
     </SafeAreaView>
   );

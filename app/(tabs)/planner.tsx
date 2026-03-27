@@ -9,6 +9,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  View,
 } from "react-native";
 import {
   SafeAreaView,
@@ -37,6 +38,7 @@ import {
 } from "../../features/planner/utils/types";
 import { Recipe } from "../../features/recipes/types";
 import { colors, layout, spacing } from "../../theme/design";
+import WebFooter from "../../components/WebFooter";
 
 export default function PlannerScreen() {
   const { session } = useAuth();
@@ -191,62 +193,125 @@ export default function PlannerScreen() {
           contentContainerStyle={[
             sharedStyles.container,
             isWeb && styles.containerWeb,
-            { paddingBottom: spacing.screen + insets.bottom + 140 },
+            {
+              paddingBottom: isWeb
+                ? spacing.screen * 2
+                : spacing.screen + insets.bottom + 140,
+            },
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <PlannerHeader
-            weekNumber={weekNumber}
-            weekRangeLabel={weekRangeLabel}
-            viewMode={viewMode}
-            saveStatus={saveStatus}
-            lastSaved={lastSaved}
-            saveError={saveError}
-            onWeekPickerOpen={openWeekPicker}
-            onViewModeToggle={() =>
-              setViewMode((prev) => (prev === "list" ? "focus" : "list"))
-            }
-          />
-
-          {viewMode === "focus" && (
+          {viewMode === "focus" && isWeb ? (
+            <View style={styles.focusWebLayout}>
+              <View style={styles.focusWebLeft}>
+                <PlannerHeader
+                  weekNumber={weekNumber}
+                  weekRangeLabel={weekRangeLabel}
+                  viewMode={viewMode}
+                  saveStatus={saveStatus}
+                  lastSaved={lastSaved}
+                  saveError={saveError}
+                  onWeekPickerOpen={openWeekPicker}
+                  onViewModeToggle={() =>
+                    setViewMode((prev) => (prev === "list" ? "focus" : "list"))
+                  }
+                />
+                <WeekProgressCard
+                  weekNumber={weekNumber}
+                  selectedDayLabel={selectedDayLabel}
+                  progress={progress}
+                  onNavigate={handleNavigate}
+                  onGoToToday={handleGoToToday}
+                />
+              </View>
+              <View style={styles.focusWebRight}>
+                <DayGridSelector
+                  referenceDate={referenceDate}
+                  selectedDate={selectedDate}
+                  onSelectDate={setSelectedDate}
+                />
+                <FocusView
+                  days={days}
+                  referenceDate={referenceDate}
+                  selectedDate={selectedDate}
+                  session={session}
+                  recipesLength={recipes.length}
+                  syncing={syncing}
+                  saving={isSaving}
+                  recipesLoading={recipesLoading}
+                  onDayChange={handleDayChange}
+                  onOpenRecipePicker={openRecipePicker}
+                  onBlur={save}
+                />
+                <Pressable
+                  style={styles.listButton}
+                  onPress={() => setViewMode("list")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Voir la semaine en liste"
+                >
+                  <Feather name="list" size={16} color={colors.accent} />
+                  <Text style={styles.listButtonText}>
+                    Voir la semaine en liste
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
             <>
-              <WeekProgressCard
+              <PlannerHeader
                 weekNumber={weekNumber}
-                selectedDayLabel={selectedDayLabel}
-                progress={progress}
-                onNavigate={handleNavigate}
-                onGoToToday={handleGoToToday}
+                weekRangeLabel={weekRangeLabel}
+                viewMode={viewMode}
+                saveStatus={saveStatus}
+                lastSaved={lastSaved}
+                saveError={saveError}
+                onWeekPickerOpen={openWeekPicker}
+                onViewModeToggle={() =>
+                  setViewMode((prev) => (prev === "list" ? "focus" : "list"))
+                }
               />
-              <DayGridSelector
-                referenceDate={referenceDate}
-                selectedDate={selectedDate}
-                onSelectDate={setSelectedDate}
-              />
-              <FocusView
-                days={days}
-                referenceDate={referenceDate}
-                selectedDate={selectedDate}
-                session={session}
-                recipesLength={recipes.length}
-                syncing={syncing}
-                saving={isSaving}
-                recipesLoading={recipesLoading}
-                onDayChange={handleDayChange}
-                onOpenRecipePicker={openRecipePicker}
-                onBlur={save}
-              />
-              <Pressable
-                style={styles.listButton}
-                onPress={() => setViewMode("list")}
-                accessibilityRole="button"
-                accessibilityLabel="Voir la semaine en liste"
-              >
-                <Feather name="list" size={16} color={colors.accent} />
-                <Text style={styles.listButtonText}>
-                  Voir la semaine en liste
-                </Text>
-              </Pressable>
+
+              {viewMode === "focus" && (
+                <>
+                  <WeekProgressCard
+                    weekNumber={weekNumber}
+                    selectedDayLabel={selectedDayLabel}
+                    progress={progress}
+                    onNavigate={handleNavigate}
+                    onGoToToday={handleGoToToday}
+                  />
+                  <DayGridSelector
+                    referenceDate={referenceDate}
+                    selectedDate={selectedDate}
+                    onSelectDate={setSelectedDate}
+                  />
+                  <FocusView
+                    days={days}
+                    referenceDate={referenceDate}
+                    selectedDate={selectedDate}
+                    session={session}
+                    recipesLength={recipes.length}
+                    syncing={syncing}
+                    saving={isSaving}
+                    recipesLoading={recipesLoading}
+                    onDayChange={handleDayChange}
+                    onOpenRecipePicker={openRecipePicker}
+                    onBlur={save}
+                  />
+                  <Pressable
+                    style={styles.listButton}
+                    onPress={() => setViewMode("list")}
+                    accessibilityRole="button"
+                    accessibilityLabel="Voir la semaine en liste"
+                  >
+                    <Feather name="list" size={16} color={colors.accent} />
+                    <Text style={styles.listButtonText}>
+                      Voir la semaine en liste
+                    </Text>
+                  </Pressable>
+                </>
+              )}
             </>
           )}
 
@@ -266,6 +331,8 @@ export default function PlannerScreen() {
               onBlur={save}
             />
           )}
+
+          {isWeb && <WebFooter />}
         </ScrollView>
 
         <WeekPickerModal
@@ -332,5 +399,21 @@ const styles = StyleSheet.create({
   },
   containerWeb: {
     paddingTop: layout.webNavOffset + spacing.screen,
+  },
+  focusWebLayout: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.base * 2,
+    flexWrap: "wrap",
+  },
+  focusWebLeft: {
+    flex: 1,
+    minWidth: 320,
+    gap: spacing.base * 2,
+  },
+  focusWebRight: {
+    flex: 1,
+    minWidth: 360,
+    gap: spacing.base * 2,
   },
 });

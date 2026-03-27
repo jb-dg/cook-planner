@@ -118,10 +118,7 @@ export default function TabsLayout() {
     return tabs;
   }
 
-  const webNavWrapStyle = [
-    styles.webNavWrap,
-    { position: "fixed" as any },
-  ];
+  const webNavWrapStyle = [styles.webNavWrap, isWeb && styles.webNavWrapFixed];
 
   return (
     <View style={styles.webRoot}>
@@ -136,7 +133,7 @@ export default function TabsLayout() {
             <View style={styles.webBrandIcon}>
               <Feather name="book-open" size={20} color="#FFFFFF" />
             </View>
-            <Text style={styles.webBrandText}>Hearth</Text>
+            <Text style={styles.webBrandText}>Weatly</Text>
           </Pressable>
 
           <View
@@ -152,7 +149,7 @@ export default function TabsLayout() {
                   activeWebSection === "planner" && styles.webPillNavTextActive,
                 ]}
               >
-                Planner
+                Planning
               </Text>
             </Pressable>
             <Pressable
@@ -165,7 +162,7 @@ export default function TabsLayout() {
                   activeWebSection === "recipes" && styles.webPillNavTextActive,
                 ]}
               >
-                Recipes
+                Recettes
               </Text>
             </Pressable>
             {isWideWeb && (
@@ -191,25 +188,6 @@ export default function TabsLayout() {
 
       <View style={styles.webContent}>{tabs}</View>
 
-      <View style={styles.webFooter}>
-        <View
-          style={[
-            styles.webFooterInner,
-            isWideWeb && styles.webFooterInnerWide,
-          ]}
-        >
-          <View style={styles.webFooterBrand}>
-            <View style={styles.webFooterBrandIcon} />
-            <Text style={styles.webFooterBrandText}>Hearth</Text>
-          </View>
-          <View style={styles.webFooterLinks}>
-            <Text style={styles.webFooterLinkText}>Privacy</Text>
-            <Text style={styles.webFooterLinkText}>Help Center</Text>
-            <Text style={styles.webFooterLinkText}>Settings</Text>
-          </View>
-          <Text style={styles.webFooterCopy}>© 2026 Hearth Kitchen Co.</Text>
-        </View>
-      </View>
     </View>
   );
 }
@@ -223,6 +201,7 @@ const styles = StyleSheet.create({
   },
   webRoot: {
     flex: 1,
+    minHeight: "100%",
   },
   webNavWrap: {
     position: "absolute",
@@ -233,6 +212,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 24,
     paddingBottom: 16,
+  },
+  webNavWrapFixed: {
+    position: "fixed" as any,
   },
   webNav: {
     width: "100%",
@@ -343,61 +325,9 @@ const styles = StyleSheet.create({
   },
   webContent: {
     flex: 1,
+    minHeight: 0,
+    paddingBottom: 0,
     backgroundColor: "#FDF8F1",
-  },
-  webFooter: {
-    backgroundColor: "#2D2D2A",
-    paddingHorizontal: 24,
-    paddingVertical: 28,
-  },
-  webFooterInner: {
-    width: "100%",
-    maxWidth: 1240,
-    alignSelf: "center",
-    flexDirection: "column",
-    gap: 14,
-    alignItems: "flex-start",
-  },
-  webFooterInnerWide: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  webFooterBrand: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  webFooterBrandIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: "#BC6C25",
-  },
-  webFooterBrandText: {
-    color: "#FDF8F1",
-    fontSize: 22,
-    fontWeight: "900",
-    letterSpacing: -0.2,
-  },
-  webFooterLinks: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 24,
-  },
-  webFooterLinkText: {
-    color: "rgba(253,248,241,0.52)",
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1.1,
-    textTransform: "uppercase",
-  },
-  webFooterCopy: {
-    color: "rgba(253,248,241,0.3)",
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1.1,
-    textTransform: "uppercase",
   },
   tabBarBackground: {
     flex: 1,

@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../../contexts/AuthContext";
+import WebFooter from "../../../../components/WebFooter";
 import {
   buildBooksStorageKey,
   buildRecipeBooks,
@@ -341,29 +342,32 @@ export default function RecipeBookScreen() {
           </View>
         }
         ListFooterComponent={
-          activeCustomBook ? (
-            <View style={styles.footerSection}>
-              <Text style={styles.footerTitle}>Ajouter des recettes au livre</Text>
-              {availableRecipes.length ? (
-                availableRecipes.map((recipe) => (
-                  <View key={recipe.id} style={styles.availableRow}>
-                    <Text style={styles.availableName}>{recipe.title}</Text>
-                    <Pressable
-                      style={styles.availableAddButton}
-                      onPress={() => handleAddRecipeToBook(recipe.id)}
-                    >
-                      <Feather name="plus" size={14} color="#BC6C25" />
-                      <Text style={styles.availableAddText}>Ajouter</Text>
-                    </Pressable>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.availableEmpty}>
-                  Toutes les recettes sont déjà dans ce livre.
-                </Text>
-              )}
-            </View>
-          ) : null
+          <>
+            {activeCustomBook ? (
+              <View style={styles.footerSection}>
+                <Text style={styles.footerTitle}>Ajouter des recettes au livre</Text>
+                {availableRecipes.length ? (
+                  availableRecipes.map((recipe) => (
+                    <View key={recipe.id} style={styles.availableRow}>
+                      <Text style={styles.availableName}>{recipe.title}</Text>
+                      <Pressable
+                        style={styles.availableAddButton}
+                        onPress={() => handleAddRecipeToBook(recipe.id)}
+                      >
+                        <Feather name="plus" size={14} color="#BC6C25" />
+                        <Text style={styles.availableAddText}>Ajouter</Text>
+                      </Pressable>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.availableEmpty}>
+                    Toutes les recettes sont déjà dans ce livre.
+                  </Text>
+                )}
+              </View>
+            ) : null}
+            {isWeb && <WebFooter />}
+          </>
         }
         ListEmptyComponent={
           loading || booksLoading ? (
@@ -403,6 +407,7 @@ const styles = StyleSheet.create({
   },
   listContentWeb: {
     paddingTop: layout.webNavOffset + spacing.screen,
+    paddingBottom: 40,
   },
   header: {
     gap: 6,

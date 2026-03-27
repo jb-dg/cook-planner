@@ -7,11 +7,6 @@
     "orientation": "portrait",
     "icon": "./assets/images/book-icon.png",
     "userInterfaceStyle": "light",
-    // "splash": {
-    //   "image": "./assets/images/book-icon.png",
-    //   "resizeMode": "contain",
-    //   "backgroundColor": "#FDFBF7"
-    // },
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,

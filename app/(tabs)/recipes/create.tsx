@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../contexts/AuthContext";
+import WebFooter from "../../../components/WebFooter";
 import {
   AddRecipeDraft,
   canContinueFromReview,
@@ -943,6 +944,8 @@ export default function CreateRecipeScreen() {
             </View>
           </View>
         ) : null}
+
+        {isWeb && <WebFooter />}
       </ScrollView>
     </SafeAreaView>
   );
@@ -960,6 +963,7 @@ const styles = StyleSheet.create({
   },
   containerWeb: {
     paddingTop: layout.webNavOffset + spacing.screen,
+    paddingBottom: 40,
   },
   centerState: {
     flex: 1,

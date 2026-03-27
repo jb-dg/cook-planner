@@ -17,6 +17,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
+import WebFooter from "@/components/WebFooter";
 import HouseholdSummaryCard from "@/components/profile/HouseholdSummaryCard";
 import ProfileActionRow from "@/components/profile/ProfileActionRow";
 import ProfileSlideModal from "@/components/profile/ProfileSlideModal";
@@ -622,6 +623,8 @@ export default function ProfileScreen() {
             </View>
           </PhysicalButtonAnimated>
         </View>
+
+        {isWeb && <WebFooter />}
       </ScrollView>
 
       <ProfileSlideModal
@@ -800,6 +803,7 @@ const styles = StyleSheet.create({
   },
   containerWeb: {
     paddingTop: layout.webNavOffset + spacing.screen,
+    paddingBottom: 40,
   },
 
   // Hero card

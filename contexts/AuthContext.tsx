@@ -84,20 +84,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const extractAuthParams = (normalizedUrl: string) => {
+    const params = new URLSearchParams();
+    const { queryParams } = Linking.parse(normalizedUrl);
+
+    if (queryParams) {
+      Object.entries(queryParams).forEach(([key, value]) => {
+        if (typeof value === "string") {
+          params.set(key, value);
+        }
+      });
+    }
+
+    const hashIndex = normalizedUrl.indexOf("#");
+    if (hashIndex !== -1 && hashIndex + 1 < normalizedUrl.length) {
+      const hashParams = new URLSearchParams(normalizedUrl.slice(hashIndex + 1));
+      hashParams.forEach((value, key) => {
+        params.set(key, value);
+      });
+    }
+
+    return params;
+  };
+
   const handleAuthUrl = useCallback(async (url?: string | null) => {
     if (!url) return;
 
     const normalizedUrl = url.trim();
     if (!normalizedUrl) return;
 
-    const { queryParams } = Linking.parse(normalizedUrl);
-    const code = typeof queryParams?.code === "string" ? queryParams.code : null;
-    const tokenHash =
-      typeof queryParams?.token_hash === "string" ? queryParams.token_hash : null;
-    const type = typeof queryParams?.type === "string" ? queryParams.type : null;
+    const params = extractAuthParams(normalizedUrl);
+    const code = params.get("code");
+    const tokenHash = params.get("token_hash");
+    const type = params.get("type");
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
     const canVerifyOtp = !!tokenHash && !!type && isEmailOtpType(type);
 
-    if (!code && !canVerifyOtp) {
+    if (!code && !canVerifyOtp && !(accessToken && refreshToken)) {
       return;
     }
 
@@ -107,6 +131,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     handledAuthUrlsRef.current.add(normalizedUrl);
 
     try {
+      if (accessToken && refreshToken) {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (error) throw error;
+        if (type === "recovery") {
+          setNeedsPasswordReset(true);
+        }
+        return;
+      }
+
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (error) throw error;

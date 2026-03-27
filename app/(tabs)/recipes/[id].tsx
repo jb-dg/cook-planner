@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { useAuth } from "../../../contexts/AuthContext";
+import WebFooter from "../../../components/WebFooter";
 import { supabase } from "../../../lib/supabase";
 import { fetchHouseholdScope } from "../../../lib/households";
 import { colors, layout, spacing, radii } from "../../../theme/design";
@@ -301,6 +302,8 @@ export default function RecipeScreen() {
               </View>
             </>
           )}
+
+          {isWeb && <WebFooter />}
         </ScrollView>
       ) : null}
     </SafeAreaView>
@@ -324,6 +327,7 @@ const styles = StyleSheet.create({
   },
   containerWeb: {
     paddingTop: layout.webNavOffset + spacing.screen,
+    paddingBottom: 40,
   },
   heading: {
     fontSize: 28,

@@ -7,6 +7,7 @@ import {
   FlatList,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -15,6 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../contexts/AuthContext";
+import WebFooter from "../../../components/WebFooter";
 import {
   buildBooksStorageKey,
   buildRecipeBooks,
@@ -68,6 +70,7 @@ export default function RecipeBooksScreen() {
   const [error, setError] = useState<string | null>(null);
   const [bookName, setBookName] = useState("");
   const [bookError, setBookError] = useState<string | null>(null);
+  const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
 
   const storageKey = useMemo(() => {
     if (!session || !scope) return null;
@@ -188,6 +191,31 @@ export default function RecipeBooksScreen() {
     return `${count} livres`;
   }, [books.length]);
 
+  useEffect(() => {
+    if (!isWeb || !books.length) return;
+    if (selectedBookId && books.some((book) => book.id === selectedBookId)) {
+      return;
+    }
+    setSelectedBookId(books[0].id);
+  }, [isWeb, books, selectedBookId]);
+
+  const selectedBook = useMemo(() => {
+    if (!books.length) return null;
+    return books.find((book) => book.id === selectedBookId) ?? books[0];
+  }, [books, selectedBookId]);
+
+  const recipesById = useMemo(
+    () => new Map(recipes.map((recipe) => [recipe.id, recipe])),
+    [recipes],
+  );
+
+  const displayedRecipes = useMemo(() => {
+    if (!selectedBook) return [];
+    return selectedBook.recipeIds
+      .map((id) => recipesById.get(id))
+      .filter((recipe): recipe is Recipe => !!recipe);
+  }, [recipesById, selectedBook]);
+
   const handleRefresh = useCallback(async () => {
     if (!session) return;
     setRefreshing(true);
@@ -220,9 +248,28 @@ export default function RecipeBooksScreen() {
   };
 
   const handleOpenBook = (book: RecipeBook) => {
+    if (isWeb) {
+      setSelectedBookId(book.id);
+      return;
+    }
     router.push({
       pathname: "/(tabs)/recipes/books/[bookId]",
       params: { bookId: book.id },
+    });
+  };
+
+  const handleOpenRecipe = (recipeId: string, mode: "view" | "edit") => {
+    router.push({
+      pathname: "/(tabs)/recipes/[id]",
+      params: { id: recipeId, mode },
+    });
+  };
+
+  const handleCreateRecipeInBook = () => {
+    if (!selectedBook) return;
+    router.push({
+      pathname: "/(tabs)/recipes/create",
+      params: { bookId: selectedBook.id },
     });
   };
 
@@ -234,7 +281,12 @@ export default function RecipeBooksScreen() {
       {Platform.OS === "android" && (
         <View pointerEvents="none" style={styles.bookAndroidShadow} />
       )}
-      <View style={styles.bookCardSurface}>
+      <View
+        style={[
+          styles.bookCardSurface,
+          isWeb && selectedBook?.id === item.id && styles.bookCardSurfaceActive,
+        ]}
+      >
         <View style={styles.bookCardHeader}>
           <View style={styles.bookTitleBlock}>
             <Text style={styles.bookEyebrow}>{item.isSystem ? "Système" : "Livre"}</Text>
@@ -251,12 +303,206 @@ export default function RecipeBooksScreen() {
             </Text>
           </View>
           <Text style={styles.bookFooterText}>
-            Appuie pour voir les recettes de ce livre
+            {isWeb ? "Voir les recettes à droite" : "Appuie pour voir les recettes de ce livre"}
           </Text>
         </View>
       </View>
     </Pressable>
   );
+
+  const listHeader = (
+    <View style={styles.header}>
+      <View style={styles.heroShadow}>
+        {Platform.OS === "android" && (
+          <View pointerEvents="none" style={styles.heroAndroidShadow} />
+        )}
+        <View style={styles.heroSurface}>
+          <View style={styles.headerRow}>
+            <View style={styles.headingBlock}>
+              <Text style={styles.headingKicker}>Carnet</Text>
+              <Text style={styles.heading}>Livres de recettes</Text>
+            </View>
+            <Pressable
+              style={styles.addButton}
+              onPress={() => router.push("/(tabs)/recipes/create")}
+            >
+              <Feather name="plus" size={20} color="#BC6C25" />
+            </Pressable>
+          </View>
+          <Text style={styles.subtitle}>
+            Choisis un livre pour ouvrir sa liste de recettes. Le livre
+            “Recettes du foyer” regroupe toutes les recettes du foyer.
+          </Text>
+          <View style={styles.headerMetaRow}>
+            <View style={styles.headerChip}>
+              <Text style={styles.headerChipText}>{booksCountLabel}</Text>
+            </View>
+            <Text style={styles.subheading}>
+              {recipes.length} recette{recipes.length > 1 ? "s" : ""} au total
+            </Text>
+          </View>
+          <View style={styles.bookCreatorRow}>
+            <TextInput
+              value={bookName}
+              onChangeText={(value) => {
+                setBookName(value);
+                if (bookError) setBookError(null);
+              }}
+              placeholder="Nom du nouveau livre"
+              placeholderTextColor="#A5A58D"
+              style={styles.bookInput}
+            />
+            <Pressable style={styles.createBookButton} onPress={handleCreateBook}>
+              <Feather name="book-open" size={14} color="#FFFFFF" />
+              <Text style={styles.createBookButtonText}>Créer</Text>
+            </Pressable>
+          </View>
+          {bookError ? <Text style={styles.bookErrorText}>{bookError}</Text> : null}
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        </View>
+      </View>
+    </View>
+  );
+
+  const listEmpty = loading || booksLoading ? (
+    <ActivityIndicator style={styles.loader} color={colors.accentSecondary} size="large" />
+  ) : null;
+
+  if (isWeb) {
+    return (
+      <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
+        <View style={styles.webLayout}>
+          <View style={styles.webSidebar}>
+            <FlatList
+              data={loading || booksLoading ? [] : books}
+              keyExtractor={(item) => item.id}
+              renderItem={renderBook}
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              ListHeaderComponent={listHeader}
+              ListEmptyComponent={listEmpty}
+              contentContainerStyle={[
+                styles.listContent,
+                styles.listContentWeb,
+                styles.sidebarContent,
+              ]}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+          <View style={styles.webContent}>
+            <ScrollView
+              contentContainerStyle={styles.webContentSurface}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.webContentHeader}>
+                <View>
+                  <Text style={styles.webContentTitle}>
+                    {selectedBook?.name ?? "Sélectionne un livre"}
+                  </Text>
+                  <Text style={styles.webContentSubtitle}>
+                    {selectedBook
+                      ? `${displayedRecipes.length} recette${
+                          displayedRecipes.length > 1 ? "s" : ""
+                        } dans ce livre`
+                      : "Choisis un livre dans le menu à gauche."}
+                  </Text>
+                </View>
+                {selectedBook ? (
+                  <Pressable style={styles.webContentAdd} onPress={handleCreateRecipeInBook}>
+                    <Feather name="plus" size={14} color="#FFFFFF" />
+                    <Text style={styles.webContentAddText}>Nouvelle recette</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+
+              {loading || booksLoading ? (
+                <ActivityIndicator
+                  style={styles.loader}
+                  color={colors.accentSecondary}
+                  size="large"
+                />
+              ) : selectedBook ? (
+                displayedRecipes.length ? (
+                  displayedRecipes.map((recipe) => (
+                    <View key={recipe.id} style={styles.recipeCardShadow}>
+                      {Platform.OS === "android" && (
+                        <View pointerEvents="none" style={styles.recipeAndroidShadow} />
+                      )}
+                      <View style={styles.recipeCardSurface}>
+                        <View style={styles.recipeHeader}>
+                          <View style={styles.recipeHeadingBlock}>
+                            <Text style={styles.recipeEyebrow}>Recette</Text>
+                            <Text style={styles.recipeTitle}>{recipe.title}</Text>
+                          </View>
+                        </View>
+
+                        <View style={styles.recipeMeta}>
+                          <View style={[styles.metaChip, styles.metaChipAccent]}>
+                            <Text style={[styles.metaChipText, styles.metaChipTextAccent]}>
+                              {recipe.difficulty}
+                            </Text>
+                          </View>
+                          <View style={styles.metaChip}>
+                            <Text style={styles.metaChipText}>{recipe.servings} pers.</Text>
+                          </View>
+                          {recipe.duration ? (
+                            <View style={styles.metaChip}>
+                              <Text style={styles.metaChipText}>{recipe.duration}</Text>
+                            </View>
+                          ) : null}
+                        </View>
+
+                        <View style={styles.actionsRow}>
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.actionButton,
+                              styles.actionButtonSoft,
+                              pressed && styles.cardPressed,
+                            ]}
+                            onPress={() => handleOpenRecipe(recipe.id, "view")}
+                          >
+                            <Feather name="eye" size={14} color="#6B705C" />
+                            <Text style={styles.actionButtonSoftText}>Afficher</Text>
+                          </Pressable>
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.actionButton,
+                              styles.actionButtonAccent,
+                              pressed && styles.cardPressed,
+                            ]}
+                            onPress={() => handleOpenRecipe(recipe.id, "edit")}
+                          >
+                            <Feather name="edit-2" size={14} color="#FFFFFF" />
+                            <Text style={styles.actionButtonAccentText}>Modifier</Text>
+                          </Pressable>
+                        </View>
+                      </View>
+                    </View>
+                  ))
+                ) : (
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyTitle}>Ce livre est vide</Text>
+                    <Text style={styles.emptySubtitle}>
+                      Ajoute des recettes pour les voir apparaître ici.
+                    </Text>
+                  </View>
+                )
+              ) : (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyTitle}>Sélectionne un livre</Text>
+                  <Text style={styles.emptySubtitle}>
+                    Choisis un livre dans le menu à gauche pour afficher ses recettes.
+                  </Text>
+                </View>
+              )}
+
+              {isWeb && <WebFooter />}
+            </ScrollView>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
@@ -266,68 +512,8 @@ export default function RecipeBooksScreen() {
         renderItem={renderBook}
         refreshing={refreshing}
         onRefresh={handleRefresh}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <View style={styles.heroShadow}>
-              {Platform.OS === "android" && (
-                <View pointerEvents="none" style={styles.heroAndroidShadow} />
-              )}
-              <View style={styles.heroSurface}>
-                <View style={styles.headerRow}>
-                  <View style={styles.headingBlock}>
-                    <Text style={styles.headingKicker}>Carnet</Text>
-                    <Text style={styles.heading}>Livres de recettes</Text>
-                  </View>
-                  <Pressable
-                    style={styles.addButton}
-                    onPress={() => router.push("/(tabs)/recipes/create")}
-                  >
-                    <Feather name="plus" size={20} color="#BC6C25" />
-                  </Pressable>
-                </View>
-                <Text style={styles.subtitle}>
-                  Choisis un livre pour ouvrir sa liste de recettes. Le livre
-                  “Recettes du foyer” regroupe toutes les recettes du foyer.
-                </Text>
-                <View style={styles.headerMetaRow}>
-                  <View style={styles.headerChip}>
-                    <Text style={styles.headerChipText}>{booksCountLabel}</Text>
-                  </View>
-                  <Text style={styles.subheading}>
-                    {recipes.length} recette{recipes.length > 1 ? "s" : ""} au total
-                  </Text>
-                </View>
-                <View style={styles.bookCreatorRow}>
-                  <TextInput
-                    value={bookName}
-                    onChangeText={(value) => {
-                      setBookName(value);
-                      if (bookError) setBookError(null);
-                    }}
-                    placeholder="Nom du nouveau livre"
-                    placeholderTextColor="#A5A58D"
-                    style={styles.bookInput}
-                  />
-                  <Pressable style={styles.createBookButton} onPress={handleCreateBook}>
-                    <Feather name="book-open" size={14} color="#FFFFFF" />
-                    <Text style={styles.createBookButtonText}>Créer</Text>
-                  </Pressable>
-                </View>
-                {bookError ? <Text style={styles.bookErrorText}>{bookError}</Text> : null}
-                {error ? <Text style={styles.errorText}>{error}</Text> : null}
-              </View>
-            </View>
-          </View>
-        }
-        ListEmptyComponent={
-          loading || booksLoading ? (
-            <ActivityIndicator
-              style={styles.loader}
-              color={colors.accentSecondary}
-              size="large"
-            />
-          ) : null
-        }
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
         contentContainerStyle={[styles.listContent, isWeb && styles.listContentWeb]}
       />
     </SafeAreaView>
@@ -346,6 +532,69 @@ const styles = StyleSheet.create({
   },
   listContentWeb: {
     paddingTop: layout.webNavOffset + spacing.screen,
+    paddingBottom: 40,
+  },
+  webLayout: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: spacing.base * 2,
+    width: "100%",
+    maxWidth: 1240,
+    alignSelf: "center",
+  },
+  webSidebar: {
+    flexBasis: 360,
+    flexGrow: 0,
+    flexShrink: 0,
+  },
+  webContent: {
+    flex: 1,
+    paddingTop: layout.webNavOffset + spacing.screen,
+    paddingBottom: spacing.screen * 2,
+    paddingHorizontal: spacing.screen,
+  },
+  webContentSurface: {
+    flex: 1,
+    gap: spacing.base * 1.5,
+  },
+  webContentHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 16,
+  },
+  webContentTitle: {
+    fontSize: 26,
+    fontWeight: "900",
+    color: "#2D2D2A",
+    letterSpacing: -0.6,
+  },
+  webContentSubtitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#6B705C",
+    marginTop: 4,
+  },
+  webContentAdd: {
+    minHeight: 38,
+    borderRadius: 999,
+    backgroundColor: "#BC6C25",
+    borderWidth: 1,
+    borderColor: "#BC6C25",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 14,
+    flexDirection: "row",
+    gap: 6,
+  },
+  webContentAddText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  sidebarContent: {
+    paddingBottom: spacing.screen * 2,
   },
   header: {
     marginBottom: 2,
@@ -511,6 +760,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 12,
   },
+  bookCardSurfaceActive: {
+    borderColor: "rgba(188, 108, 37, 0.45)",
+    backgroundColor: "#FFF7ED",
+  },
   bookCardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -582,5 +835,136 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginTop: 32,
+  },
+  emptyState: {
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(228, 217, 200, 0.8)",
+    backgroundColor: "#FFFFFF",
+    padding: 20,
+    gap: 6,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#2D2D2A",
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#6B705C",
+  },
+  recipeCardShadow: {
+    borderRadius: 32,
+    position: "relative",
+    ...shadowCard,
+  },
+  recipeAndroidShadow: {
+    ...StyleSheet.absoluteFillObject,
+    top: 1,
+    left: -1,
+    right: -1,
+    bottom: -2,
+    borderRadius: 32,
+    backgroundColor: "#000000",
+    opacity: 0.11,
+  },
+  recipeCardSurface: {
+    borderRadius: 32,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 16,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.8)",
+    gap: 12,
+  },
+  recipeHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  recipeHeadingBlock: {
+    flex: 1,
+    gap: 3,
+  },
+  recipeEyebrow: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: "#A5A58D",
+  },
+  recipeTitle: {
+    fontSize: 21,
+    fontWeight: "800",
+    color: "#2D2D2A",
+    letterSpacing: -0.6,
+    lineHeight: 25,
+  },
+  recipeMeta: {
+    flexDirection: "row",
+    gap: 6,
+    flexWrap: "wrap",
+  },
+  metaChip: {
+    backgroundColor: "#F5EFE4",
+    borderWidth: 1,
+    borderColor: "#E4D9C8",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  metaChipAccent: {
+    backgroundColor: "rgba(188, 108, 37, 0.1)",
+    borderColor: "rgba(188, 108, 37, 0.2)",
+  },
+  metaChipText: {
+    color: "#6B705C",
+    fontSize: 11,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  metaChipTextAccent: {
+    color: "#BC6C25",
+  },
+  actionsRow: {
+    paddingTop: 10,
+    marginTop: 2,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(228, 217, 200, 0.7)",
+    flexDirection: "row",
+    gap: 8,
+  },
+  actionButton: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 6,
+  },
+  actionButtonSoft: {
+    borderWidth: 1,
+    borderColor: "#E4D9C8",
+    backgroundColor: "#F5EFE4",
+  },
+  actionButtonAccent: {
+    borderWidth: 1,
+    borderColor: "#BC6C25",
+    backgroundColor: "#BC6C25",
+  },
+  actionButtonSoftText: {
+    color: "#6B705C",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  actionButtonAccentText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
   },
 });
