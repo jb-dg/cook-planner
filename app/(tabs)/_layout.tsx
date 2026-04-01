@@ -165,6 +165,21 @@ export default function TabsLayout() {
                 Recettes
               </Text>
             </Pressable>
+            {!isWideWeb && (
+              <Pressable
+                onPress={() => router.push("/(tabs)/profile")}
+                style={styles.webPillNavLink}
+              >
+                <Text
+                  style={[
+                    styles.webPillNavText,
+                    activeWebSection === "profile" && styles.webPillNavTextActive,
+                  ]}
+                >
+                  Profil
+                </Text>
+              </Pressable>
+            )}
             {isWideWeb && (
               <>
                 <Pressable

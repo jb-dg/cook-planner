@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { AuthError, EmailOtpType, Session } from "@supabase/supabase-js";
 import * as Linking from "expo-linking";
+import { Platform } from "react-native";
 
 import { ensureProfileRecord } from "../lib/profile";
 import { supabase } from "../lib/supabase";
@@ -36,7 +37,21 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-const SUPABASE_REDIRECT_URL = Linking.createURL("auth");
+const resolveSupabaseRedirectUrl = () => {
+  if (Platform.OS === "web") {
+    const baseUrl =
+      process.env.EXPO_PUBLIC_WEB_URL ?? Linking.createURL("/");
+    try {
+      return new URL("/auth", baseUrl).toString();
+    } catch {
+      return `${baseUrl.replace(/\/+$/, "")}/auth`;
+    }
+  }
+
+  return Linking.createURL("auth");
+};
+
+const SUPABASE_REDIRECT_URL = resolveSupabaseRedirectUrl();
 const EMAIL_OTP_TYPES: EmailOtpType[] = [
   "signup",
   "invite",
