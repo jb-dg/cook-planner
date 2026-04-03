@@ -38,6 +38,12 @@ export const layout = {
   webFooterOffset: 140,
 };
 
+export const breakpoints = {
+  webNavWide: 900,
+  webAuthWide: 980,
+  webPlannerWide: 1100,
+};
+
 export const shadows = {
   card: {
     shadowColor: "rgba(45, 45, 42, 0.15)",

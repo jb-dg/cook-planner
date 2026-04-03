@@ -46,6 +46,8 @@ components/HearthWeeklyPlanner.tsx
 /android
 
 eas.json
+backup-02026.app.json
+backup-032026.eas.json
 
 #.md
 PLANNER_MODERN_MIGRATION.md

@@ -1,8 +1,10 @@
 import { Platform, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 
+import { breakpoints } from "@/theme/design";
+
 export default function WebFooter() {
   const { width } = useWindowDimensions();
-  const isWideWeb = Platform.OS === "web" && width >= 900;
+  const isWideWeb = Platform.OS === "web" && width >= breakpoints.webNavWide;
 
   return (
     <View style={styles.webFooter}>

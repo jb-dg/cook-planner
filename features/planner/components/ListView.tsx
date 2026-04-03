@@ -11,7 +11,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import { spacing } from "../../../theme/design";
+import { breakpoints, spacing } from "../../../theme/design";
 import { MEAL_SLOTS } from "../utils/constants";
 import { DayPlan, MealKey } from "../utils/types";
 import { DayMealCard } from "./DayMealCard";
@@ -58,7 +58,7 @@ export const ListView = ({
 }: Props) => {
   const { width } = useWindowDimensions();
   const isWeb = Platform.OS === "web";
-  const isWideWeb = Platform.OS === "web" && width >= 1100;
+  const isWideWeb = Platform.OS === "web" && width >= breakpoints.webPlannerWide;
 
   return (
     <View style={styles.weekList}>
