@@ -202,6 +202,14 @@ export default function RecipeBookScreen() {
     }
   }, [session, fetchRecipes]);
 
+  const handleBackToRecipes = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace("/(tabs)/recipes");
+  };
+
   const handleOpenRecipe = (recipeId: string, mode: "view" | "edit") => {
     router.push({
       pathname: "/(tabs)/recipes/[id]",
@@ -310,6 +318,20 @@ export default function RecipeBookScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
+      {!isWeb ? (
+        <View style={styles.stickyHeader}>
+          <Pressable
+            style={({ pressed }) => [styles.backButton, pressed && styles.cardPressed]}
+            onPress={handleBackToRecipes}
+          >
+            <Feather name="chevron-left" size={16} color="#6B705C" />
+            <Text style={styles.backButtonText}>Tous les livres</Text>
+          </Pressable>
+          <Text numberOfLines={1} style={styles.stickyHeaderTitle}>
+            {selectedBook?.name ?? "Livre"}
+          </Text>
+        </View>
+      ) : null}
       <FlatList
         data={displayedRecipes}
         keyExtractor={(item) => item.id}
@@ -405,6 +427,21 @@ const styles = StyleSheet.create({
     paddingBottom: 140,
     gap: 14,
   },
+  stickyHeader: {
+    paddingHorizontal: spacing.screen,
+    paddingTop: 4,
+    paddingBottom: 8,
+    backgroundColor: colors.background,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(107,112,92,0.24)",
+    gap: 4,
+  },
+  stickyHeaderTitle: {
+    color: "#2D2D2A",
+    fontSize: 16,
+    fontWeight: "800",
+    letterSpacing: -0.2,
+  },
   listContentWeb: {
     paddingTop: layout.webNavOffset + spacing.screen,
     paddingBottom: 40,
@@ -412,6 +449,19 @@ const styles = StyleSheet.create({
   header: {
     gap: 6,
     marginBottom: 4,
+  },
+  backButton: {
+    alignSelf: "flex-start",
+    minHeight: 30,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    paddingHorizontal: 4,
+  },
+  backButtonText: {
+    color: "#6B705C",
+    fontSize: 13,
+    fontWeight: "700",
   },
   heading: {
     fontSize: 29,

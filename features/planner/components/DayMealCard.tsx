@@ -76,7 +76,9 @@ export const DayMealCard = ({
   };
 
   return (
-    <View style={[styles.mealCardShadow, showAsFilled && styles.mealCardRaised]}>
+    <View
+      style={[styles.mealCardShadow, showAsFilled && styles.mealCardRaised]}
+    >
       <View
         style={[
           styles.mealCardSurface,

@@ -1,3 +1,6 @@
+import { Feather } from "@expo/vector-icons";
+import { Session } from "@supabase/supabase-js";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -8,20 +11,17 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Feather } from "@expo/vector-icons";
-import { Session } from "@supabase/supabase-js";
-import { useMemo, useState } from "react";
 import { colors, radii, spacing } from "../../../theme/design";
 import { Recipe } from "../../recipes/types";
-import { DayPlan, MealKey, RecipePickerTarget } from "../utils/types";
 import { MEAL_SLOTS } from "../utils/constants";
+import { DayPlan, MealKey, RecipePickerTarget } from "../utils/types";
 
 type Props = {
   visible: boolean;
   session: Session | null;
   target: RecipePickerTarget | null;
   days: DayPlan[];
-  weekDays: Array<{ day: string; date: string }>;
+  weekDays: { day: string; date: string }[];
   recipes: Recipe[];
   recipesLoading: boolean;
   recipesError: string | null;
@@ -72,7 +72,7 @@ export const RecipePickerModal = ({
     const query = recipeQuery.trim().toLowerCase();
     if (!query) return recipes;
     return recipes.filter((recipe) =>
-      recipe.title.toLowerCase().includes(query)
+      recipe.title.toLowerCase().includes(query),
     );
   }, [recipes, recipeQuery]);
 
@@ -180,11 +180,6 @@ export const RecipePickerModal = ({
                     </Text>
                   </View>
                 </View>
-                {recipe.description ? (
-                  <Text style={styles.recipeOptionDescription}>
-                    {recipe.description}
-                  </Text>
-                ) : null}
                 <Text style={styles.recipeOptionAction}>
                   Utiliser pour ce repas
                 </Text>
@@ -228,7 +223,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   recipeSheet: {
-    maxHeight: "82%",
+    maxHeight: "90%",
   },
   sheetHandle: {
     alignSelf: "center",

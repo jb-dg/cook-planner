@@ -1,3 +1,4 @@
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -10,20 +11,19 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams, useRouter } from "expo-router";
 
-import { useAuth } from "../../../contexts/AuthContext";
 import WebFooter from "../../../components/WebFooter";
-import { supabase } from "../../../lib/supabase";
-import { fetchHouseholdScope } from "../../../lib/households";
-import { colors, layout, spacing, radii } from "../../../theme/design";
-import RecipeForm from "./RecipeForm";
+import { useAuth } from "../../../contexts/AuthContext";
 import {
   mapRecipe,
-  recipeToFormState,
   RecipeFormState,
   RecipeInput,
+  recipeToFormState,
 } from "../../../features/recipes/types";
+import { fetchHouseholdScope } from "../../../lib/households";
+import { supabase } from "../../../lib/supabase";
+import { colors, layout, radii, spacing } from "../../../theme/design";
+import RecipeForm from "./RecipeForm";
 
 type ScreenMode = "view" | "edit";
 
@@ -36,7 +36,7 @@ export default function RecipeScreen() {
   const { session } = useAuth();
   const isWeb = Platform.OS === "web";
   const [initialValues, setInitialValues] = useState<RecipeFormState | null>(
-    null
+    null,
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +50,7 @@ export default function RecipeScreen() {
   const displayIngredients = useMemo(() => {
     if (!initialValues) return [];
     return initialValues.ingredients.filter(
-      (item) => item.name.trim() || item.quantity.trim()
+      (item) => item.name.trim() || item.quantity.trim(),
     );
   }, [initialValues]);
 
@@ -63,7 +63,7 @@ export default function RecipeScreen() {
       const { data, error: fetchError } = await supabase
         .from("recipes")
         .select(
-          "id,title,duration,difficulty,servings,description,ingredients,user_id,household_id"
+          "id,title,duration,difficulty,servings,description,ingredients,user_id,household_id",
         )
         .eq("id", id)
         .maybeSingle();
@@ -122,7 +122,7 @@ export default function RecipeScreen() {
       console.error("update recipe", err);
       Alert.alert(
         "Erreur",
-        "Impossible de mettre à jour la recette. Réessaie plus tard."
+        "Impossible de mettre à jour la recette. Réessaie plus tard.",
       );
     }
   };
@@ -138,7 +138,7 @@ export default function RecipeScreen() {
           style: "destructive",
           onPress: confirmDelete,
         },
-      ]
+      ],
     );
   };
 
@@ -164,7 +164,7 @@ export default function RecipeScreen() {
       console.error("delete recipe", err);
       Alert.alert(
         "Erreur",
-        "Impossible de supprimer la recette. Réessaie plus tard."
+        "Impossible de supprimer la recette. Réessaie plus tard.",
       );
     } finally {
       setDeleting(false);
@@ -183,11 +183,16 @@ export default function RecipeScreen() {
         </View>
       ) : initialValues ? (
         <ScrollView
-          contentContainerStyle={[styles.container, isWeb && styles.containerWeb]}
+          contentContainerStyle={[
+            styles.container,
+            isWeb && styles.containerWeb,
+          ]}
           showsVerticalScrollIndicator={false}
         >
           <Text style={styles.heading}>
-            {screenMode === "view" ? "Afficher la recette" : "Modifier la recette"}
+            {screenMode === "view"
+              ? "Afficher la recette"
+              : "Modifier la recette"}
           </Text>
 
           <View style={styles.modeSwitch}>
@@ -278,7 +283,9 @@ export default function RecipeScreen() {
                 style={styles.editFromViewButton}
                 onPress={() => setScreenMode("edit")}
               >
-                <Text style={styles.editFromViewButtonText}>Modifier la recette</Text>
+                <Text style={styles.editFromViewButtonText}>
+                  Modifier la recette
+                </Text>
               </Pressable>
             </View>
           ) : (
@@ -291,7 +298,10 @@ export default function RecipeScreen() {
               <View style={styles.deleteWrapper}>
                 <Text style={styles.deleteLabel}>Danger</Text>
                 <Pressable
-                  style={[styles.deleteButton, deleting && styles.deleteDisabled]}
+                  style={[
+                    styles.deleteButton,
+                    deleting && styles.deleteDisabled,
+                  ]}
                   onPress={handleDelete}
                   disabled={deleting}
                 >
