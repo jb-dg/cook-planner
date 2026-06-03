@@ -8,6 +8,12 @@ export type Ingredient = {
   unit: IngredientUnit;
 };
 
+export type RecipeStep = {
+  id: string;
+  order: number;
+  text: string;
+};
+
 export type Recipe = {
   id: string;
   title: string;
@@ -16,6 +22,8 @@ export type Recipe = {
   servings: number;
   description: string;
   ingredients: Ingredient[];
+  steps: RecipeStep[];
+  sourceUrl: string;
 };
 
 export type RecipeFormState = {
@@ -25,6 +33,8 @@ export type RecipeFormState = {
   servings: string;
   difficulty: Difficulty;
   ingredients: Ingredient[];
+  steps: RecipeStep[];
+  sourceUrl: string;
 };
 
 export type RecipeInput = {
@@ -34,6 +44,8 @@ export type RecipeInput = {
   servings: number;
   difficulty: Difficulty;
   ingredients: Ingredient[];
+  steps: RecipeStep[];
+  source_url: string | null;
 };
 
 export const DIFFICULTIES: Difficulty[] = ["Facile", "Moyen", "Expert"];
@@ -46,6 +58,70 @@ export const createIngredient = (): Ingredient => ({
   unit: "pièce",
 });
 
+export const createRecipeStep = (order = 1): RecipeStep => ({
+  id: String(Date.now() + Math.random()),
+  order,
+  text: "",
+});
+
+const cleanStepText = (value: string): string =>
+  value
+    .replace(/^\s*[-*•]\s+/, "")
+    .replace(/^\s*\d+[.)]\s+/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+export const parseStepsFromDescription = (description: string): RecipeStep[] =>
+  description
+    .split(/\r?\n/)
+    .map(cleanStepText)
+    .filter(Boolean)
+    .map((text, index) => ({
+      id: String(Date.now() + Math.random() + index),
+      order: index + 1,
+      text,
+    }));
+
+export const sanitizeRecipeSteps = (
+  value: unknown,
+  fallbackDescription = ""
+): RecipeStep[] => {
+  const source = Array.isArray(value)
+    ? value
+    : parseStepsFromDescription(fallbackDescription);
+
+  const steps = source
+    .map((entry, index) => {
+      if (typeof entry === "string") {
+        const text = cleanStepText(entry);
+        return text
+          ? {
+              id: String(Date.now() + Math.random() + index),
+              order: index + 1,
+              text,
+            }
+          : null;
+      }
+
+      if (!entry || typeof entry !== "object") return null;
+
+      const raw = entry as Partial<RecipeStep>;
+      const text = typeof raw.text === "string" ? cleanStepText(raw.text) : "";
+      if (!text) return null;
+
+      return {
+        id: typeof raw.id === "string" ? raw.id : String(Date.now() + Math.random() + index),
+        order: typeof raw.order === "number" && raw.order > 0 ? raw.order : index + 1,
+        text,
+      };
+    })
+    .filter((item): item is RecipeStep => Boolean(item))
+    .sort((a, b) => a.order - b.order)
+    .map((step, index) => ({ ...step, order: index + 1 }));
+
+  return steps.length ? steps : [createRecipeStep()];
+};
+
 export const mapRecipe = (row: {
   id: string | number;
   title: string;
@@ -54,6 +130,9 @@ export const mapRecipe = (row: {
   servings?: number | null;
   description?: string | null;
   ingredients?: Ingredient[] | null;
+  steps?: RecipeStep[] | string[] | null;
+  source_url?: string | null;
+  sourceUrl?: string | null;
 }): Recipe => ({
   id: String(row.id),
   title: row.title,
@@ -62,6 +141,8 @@ export const mapRecipe = (row: {
   servings: row.servings ?? 1,
   description: row.description ?? "",
   ingredients: Array.isArray(row.ingredients) ? row.ingredients : [],
+  steps: sanitizeRecipeSteps(row.steps, row.description ?? ""),
+  sourceUrl: row.source_url ?? row.sourceUrl ?? "",
 });
 
 export const createEmptyFormState = (): RecipeFormState => ({
@@ -71,6 +152,8 @@ export const createEmptyFormState = (): RecipeFormState => ({
   servings: "2",
   difficulty: "Facile",
   ingredients: [createIngredient()],
+  steps: [createRecipeStep()],
+  sourceUrl: "",
 });
 
 export const recipeToFormState = (recipe: Recipe): RecipeFormState => ({
@@ -88,4 +171,6 @@ export const recipeToFormState = (recipe: Recipe): RecipeFormState => ({
             : String(Date.now() + Math.random()),
         }))
       : [createIngredient()],
+  steps: sanitizeRecipeSteps(recipe.steps, recipe.description),
+  sourceUrl: recipe.sourceUrl ?? "",
 });

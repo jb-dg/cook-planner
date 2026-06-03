@@ -54,6 +54,11 @@ export default function RecipeScreen() {
     );
   }, [initialValues]);
 
+  const displaySteps = useMemo(() => {
+    if (!initialValues) return [];
+    return initialValues.steps.filter((item) => item.text.trim());
+  }, [initialValues]);
+
   const loadRecipe = useCallback(async () => {
     if (!session || !id) return;
 
@@ -63,7 +68,7 @@ export default function RecipeScreen() {
       const { data, error: fetchError } = await supabase
         .from("recipes")
         .select(
-          "id,title,duration,difficulty,servings,description,ingredients,user_id,household_id",
+          "id,title,duration,difficulty,servings,description,ingredients,steps,source_url,user_id,household_id",
         )
         .eq("id", id)
         .maybeSingle();
@@ -109,6 +114,8 @@ export default function RecipeScreen() {
           servings: input.servings,
           difficulty: input.difficulty,
           ingredients: input.ingredients,
+          steps: input.steps,
+          source_url: input.source_url,
         })
         .eq("id", id)
         .eq(column, value);
@@ -255,9 +262,9 @@ export default function RecipeScreen() {
               </View>
 
               <View style={styles.recipeSection}>
-                <Text style={styles.recipeSectionLabel}>Description</Text>
+                <Text style={styles.recipeSectionLabel}>Note</Text>
                 <Text style={styles.recipeDescription}>
-                  {initialValues.description || "Aucune description."}
+                  {initialValues.description || "Aucune note."}
                 </Text>
               </View>
 
@@ -278,6 +285,31 @@ export default function RecipeScreen() {
                   </Text>
                 )}
               </View>
+
+              <View style={styles.recipeSection}>
+                <Text style={styles.recipeSectionLabel}>Étapes</Text>
+                {displaySteps.length ? (
+                  displaySteps.map((item, index) => (
+                    <View style={styles.stepRow} key={item.id}>
+                      <View style={styles.stepIndex}>
+                        <Text style={styles.stepIndexText}>{index + 1}</Text>
+                      </View>
+                      <Text style={styles.stepText}>{item.text}</Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.recipeDescription}>
+                    Aucune étape renseignée.
+                  </Text>
+                )}
+              </View>
+
+              {initialValues.sourceUrl ? (
+                <View style={styles.recipeSection}>
+                  <Text style={styles.recipeSectionLabel}>Source</Text>
+                  <Text style={styles.sourceText}>{initialValues.sourceUrl}</Text>
+                </View>
+              ) : null}
 
               <Pressable
                 style={styles.editFromViewButton}
@@ -438,6 +470,36 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 13,
     fontWeight: "600",
+  },
+  stepRow: {
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "flex-start",
+  },
+  stepIndex: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "rgba(188, 108, 37, 0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepIndexText: {
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  stepText: {
+    flex: 1,
+    color: colors.text,
+    lineHeight: 20,
+    fontSize: 14,
+  },
+  sourceText: {
+    color: colors.accent,
+    lineHeight: 20,
+    fontSize: 13,
+    fontWeight: "700",
   },
   editFromViewButton: {
     marginTop: 6,

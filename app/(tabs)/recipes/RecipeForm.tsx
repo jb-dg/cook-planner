@@ -4,6 +4,7 @@ import { colors, radii } from "../../../theme/design";
 import {
   createEmptyFormState,
   createIngredient,
+  createRecipeStep,
   DIFFICULTIES,
   INGREDIENT_UNITS,
   RecipeFormState,
@@ -35,11 +36,11 @@ export default function RecipeForm({
   const canSubmit = useMemo(() => {
     return (
       Boolean(form.title.trim()) &&
-      Boolean(form.description.trim()) &&
       Number(form.servings) > 0 &&
       form.ingredients.some(
         (item) => item.name.trim() && item.quantity.trim()
       ) &&
+      form.steps.some((item) => item.text.trim()) &&
       !submitting
     );
   }, [form, submitting]);
@@ -74,6 +75,36 @@ export default function RecipeForm({
     }));
   };
 
+  const handleStepChange = (id: string, value: string) => {
+    setForm((prev) => ({
+      ...prev,
+      steps: prev.steps.map((item) =>
+        item.id === id ? { ...item, text: value } : item
+      ),
+    }));
+  };
+
+  const handleAddStep = () => {
+    setForm((prev) => ({
+      ...prev,
+      steps: [...prev.steps, createRecipeStep(prev.steps.length + 1)],
+    }));
+  };
+
+  const handleRemoveStep = (id: string) => {
+    setForm((prev) => {
+      const nextSteps =
+        prev.steps.length === 1
+          ? prev.steps
+          : prev.steps.filter((item) => item.id !== id);
+
+      return {
+        ...prev,
+        steps: nextSteps.map((item, index) => ({ ...item, order: index + 1 })),
+      };
+    });
+  };
+
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
@@ -93,6 +124,14 @@ export default function RecipeForm({
       servings: Number(form.servings) || 1,
       difficulty: form.difficulty,
       ingredients: preparedIngredients,
+      steps: form.steps
+        .filter((item) => item.text.trim())
+        .map((item, index) => ({
+          ...item,
+          order: index + 1,
+          text: item.text.trim(),
+        })),
+      source_url: form.sourceUrl.trim() || null,
     };
 
     try {
@@ -242,7 +281,7 @@ export default function RecipeForm({
         </View>
       </View>
       <TextInput
-        placeholder="Descriptif (étapes, astuces, etc.)"
+        placeholder="Note ou introduction (optionnel)"
         placeholderTextColor={colors.muted}
         style={[styles.input, styles.notesInput]}
         value={form.description}
@@ -251,6 +290,55 @@ export default function RecipeForm({
         }
         multiline
         numberOfLines={4}
+        editable={!submitting}
+      />
+      <View>
+        <Text style={styles.label}>Étapes</Text>
+        <View style={styles.ingredientsEditor}>
+          {form.steps.map((recipeStep, index) => (
+            <View key={recipeStep.id} style={styles.ingredientCard}>
+              <View style={styles.ingredientHeader}>
+                <Text style={styles.ingredientHeading}>Étape {index + 1}</Text>
+                {form.steps.length > 1 ? (
+                  <Pressable
+                    onPress={() => handleRemoveStep(recipeStep.id)}
+                    hitSlop={8}
+                  >
+                    <Text style={styles.removeText}>Supprimer</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+              <TextInput
+                placeholder="Décris cette étape"
+                placeholderTextColor={colors.muted}
+                style={[styles.input, styles.stepInput]}
+                value={recipeStep.text}
+                onChangeText={(value) => handleStepChange(recipeStep.id, value)}
+                multiline
+                numberOfLines={3}
+                editable={!submitting}
+              />
+            </View>
+          ))}
+          <Pressable
+            style={styles.addIngredientButton}
+            onPress={handleAddStep}
+            disabled={submitting}
+          >
+            <Text style={styles.addIngredientText}>+ Ajouter une étape</Text>
+          </Pressable>
+        </View>
+      </View>
+      <TextInput
+        placeholder="Lien source (optionnel)"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={form.sourceUrl}
+        onChangeText={(value) =>
+          setForm((prev) => ({ ...prev, sourceUrl: value }))
+        }
+        autoCapitalize="none"
+        keyboardType="url"
         editable={!submitting}
       />
       <Pressable
@@ -285,6 +373,10 @@ const styles = StyleSheet.create({
   },
   notesInput: {
     minHeight: 120,
+    textAlignVertical: "top",
+  },
+  stepInput: {
+    minHeight: 86,
     textAlignVertical: "top",
   },
   label: {

@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../../contexts/AuthContext";
 import WebFooter from "../../../../components/WebFooter";
+import RecipeViewModal from "../../../../features/recipes/components/RecipeViewModal";
 import {
   buildBooksStorageKey,
   buildRecipeBooks,
@@ -55,6 +56,7 @@ export default function RecipeBookScreen() {
   const [booksLoading, setBooksLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
 
   const storageKey = useMemo(() => {
     if (!session || !scope) return null;
@@ -74,7 +76,7 @@ export default function RecipeBookScreen() {
       setScope(nextScope);
       const { data, error: fetchError } = await supabase
         .from("recipes")
-        .select("id,title,duration,difficulty,servings,description,ingredients")
+        .select("id,title,duration,difficulty,servings,description,ingredients,steps,source_url")
         .eq(nextScope.filterColumn, nextScope.filterValue)
         .order("created_at", { ascending: false });
 
@@ -181,6 +183,11 @@ export default function RecipeBookScreen() {
     return recipes.filter((recipe) => ids.has(recipe.id));
   }, [selectedBook, recipes]);
 
+  const selectedRecipe = useMemo(() => {
+    if (!selectedRecipeId) return null;
+    return recipes.find((recipe) => recipe.id === selectedRecipeId) ?? null;
+  }, [recipes, selectedRecipeId]);
+
   const activeCustomBook = useMemo(() => {
     if (!selectedBook || selectedBook.isSystem) return null;
     return customBooks.find((book) => book.id === selectedBook.id) ?? null;
@@ -211,6 +218,11 @@ export default function RecipeBookScreen() {
   };
 
   const handleOpenRecipe = (recipeId: string, mode: "view" | "edit") => {
+    if (mode === "view") {
+      setSelectedRecipeId(recipeId);
+      return;
+    }
+
     router.push({
       pathname: "/(tabs)/recipes/[id]",
       params: { id: recipeId, mode },
@@ -412,6 +424,15 @@ export default function RecipeBookScreen() {
           )
         }
         contentContainerStyle={[styles.listContent, isWeb && styles.listContentWeb]}
+      />
+      <RecipeViewModal
+        visible={!!selectedRecipe}
+        recipe={selectedRecipe}
+        onClose={() => setSelectedRecipeId(null)}
+        onEdit={(recipeId) => {
+          setSelectedRecipeId(null);
+          handleOpenRecipe(recipeId, "edit");
+        }}
       />
     </SafeAreaView>
   );

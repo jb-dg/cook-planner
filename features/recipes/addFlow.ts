@@ -1,15 +1,19 @@
 import {
   createEmptyFormState,
   createIngredient,
+  createRecipeStep,
   Difficulty,
   Ingredient,
   IngredientUnit,
   RecipeInput,
+  RecipeStep,
+  sanitizeRecipeSteps,
 } from "./types";
+import { supabase } from "../../lib/supabase";
 
 export type RecipeSourceType = "photo" | "url" | "paste" | "manual";
 export type ExtractionStatus = "idle" | "loading" | "done" | "error";
-export type DraftMissingField = "title" | "ingredients" | "description";
+export type DraftMissingField = "title" | "ingredients" | "steps";
 
 export type AddRecipeDraft = {
   bookId: string | null;
@@ -21,6 +25,8 @@ export type AddRecipeDraft = {
   difficulty: Difficulty;
   ingredients: Ingredient[];
   description: string;
+  steps: RecipeStep[];
+  sourceUrl: string;
   extractionStatus: ExtractionStatus;
   extractionMessage: string | null;
   updatedAt: string;
@@ -33,6 +39,8 @@ export type SourceExtractionResult = {
   difficulty: Difficulty;
   ingredients: Ingredient[];
   description: string;
+  steps: RecipeStep[];
+  sourceUrl: string;
   message: string;
 };
 
@@ -236,6 +244,21 @@ const isStepsHeading = (value: string) =>
     value.trim()
   );
 
+const createStepsFromLines = (lines: string[]): RecipeStep[] =>
+  lines
+    .map((line) =>
+      line
+        .replace(/^\s*[-*•]\s+/, "")
+        .replace(/^\s*\d+[.)]\s+/, "")
+        .replace(/\s+/g, " ")
+        .trim()
+    )
+    .filter(Boolean)
+    .map((text, index) => ({
+      ...createRecipeStep(index + 1),
+      text,
+    }));
+
 const normalizeTitleFromUrl = (rawUrl: string): string => {
   let parsed: URL | null = null;
   try {
@@ -258,6 +281,13 @@ const normalizeTitleFromUrl = (rawUrl: string): string => {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+};
+
+const normalizeRecipeUrl = (rawUrl: string): string => {
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
 };
 
 const inferDifficultyFromMinutes = (minutes: number): Difficulty => {
@@ -645,6 +675,8 @@ const extractRecipeFromWprm = (
     difficulty: fallback.difficulty,
     ingredients: ingredients.length ? ingredients : fallback.ingredients,
     description: fallback.description,
+    steps: fallback.steps,
+    sourceUrl: source,
     message:
       ingredients.length > 0
         ? "Ingrédients extraits avec quantités/unités depuis la page."
@@ -691,9 +723,8 @@ const extractRecipeFromHtml = (
     .filter((item): item is Ingredient => Boolean(item));
 
   const instructionLines = parseInstructionLines(bestRecipeNode.recipeInstructions);
-  const description = instructionLines
-    .map((line, index) => `${index + 1}. ${line}`)
-    .join("\n");
+  const steps = createStepsFromLines(instructionLines);
+  const description = cleanText(bestRecipeNode.description);
 
   const totalDurationMin = parseIsoDurationToMinutes(bestRecipeNode.totalTime);
   const prepDurationMin = parseIsoDurationToMinutes(bestRecipeNode.prepTime);
@@ -712,9 +743,11 @@ const extractRecipeFromHtml = (
     servings,
     difficulty,
     ingredients: ingredients.length ? ingredients : fallback.ingredients,
-    description: description || cleanText(bestRecipeNode.description) || fallback.description,
+    description: description || fallback.description,
+    steps: steps.length ? steps : fallback.steps,
+    sourceUrl: source,
     message:
-      ingredients.length || description
+      ingredients.length || steps.length
         ? "Recette extraite depuis la page: vérifie puis ajuste."
         : "Extraction partielle depuis la page: complète les champs manquants.",
   };
@@ -769,9 +802,7 @@ const parseTextRecipe = (source: string): SourceExtractionResult => {
     .filter((item): item is Ingredient => Boolean(item))
     .slice(0, 25);
 
-  const description = stepLines
-    .map((line, index) => `${index + 1}. ${line.replace(/^[-*•\d.)\s]+/, "").trim()}`)
-    .join("\n");
+  const steps = createStepsFromLines(stepLines);
 
   const servingsMatch = source.match(SERVINGS_PATTERN);
   const inferredDuration = inferDurationFromText(source);
@@ -787,9 +818,11 @@ const parseTextRecipe = (source: string): SourceExtractionResult => {
     servings: servingsMatch?.[1] ?? baseForm.servings,
     difficulty: inferredDifficulty,
     ingredients: parsedIngredients.length ? parsedIngredients : baseForm.ingredients,
-    description,
+    description: "",
+    steps: steps.length ? steps : baseForm.steps,
+    sourceUrl: "",
     message:
-      parsedIngredients.length || description
+      parsedIngredients.length || steps.length
         ? "Recette pré-remplie: vérifie les ingrédients et les étapes." 
         : "Extraction partielle: certains champs restent à compléter.",
   };
@@ -809,7 +842,9 @@ const parseUrlRecipeFallback = (source: string): SourceExtractionResult => {
       ? inferDifficultyFromMinutes(inferredDuration.minutes)
       : "Facile",
     ingredients: baseForm.ingredients,
-    description: source ? `Source importée: ${source}` : "",
+    description: "",
+    steps: baseForm.steps,
+    sourceUrl: source,
     message:
       titleFromUrl || inferredDuration.label
         ? "Lien analysé localement: complète les champs manquants."
@@ -818,6 +853,18 @@ const parseUrlRecipeFallback = (source: string): SourceExtractionResult => {
 };
 
 const fetchRecipeHtml = async (source: string): Promise<string | null> => {
+  try {
+    const { data, error } = await supabase.functions.invoke("recipe-html", {
+      body: { url: source },
+    });
+
+    if (!error && data && typeof data.html === "string") {
+      return data.html;
+    }
+  } catch {
+    // Fall back to direct fetch when the Edge Function is not deployed yet.
+  }
+
   try {
     const response = await withTimeout(
       fetch(source, {
@@ -836,15 +883,16 @@ const fetchRecipeHtml = async (source: string): Promise<string | null> => {
 };
 
 const parseUrlRecipe = async (source: string): Promise<SourceExtractionResult> => {
-  const fallback = parseUrlRecipeFallback(source);
-  const html = await fetchRecipeHtml(source);
+  const normalizedSource = normalizeRecipeUrl(source);
+  const fallback = parseUrlRecipeFallback(normalizedSource);
+  const html = await fetchRecipeHtml(normalizedSource);
 
   if (!html) {
     return fallback;
   }
 
-  const jsonLdExtraction = extractRecipeFromHtml(html, source);
-  const wprmExtraction = extractRecipeFromWprm(html, source);
+  const jsonLdExtraction = extractRecipeFromHtml(html, normalizedSource);
+  const wprmExtraction = extractRecipeFromWprm(html, normalizedSource);
 
   if (!jsonLdExtraction && !wprmExtraction) {
     return fallback;
@@ -890,6 +938,8 @@ export const createEmptyAddRecipeDraft = (
     difficulty: empty.difficulty,
     ingredients: empty.ingredients,
     description: empty.description,
+    steps: empty.steps,
+    sourceUrl: empty.sourceUrl,
     extractionStatus: "idle",
     extractionMessage: null,
     updatedAt: new Date().toISOString(),
@@ -958,6 +1008,13 @@ export const parseStoredAddRecipeDraft = (
           : "Facile",
       ingredients: sanitizeIngredients(parsed.ingredients),
       description: typeof parsed.description === "string" ? parsed.description : "",
+      steps: sanitizeRecipeSteps(parsed.steps, parsed.description),
+      sourceUrl:
+        typeof parsed.sourceUrl === "string"
+          ? parsed.sourceUrl
+          : sourceType === "url" && typeof parsed.sourceValue === "string"
+            ? parsed.sourceValue
+            : "",
       extractionStatus:
         parsed.extractionStatus === "idle" ||
         parsed.extractionStatus === "loading" ||
@@ -989,8 +1046,10 @@ export const getMissingFields = (draft: AddRecipeDraft): DraftMissingField[] => 
     next.push("ingredients");
   }
 
-  if (!draft.description.trim()) {
-    next.push("description");
+  const hasStep = draft.steps.some((step) => step.text.trim());
+
+  if (!hasStep) {
+    next.push("steps");
   }
 
   return next;
@@ -1047,4 +1106,12 @@ export const toRecipeInput = (draft: AddRecipeDraft): RecipeInput => ({
       name: ingredient.name.trim(),
       quantity: ingredient.quantity.trim(),
     })),
+  steps: sanitizeRecipeSteps(draft.steps)
+    .filter((step) => step.text.trim())
+    .map((step, index) => ({
+      ...step,
+      order: index + 1,
+      text: step.text.trim(),
+    })),
+  source_url: draft.sourceUrl.trim() || null,
 });

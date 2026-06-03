@@ -32,6 +32,7 @@ export const useRecipeBooksScreenState = (mode: Mode) => {
   const [bookName, setBookName] = useState("");
   const [bookError, setBookError] = useState<string | null>(null);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
+  const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
 
   const storageKey = useMemo(() => {
     if (!session || !scope) return null;
@@ -51,7 +52,7 @@ export const useRecipeBooksScreenState = (mode: Mode) => {
       setScope(nextScope);
       const { data, error: fetchError } = await supabase
         .from("recipes")
-        .select("id,title,duration,difficulty,servings,description,ingredients")
+        .select("id,title,duration,difficulty,servings,description,ingredients,steps,source_url")
         .eq(nextScope.filterColumn, nextScope.filterValue)
         .order("created_at", { ascending: false });
 
@@ -177,6 +178,11 @@ export const useRecipeBooksScreenState = (mode: Mode) => {
       .filter((recipe): recipe is Recipe => !!recipe);
   }, [recipesById, selectedBook]);
 
+  const selectedRecipe = useMemo(() => {
+    if (!selectedRecipeId) return null;
+    return recipesById.get(selectedRecipeId) ?? null;
+  }, [recipesById, selectedRecipeId]);
+
   const handleRefresh = useCallback(async () => {
     if (!session) return;
     setRefreshing(true);
@@ -234,6 +240,11 @@ export const useRecipeBooksScreenState = (mode: Mode) => {
 
   const handleOpenRecipe = useCallback(
     (recipeId: string, actionMode: "view" | "edit") => {
+      if (actionMode === "view") {
+        setSelectedRecipeId(recipeId);
+        return;
+      }
+
       router.push({
         pathname: "/(tabs)/recipes/[id]",
         params: { id: recipeId, mode: actionMode },
@@ -241,6 +252,10 @@ export const useRecipeBooksScreenState = (mode: Mode) => {
     },
     [router],
   );
+
+  const handleCloseRecipeModal = useCallback(() => {
+    setSelectedRecipeId(null);
+  }, []);
 
   const handleOpenCreateRecipe = useCallback(() => {
     router.push("/(tabs)/recipes/create");
@@ -266,11 +281,13 @@ export const useRecipeBooksScreenState = (mode: Mode) => {
     bookError,
     selectedBook,
     selectedBookId,
+    selectedRecipe,
     displayedRecipes,
     onBookNameChange,
     handleCreateBook,
     handleOpenBook,
     handleOpenRecipe,
+    handleCloseRecipeModal,
     handleOpenCreateRecipe,
     handleCreateRecipeInBook,
     handleRefresh,

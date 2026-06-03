@@ -3,6 +3,7 @@ import { ActivityIndicator, Platform, Pressable, ScrollView, Text, View } from "
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import RecipeBooksList from "@/features/recipes/components/RecipeBooksList";
+import RecipeViewModal from "@/features/recipes/components/RecipeViewModal";
 import WebFooter from "@/components/WebFooter";
 import { colors } from "@/theme/design";
 
@@ -149,6 +150,15 @@ export default function RecipeBooksScreenWeb() {
           </ScrollView>
         </View>
       </View>
+      <RecipeViewModal
+        visible={!!state.selectedRecipe}
+        recipe={state.selectedRecipe}
+        onClose={state.handleCloseRecipeModal}
+        onEdit={(recipeId) => {
+          state.handleCloseRecipeModal();
+          state.handleOpenRecipe(recipeId, "edit");
+        }}
+      />
     </SafeAreaView>
   );
 }

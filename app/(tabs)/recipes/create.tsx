@@ -33,7 +33,12 @@ import {
   parseStoredBooks,
   SYSTEM_BOOK_ID,
 } from "../../../features/recipes/books";
-import { createIngredient, DIFFICULTIES, INGREDIENT_UNITS } from "../../../features/recipes/types";
+import {
+  createIngredient,
+  createRecipeStep,
+  DIFFICULTIES,
+  INGREDIENT_UNITS,
+} from "../../../features/recipes/types";
 import { fetchHouseholdScope, HouseholdScope } from "../../../lib/households";
 import { supabase } from "../../../lib/supabase";
 import { colors, layout, radii, spacing } from "../../../theme/design";
@@ -85,7 +90,7 @@ const SOURCE_OPTIONS: SourceOption[] = [
 const MISSING_LABELS: Record<string, string> = {
   title: "Titre",
   ingredients: "Ingrédients",
-  description: "Étapes",
+  steps: "Étapes",
 };
 
 const SOURCE_STORAGE_PREFIX = "recipe-add-flow";
@@ -367,6 +372,10 @@ export default function CreateRecipeScreen() {
           difficulty: extracted.difficulty,
           ingredients: shouldReplaceIngredients ? extracted.ingredients : prev.ingredients,
           description: extracted.description || prev.description,
+          steps: extracted.steps.some((step) => step.text.trim())
+            ? extracted.steps
+            : prev.steps,
+          sourceUrl: extracted.sourceUrl || prev.sourceUrl,
           extractionStatus: "done",
           extractionMessage: extracted.message,
         };
@@ -430,6 +439,39 @@ export default function CreateRecipeScreen() {
           ? prev.ingredients.filter((ingredient) => ingredient.id !== ingredientId)
           : prev.ingredients,
     }));
+  };
+
+  const handleStepChange = (stepId: string, value: string) => {
+    updateDraft((prev) => ({
+      ...prev,
+      steps: prev.steps.map((recipeStep) =>
+        recipeStep.id === stepId ? { ...recipeStep, text: value } : recipeStep
+      ),
+    }));
+  };
+
+  const handleAddStep = () => {
+    updateDraft((prev) => ({
+      ...prev,
+      steps: [...prev.steps, createRecipeStep(prev.steps.length + 1)],
+    }));
+  };
+
+  const handleRemoveStep = (stepId: string) => {
+    updateDraft((prev) => {
+      const nextSteps =
+        prev.steps.length > 1
+          ? prev.steps.filter((recipeStep) => recipeStep.id !== stepId)
+          : prev.steps;
+
+      return {
+        ...prev,
+        steps: nextSteps.map((recipeStep, index) => ({
+          ...recipeStep,
+          order: index + 1,
+        })),
+      };
+    });
   };
 
   const handleSaveRecipe = async () => {
@@ -841,9 +883,38 @@ export default function CreateRecipeScreen() {
               </Pressable>
             </View>
 
+            <View style={styles.stepsWrap}>
+              <Text style={styles.sectionLabel}>Étapes</Text>
+              {draft.steps.map((recipeStep, index) => (
+                <View key={recipeStep.id} style={styles.stepCard}>
+                  <View style={styles.ingredientHeader}>
+                    <Text style={styles.ingredientTitle}>Étape {index + 1}</Text>
+                    {draft.steps.length > 1 ? (
+                      <Pressable onPress={() => handleRemoveStep(recipeStep.id)}>
+                        <Text style={styles.removeText}>Supprimer</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                  <TextInput
+                    style={[styles.input, styles.stepInput]}
+                    placeholder="Décris cette étape"
+                    placeholderTextColor={colors.muted}
+                    value={recipeStep.text}
+                    onChangeText={(value) => handleStepChange(recipeStep.id, value)}
+                    multiline
+                    numberOfLines={3}
+                  />
+                </View>
+              ))}
+
+              <Pressable style={styles.addIngredientButton} onPress={handleAddStep}>
+                <Text style={styles.addIngredientText}>+ Ajouter une étape</Text>
+              </Pressable>
+            </View>
+
             <TextInput
               style={[styles.input, styles.largeInput]}
-              placeholder="Étapes et notes"
+              placeholder="Note ou introduction (optionnel)"
               placeholderTextColor={colors.muted}
               value={draft.description}
               onChangeText={(value) =>
@@ -908,8 +979,21 @@ export default function CreateRecipeScreen() {
 
               <Text style={styles.previewLabel}>Étapes</Text>
               <Text style={styles.previewBody} numberOfLines={6}>
-                {draft.description.trim() || "Aucune étape"}
+                {draft.steps
+                  .filter((recipeStep) => recipeStep.text.trim())
+                  .slice(0, 4)
+                  .map((recipeStep, index) => `${index + 1}. ${recipeStep.text.trim()}`)
+                  .join("\n") || "Aucune étape"}
               </Text>
+
+              {draft.sourceUrl.trim() ? (
+                <>
+                  <Text style={styles.previewLabel}>Source</Text>
+                  <Text style={styles.previewBody} numberOfLines={2}>
+                    {draft.sourceUrl.trim()}
+                  </Text>
+                </>
+              ) : null}
             </View>
 
             <View style={styles.inlineHint}>
@@ -1258,6 +1342,9 @@ const styles = StyleSheet.create({
   ingredientsWrap: {
     gap: 10,
   },
+  stepsWrap: {
+    gap: 10,
+  },
   ingredientCard: {
     borderRadius: 18,
     borderWidth: 1,
@@ -1265,6 +1352,18 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.86)",
     padding: 12,
     gap: 8,
+  },
+  stepCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.84)",
+    backgroundColor: "rgba(255,255,255,0.86)",
+    padding: 12,
+    gap: 8,
+  },
+  stepInput: {
+    minHeight: 82,
+    textAlignVertical: "top",
   },
   ingredientHeader: {
     flexDirection: "row",
