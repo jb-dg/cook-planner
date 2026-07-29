@@ -10,6 +10,7 @@ import type {
   QuickActionItem,
 } from "@/components/profile/types";
 import { useAuth } from "@/contexts/AuthContext";
+import { pickAndUploadImage } from "@/lib/mediaUpload";
 import { ensureProfileRecord } from "@/lib/profile";
 import { supabase } from "@/lib/supabase";
 import { validateEmail } from "@/lib/validation/auth";
@@ -19,10 +20,12 @@ export const useProfileScreenState = () => {
   const { session, signOut } = useAuth();
 
   const [pseudo, setPseudo] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [pseudoError, setPseudoError] = useState<string | null>(null);
   const [pseudoSuccess, setPseudoSuccess] = useState<string | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [savingPseudo, setSavingPseudo] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const [household, setHousehold] = useState<Household | null>(null);
   const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[]>(
@@ -74,6 +77,21 @@ export const useProfileScreenState = () => {
     try {
       const syncedPseudo = await ensureProfileRecord(session.user);
       setPseudo(syncedPseudo);
+      const { data: profile, error: avatarError } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      if (avatarError) {
+        if ((avatarError as PostgrestError).code === "42703") {
+          setAvatarUrl("");
+        } else {
+          throw avatarError;
+        }
+      } else {
+        setAvatarUrl(profile?.avatar_url ?? "");
+      }
     } catch (err) {
       console.error("load profile", err);
     } finally {
@@ -250,6 +268,47 @@ export const useProfileScreenState = () => {
       );
     } finally {
       setSavingPseudo(false);
+    }
+  };
+
+  const handlePickAvatar = async () => {
+    if (!session || uploadingAvatar) return;
+    setUploadingAvatar(true);
+    setPseudoSuccess(null);
+    setPseudoError(null);
+    try {
+      const url = await pickAndUploadImage({
+        pathPrefix: `profiles/${session.user.id}`,
+        fileNamePrefix: "avatar",
+        aspect: [1, 1],
+      });
+
+      if (!url) return;
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ avatar_url: url })
+        .eq("user_id", session.user.id);
+
+      if (error) throw error;
+
+      setAvatarUrl(url);
+      setPseudoSuccess("Photo de profil mise à jour !");
+    } catch (err) {
+      console.error("upload avatar", err);
+      if (err instanceof Error && err.message === "media-bucket-not-found") {
+        Alert.alert(
+          "Migration Supabase requise",
+          "Le bucket media n'existe pas encore. Applique la migration Supabase puis réessaie.",
+        );
+        return;
+      }
+      Alert.alert(
+        "Erreur",
+        "Impossible d'ajouter cette photo. Vérifie les permissions et réessaie.",
+      );
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -524,10 +583,12 @@ export const useProfileScreenState = () => {
   return {
     session,
     pseudo,
+    avatarUrl,
     pseudoError,
     pseudoSuccess,
     loadingProfile,
     savingPseudo,
+    uploadingAvatar,
     household,
     householdMembers,
     loadingHousehold,
@@ -556,6 +617,7 @@ export const useProfileScreenState = () => {
     setProfileModalOpen,
     setHouseholdActionsOpen,
     handleSavePseudo,
+    handlePickAvatar,
     handleCreateHousehold,
     handleInviteMember,
     handleJoinHousehold,

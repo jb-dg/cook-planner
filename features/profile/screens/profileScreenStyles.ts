@@ -45,6 +45,11 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     position: "relative",
     backgroundColor: "#BC6C25",
+    overflow: "hidden",
+  },
+  avatarImage: {
+    width: "100%",
+    height: "100%",
   },
   avatarLetter: {
     fontSize: 32,
@@ -155,6 +160,34 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: colors.text,
+  },
+  avatarEditorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  avatarEditorPreview: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    borderWidth: 2,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.accent,
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarEditorImage: {
+    width: "100%",
+    height: "100%",
+  },
+  avatarEditorLetter: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: "#FFFFFF",
+  },
+  avatarUploadButton: {
+    flex: 1,
   },
   input: {
     borderWidth: 1.5,

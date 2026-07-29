@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import {
+  Image,
   Linking,
   Modal,
   Platform,
@@ -81,6 +82,21 @@ export default function RecipeViewModal({
                     </View>
                   ) : null}
                 </View>
+
+                {recipe.coverImageUrl || recipe.imageUrls[0] ? (
+                  <Image
+                    source={{ uri: recipe.coverImageUrl || recipe.imageUrls[0] }}
+                    style={styles.coverImage}
+                  />
+                ) : null}
+
+                {recipe.imageUrls.length > 1 ? (
+                  <View style={styles.photoStrip}>
+                    {recipe.imageUrls.map((url) => (
+                      <Image key={url} source={{ uri: url }} style={styles.photoThumb} />
+                    ))}
+                  </View>
+                ) : null}
 
                 {recipe.description.trim() ? (
                   <View style={styles.section}>
@@ -220,6 +236,23 @@ const styles = StyleSheet.create({
     padding: spacing.card,
     gap: 18,
     paddingBottom: spacing.card + 72,
+  },
+  coverImage: {
+    width: "100%",
+    aspectRatio: 4 / 3,
+    borderRadius: 18,
+    backgroundColor: colors.surfaceAlt,
+  },
+  photoStrip: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  photoThumb: {
+    width: 82,
+    height: 62,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceAlt,
   },
   metaRow: {
     flexDirection: "row",

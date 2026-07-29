@@ -16,6 +16,12 @@ import { supabase } from "@/lib/supabase";
 import { mapRecipe, type Recipe } from "../types";
 
 type Mode = "web" | "native";
+type RecipeRow = Parameters<typeof mapRecipe>[0];
+
+const RECIPE_SELECT_WITH_IMAGES =
+  "id,title,duration,difficulty,servings,description,ingredients,steps,source_url,image_urls,cover_image_url";
+const RECIPE_SELECT_BASIC =
+  "id,title,duration,difficulty,servings,description,ingredients,steps,source_url";
 
 export const useRecipeBooksScreenState = (mode: Mode) => {
   const { session } = useAuth();
@@ -50,11 +56,24 @@ export const useRecipeBooksScreenState = (mode: Mode) => {
     try {
       const nextScope = await fetchHouseholdScope(session.user.id);
       setScope(nextScope);
-      const { data, error: fetchError } = await supabase
+      const primary = await supabase
         .from("recipes")
-        .select("id,title,duration,difficulty,servings,description,ingredients,steps,source_url")
+        .select(RECIPE_SELECT_WITH_IMAGES)
         .eq(nextScope.filterColumn, nextScope.filterValue)
         .order("created_at", { ascending: false });
+      let data = primary.data as RecipeRow[] | null;
+      let fetchError = primary.error;
+
+      if (fetchError?.code === "42703") {
+        const fallback = await supabase
+          .from("recipes")
+          .select(RECIPE_SELECT_BASIC)
+          .eq(nextScope.filterColumn, nextScope.filterValue)
+          .order("created_at", { ascending: false });
+
+        data = fallback.data as RecipeRow[] | null;
+        fetchError = fallback.error;
+      }
 
       if (fetchError) {
         throw fetchError;

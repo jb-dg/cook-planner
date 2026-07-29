@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { AntDesign } from "@expo/vector-icons";
 import {
   ActivityIndicator,
   Pressable,
@@ -20,6 +21,7 @@ import { useTheme } from "../theme/useTheme";
 
 type Mode = "signin" | "signup" | "forgot";
 type ActiveMode = Mode | "recovery";
+type OAuthProvider = "google" | "apple";
 type FeedbackMessage = {
   text: string;
   tone: "error" | "success";
@@ -28,6 +30,7 @@ type FeedbackMessage = {
 export default function AuthForm() {
   const {
     signIn,
+    signInWithProvider,
     signUp,
     requestPasswordReset,
     updatePassword,
@@ -40,9 +43,13 @@ export default function AuthForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [socialSubmitting, setSocialSubmitting] = useState<OAuthProvider | null>(
+    null,
+  );
   const [message, setMessage] = useState<FeedbackMessage | null>(null);
 
   const activeMode: ActiveMode = needsPasswordReset ? "recovery" : mode;
+  const busy = submitting || !!socialSubmitting;
 
   const errors = useMemo(() => {
     const emailError = activeMode === "recovery" ? null : validateEmail(email);
@@ -60,7 +67,7 @@ export default function AuthForm() {
   }, [activeMode, email, password, confirmPassword]);
 
   const canSubmit = useMemo(() => {
-    if (submitting) return false;
+    if (busy) return false;
 
     if (activeMode === "forgot") {
       return !errors.email;
@@ -73,7 +80,7 @@ export default function AuthForm() {
     }
 
     return !errors.email && !errors.password;
-  }, [activeMode, errors.confirm, errors.email, errors.password, submitting]);
+  }, [activeMode, busy, errors.confirm, errors.email, errors.password]);
 
   const submitDisabled = !canSubmit;
 
@@ -89,6 +96,8 @@ export default function AuthForm() {
   };
 
   const handleSubmit = async () => {
+    if (busy) return;
+
     setSubmitting(true);
     setMessage(null);
     let result: { success: boolean; message?: string };
@@ -143,6 +152,23 @@ export default function AuthForm() {
         tone: "success",
       });
       clearSensitiveFields();
+    }
+  };
+
+  const handleSocialSignIn = async (provider: OAuthProvider) => {
+    if (busy) return;
+
+    setSocialSubmitting(provider);
+    setMessage(null);
+
+    const result = await signInWithProvider(provider);
+    setSocialSubmitting(null);
+
+    if (!result.success) {
+      setMessage({
+        text: result.message ?? "Une erreur inattendue est survenue.",
+        tone: "error",
+      });
     }
   };
 
@@ -290,6 +316,9 @@ export default function AuthForm() {
           borderWidth: 1,
           borderColor: "rgba(165, 165, 141, 0.25)",
         },
+        socialBtnDisabled: {
+          opacity: 0.55,
+        },
         socialBtnText: {
           fontSize: t.typography.size.bodySmall,
           fontWeight: "700",
@@ -337,7 +366,7 @@ export default function AuthForm() {
             value={email}
             onChangeText={setEmail}
             textContentType="emailAddress"
-            editable={!submitting}
+            editable={!busy}
           />
           {errors.email ? <Text style={s.error}>{errors.email}</Text> : null}
         </View>
@@ -353,7 +382,7 @@ export default function AuthForm() {
             {activeMode === "signin" ? (
               <Pressable
                 onPress={() => switchMode("forgot")}
-                disabled={submitting}
+                disabled={busy}
               >
                 <Text style={s.forgotLink}>Oublié ?</Text>
               </Pressable>
@@ -367,7 +396,7 @@ export default function AuthForm() {
             value={password}
             onChangeText={setPassword}
             textContentType={activeMode === "recovery" ? "newPassword" : "password"}
-            editable={!submitting}
+            editable={!busy}
           />
           {errors.password ? (
             <Text style={s.error}>{errors.password}</Text>
@@ -391,7 +420,7 @@ export default function AuthForm() {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             textContentType="newPassword"
-            editable={!submitting}
+            editable={!busy}
           />
           {errors.confirm ? (
             <Text style={s.error}>{errors.confirm}</Text>
@@ -430,24 +459,48 @@ export default function AuthForm() {
         )}
       </PhysicalButtonAnimated>
 
-      {/* Divider */}
-      {/* <View style={s.dividerRow}>
-        <View style={s.dividerLine} />
-        <Text style={s.dividerText}>Ou continuer avec</Text>
-        <View style={s.dividerLine} />
-      </View> */}
+      {activeMode === "signin" || activeMode === "signup" ? (
+        <>
+          {/* Divider */}
+          <View style={s.dividerRow}>
+            <View style={s.dividerLine} />
+            <Text style={s.dividerText}>Ou continuer avec</Text>
+            <View style={s.dividerLine} />
+          </View>
 
-      {/* Social buttons */}
-      {/* <View style={s.socialRow}>
-        <Pressable style={s.socialBtn}>
-          <AntDesign name="google" size={18} color="#EA4335" />
-          <Text style={s.socialBtnText}>Google</Text>
-        </Pressable>
-        <Pressable style={s.socialBtn}>
-          <AntDesign name="apple1" size={18} color={t.colors.textPrimary} />
-          <Text style={s.socialBtnText}>Apple</Text>
-        </Pressable>
-      </View> */}
+          {/* Social buttons */}
+          <View style={s.socialRow}>
+            <Pressable
+              style={[s.socialBtn, busy ? s.socialBtnDisabled : null]}
+              onPress={() => handleSocialSignIn("google")}
+              disabled={busy}
+            >
+              {socialSubmitting === "google" ? (
+                <ActivityIndicator color="#EA4335" />
+              ) : (
+                <>
+                  <AntDesign name="google" size={18} color="#EA4335" />
+                  <Text style={s.socialBtnText}>Google</Text>
+                </>
+              )}
+            </Pressable>
+            <Pressable
+              style={[s.socialBtn, busy ? s.socialBtnDisabled : null]}
+              onPress={() => handleSocialSignIn("apple")}
+              disabled={busy}
+            >
+              {socialSubmitting === "apple" ? (
+                <ActivityIndicator color={t.colors.textPrimary} />
+              ) : (
+                <>
+                  <AntDesign name="apple" size={18} color={t.colors.textPrimary} />
+                  <Text style={s.socialBtnText}>Apple</Text>
+                </>
+              )}
+            </Pressable>
+          </View>
+        </>
+      ) : null}
 
       {/* Mode switch */}
       {activeMode === "recovery" ? null : (
@@ -457,7 +510,7 @@ export default function AuthForm() {
               <Text style={s.switchLabel}>Tu te souviens du mot de passe ?</Text>
               <Pressable
                 onPress={() => switchMode("signin")}
-                disabled={submitting}
+                disabled={busy}
               >
                 <Text style={s.link}>Se connecter</Text>
               </Pressable>
@@ -471,7 +524,7 @@ export default function AuthForm() {
                 onPress={() =>
                   switchMode(activeMode === "signin" ? "signup" : "signin")
                 }
-                disabled={submitting}
+                disabled={busy}
               >
                 <Text style={s.link}>
                   {activeMode === "signin" ? "Créer un compte" : "Se connecter"}

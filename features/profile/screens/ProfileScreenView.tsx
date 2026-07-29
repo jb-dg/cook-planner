@@ -3,6 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useMemo } from "react";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   ScrollView,
   Text,
@@ -80,9 +81,17 @@ export default function ProfileScreenView({ variant }: Props) {
           style={styles.heroCard}
         >
           <View style={styles.heroHeader}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarLetter}>{state.badgeLetter}</Text>
-            </View>
+            <Pressable
+              style={styles.avatar}
+              onPress={state.handlePickAvatar}
+              disabled={state.uploadingAvatar}
+            >
+              {state.avatarUrl ? (
+                <Image source={{ uri: state.avatarUrl }} style={styles.avatarImage} />
+              ) : (
+                <Text style={styles.avatarLetter}>{state.badgeLetter}</Text>
+              )}
+            </Pressable>
             <View style={styles.heroText}>
               <Text style={styles.helper}>Bonjour !</Text>
               <Text style={styles.heroGreeting}>{state.displayName}</Text>
@@ -123,6 +132,32 @@ export default function ProfileScreenView({ variant }: Props) {
       >
         <Text style={styles.label}>Email</Text>
         <Text style={styles.value}>{state.session?.user.email}</Text>
+        <Text style={[styles.label, { marginTop: 16 }]}>Photo</Text>
+        <View style={styles.avatarEditorRow}>
+          <View style={styles.avatarEditorPreview}>
+            {state.avatarUrl ? (
+              <Image
+                source={{ uri: state.avatarUrl }}
+                style={styles.avatarEditorImage}
+              />
+            ) : (
+              <Text style={styles.avatarEditorLetter}>{state.badgeLetter}</Text>
+            )}
+          </View>
+          <Pressable
+            style={[
+              styles.secondaryButton,
+              styles.avatarUploadButton,
+              state.uploadingAvatar && styles.buttonDisabled,
+            ]}
+            onPress={state.handlePickAvatar}
+            disabled={state.uploadingAvatar}
+          >
+            <Text style={styles.secondaryButtonText}>
+              {state.uploadingAvatar ? "Upload..." : "Choisir une photo"}
+            </Text>
+          </Pressable>
+        </View>
         <Text style={[styles.label, { marginTop: 16 }]}>Pseudo unique</Text>
         {state.loadingProfile ? (
           <ActivityIndicator color="#6B705C" />

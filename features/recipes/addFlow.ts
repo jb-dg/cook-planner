@@ -7,6 +7,7 @@ import {
   IngredientUnit,
   RecipeInput,
   RecipeStep,
+  sanitizeImageUrls,
   sanitizeRecipeSteps,
 } from "./types";
 import { supabase } from "../../lib/supabase";
@@ -27,6 +28,8 @@ export type AddRecipeDraft = {
   description: string;
   steps: RecipeStep[];
   sourceUrl: string;
+  imageUrls: string[];
+  coverImageUrl: string;
   extractionStatus: ExtractionStatus;
   extractionMessage: string | null;
   updatedAt: string;
@@ -940,6 +943,8 @@ export const createEmptyAddRecipeDraft = (
     description: empty.description,
     steps: empty.steps,
     sourceUrl: empty.sourceUrl,
+    imageUrls: empty.imageUrls,
+    coverImageUrl: empty.coverImageUrl,
     extractionStatus: "idle",
     extractionMessage: null,
     updatedAt: new Date().toISOString(),
@@ -1015,6 +1020,11 @@ export const parseStoredAddRecipeDraft = (
           : sourceType === "url" && typeof parsed.sourceValue === "string"
             ? parsed.sourceValue
             : "",
+      imageUrls: sanitizeImageUrls(parsed.imageUrls),
+      coverImageUrl:
+        typeof parsed.coverImageUrl === "string"
+          ? parsed.coverImageUrl
+          : sanitizeImageUrls(parsed.imageUrls)[0] ?? "",
       extractionStatus:
         parsed.extractionStatus === "idle" ||
         parsed.extractionStatus === "loading" ||
@@ -1114,4 +1124,6 @@ export const toRecipeInput = (draft: AddRecipeDraft): RecipeInput => ({
       text: step.text.trim(),
     })),
   source_url: draft.sourceUrl.trim() || null,
+  image_urls: sanitizeImageUrls(draft.imageUrls),
+  cover_image_url: draft.coverImageUrl || draft.imageUrls[0] || null,
 });

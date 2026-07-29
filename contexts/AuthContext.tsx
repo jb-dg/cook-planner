@@ -8,7 +8,10 @@ import {
   type ReactNode,
 } from "react";
 import type { AuthError, EmailOtpType, Session } from "@supabase/supabase-js";
+import * as AppleAuthentication from "expo-apple-authentication";
+import * as Crypto from "expo-crypto";
 import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
 import { Platform } from "react-native";
 
 import { ensureProfileRecord } from "../lib/profile";
@@ -24,11 +27,17 @@ type AuthActionResult = {
   message?: string;
 };
 
+type OAuthProvider = "google" | "apple";
+
+const NONCE_CHARS =
+  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._";
+
 type AuthContextValue = {
   session: Session | null;
   initializing: boolean;
   needsPasswordReset: boolean;
   signIn: (credentials: AuthCredentials) => Promise<AuthActionResult>;
+  signInWithProvider: (provider: OAuthProvider) => Promise<AuthActionResult>;
   signUp: (credentials: AuthCredentials) => Promise<AuthActionResult>;
   requestPasswordReset: (email: string) => Promise<AuthActionResult>;
   updatePassword: (password: string) => Promise<AuthActionResult>;
@@ -36,6 +45,8 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+const NATIVE_AUTH_REDIRECT_URL = "cookplanner://auth/callback";
 
 const resolveSupabaseRedirectUrl = () => {
   if (Platform.OS === "web") {
@@ -48,7 +59,7 @@ const resolveSupabaseRedirectUrl = () => {
     }
   }
 
-  return Linking.createURL("auth");
+  return NATIVE_AUTH_REDIRECT_URL;
 };
 
 const SUPABASE_REDIRECT_URL = resolveSupabaseRedirectUrl();
@@ -83,6 +94,20 @@ const formatAuthError = (error: AuthError | Error) => {
 
 const createResult = (error: AuthError | Error | null): AuthActionResult =>
   error ? { success: false, message: formatAuthError(error) } : { success: true };
+
+const generateNonce = (length = 32) => {
+  const randomBytes = Crypto.getRandomBytes(length);
+
+  return Array.from(randomBytes)
+    .map((byte) => NONCE_CHARS[byte % NONCE_CHARS.length])
+    .join("");
+};
+
+const isAppleAuthCanceledError = (error: unknown) =>
+  typeof error === "object" &&
+  error !== null &&
+  "code" in error &&
+  (error as { code?: string }).code === "ERR_REQUEST_CANCELED";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -238,6 +263,140 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const signInWithNativeApple = useCallback(async () => {
+    try {
+      if (Platform.OS !== "ios") {
+        return {
+          success: false,
+          message:
+            "Sign in with Apple natif est disponible uniquement sur iOS.",
+        };
+      }
+
+      const isAvailable = await AppleAuthentication.isAvailableAsync();
+      if (!isAvailable) {
+        return {
+          success: false,
+          message: "Sign in with Apple n'est pas disponible sur cet appareil.",
+        };
+      }
+
+      const rawNonce = generateNonce();
+      const hashedNonce = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        rawNonce,
+      );
+
+      const credential = await AppleAuthentication.signInAsync({
+        nonce: hashedNonce,
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      if (!credential.identityToken) {
+        return {
+          success: false,
+          message: "Apple n'a pas retourné identityToken.",
+        };
+      }
+
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: "apple",
+        token: credential.identityToken,
+        nonce: rawNonce,
+      });
+
+      if (error) {
+        return createResult(error);
+      }
+
+      const fullName = [
+        credential.fullName?.givenName,
+        credential.fullName?.familyName,
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      if (credential.fullName && fullName) {
+        const { error: updateError } = await supabase.auth.updateUser({
+          data: {
+            full_name: fullName,
+            given_name: credential.fullName.givenName,
+            family_name: credential.fullName.familyName,
+          },
+        });
+
+        if (updateError) {
+          console.warn("Apple user metadata update failed", updateError);
+        }
+      }
+
+      return { success: true };
+    } catch (error) {
+      if (isAppleAuthCanceledError(error)) {
+        return {
+          success: false,
+          message: "Connexion annulée.",
+        };
+      }
+
+      return createResult(error as Error);
+    }
+  }, []);
+
+  const signInWithProvider = useCallback(
+    async (provider: OAuthProvider) => {
+      try {
+        if (provider === "apple" && Platform.OS === "ios") {
+          return signInWithNativeApple();
+        }
+
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: {
+            redirectTo: SUPABASE_REDIRECT_URL,
+            skipBrowserRedirect: Platform.OS !== "web",
+          },
+        });
+
+        if (error) {
+          return createResult(error);
+        }
+
+        if (Platform.OS === "web") {
+          return { success: true };
+        }
+
+        if (!data.url) {
+          return {
+            success: false,
+            message: "Impossible d'ouvrir la connexion externe.",
+          };
+        }
+
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.url,
+          SUPABASE_REDIRECT_URL,
+        );
+
+        if (result.type === "success") {
+          await handleAuthUrl(result.url);
+          return { success: true };
+        }
+
+        return {
+          success: false,
+          message: "Connexion annulée.",
+        };
+      } catch (error) {
+        return createResult(error as Error);
+      }
+    },
+    [handleAuthUrl, signInWithNativeApple],
+  );
+
   const signUp = useCallback(async (credentials: AuthCredentials) => {
     try {
       const { error } = await supabase.auth.signUp({
@@ -294,6 +453,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         initializing,
         needsPasswordReset,
         signIn,
+        signInWithProvider,
         signUp,
         requestPasswordReset,
         updatePassword,

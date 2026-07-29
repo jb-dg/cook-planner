@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Alert,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { colors, radii } from "../../../theme/design";
 import {
   createEmptyFormState,
@@ -10,22 +18,26 @@ import {
   RecipeFormState,
   RecipeInput,
 } from "../../../features/recipes/types";
+import { pickAndUploadImage } from "../../../lib/mediaUpload";
 
 type RecipeFormProps = {
   initialValues?: RecipeFormState;
   submitLabel: string;
+  uploadPathPrefix?: string;
   onSubmit: (values: RecipeInput) => Promise<void>;
 };
 
 export default function RecipeForm({
   initialValues,
   submitLabel,
+  uploadPathPrefix,
   onSubmit,
 }: RecipeFormProps) {
   const [form, setForm] = useState<RecipeFormState>(
     initialValues ?? createEmptyFormState()
   );
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     if (initialValues) {
@@ -132,6 +144,8 @@ export default function RecipeForm({
           text: item.text.trim(),
         })),
       source_url: form.sourceUrl.trim() || null,
+      image_urls: form.imageUrls,
+      cover_image_url: form.coverImageUrl || form.imageUrls[0] || null,
     };
 
     try {
@@ -139,6 +153,53 @@ export default function RecipeForm({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleAddImage = async () => {
+    if (!uploadPathPrefix || uploadingImage) return;
+    setUploadingImage(true);
+    try {
+      const url = await pickAndUploadImage({
+        pathPrefix: uploadPathPrefix,
+        fileNamePrefix: "recipe",
+        aspect: [4, 3],
+      });
+
+      if (!url) return;
+
+      setForm((prev) => ({
+        ...prev,
+        imageUrls: [...prev.imageUrls, url],
+        coverImageUrl: prev.coverImageUrl || url,
+      }));
+    } catch (error) {
+      console.error("upload recipe image", error);
+      if (error instanceof Error && error.message === "media-bucket-not-found") {
+        Alert.alert(
+          "Migration Supabase requise",
+          "Le bucket media n'existe pas encore. Applique la migration Supabase puis réessaie."
+        );
+        return;
+      }
+      Alert.alert(
+        "Erreur",
+        "Impossible d'ajouter cette photo. Vérifie les permissions et réessaie."
+      );
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = (url: string) => {
+    setForm((prev) => {
+      const nextUrls = prev.imageUrls.filter((item) => item !== url);
+      return {
+        ...prev,
+        imageUrls: nextUrls,
+        coverImageUrl:
+          prev.coverImageUrl === url ? nextUrls[0] ?? "" : prev.coverImageUrl,
+      };
+    });
   };
 
   return (
@@ -201,6 +262,57 @@ export default function RecipeForm({
             </Pressable>
           ))}
         </View>
+      </View>
+      <View style={styles.photosSection}>
+        <View style={styles.photosHeader}>
+          <Text style={styles.label}>Photos</Text>
+          <Pressable
+            style={[styles.addPhotoButton, uploadingImage && styles.buttonDisabled]}
+            onPress={handleAddImage}
+            disabled={!uploadPathPrefix || uploadingImage}
+          >
+            <Text style={styles.addPhotoText}>
+              {uploadingImage ? "Upload..." : "+ Ajouter"}
+            </Text>
+          </Pressable>
+        </View>
+        {form.imageUrls.length ? (
+          <View style={styles.photoGrid}>
+            {form.imageUrls.map((url) => {
+              const isCover = (form.coverImageUrl || form.imageUrls[0]) === url;
+              return (
+                <View key={url} style={styles.photoTile}>
+                  <Image source={{ uri: url }} style={styles.photoPreview} />
+                  <View style={styles.photoActions}>
+                    <Pressable
+                      style={[styles.photoAction, isCover && styles.photoActionActive]}
+                      onPress={() =>
+                        setForm((prev) => ({ ...prev, coverImageUrl: url }))
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.photoActionText,
+                          isCover && styles.photoActionTextActive,
+                        ]}
+                      >
+                        {isCover ? "Couverture" : "Définir"}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={styles.photoAction}
+                      onPress={() => handleRemoveImage(url)}
+                    >
+                      <Text style={styles.photoRemoveText}>Retirer</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        ) : (
+          <Text style={styles.helperText}>Aucune photo ajoutée.</Text>
+        )}
       </View>
       <View>
         <Text style={styles.label}>Ingrédients</Text>
@@ -387,9 +499,87 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 1,
   },
+  helperText: {
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  photosSection: {
+    gap: 10,
+  },
+  photosHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  addPhotoButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(188, 108, 37, 0.3)",
+    backgroundColor: "rgba(188, 108, 37, 0.08)",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  addPhotoText: {
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  photoGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  photoTile: {
+    width: 138,
+    borderRadius: 18,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.surface,
+  },
+  photoPreview: {
+    width: "100%",
+    height: 104,
+    backgroundColor: colors.surfaceAlt,
+  },
+  photoActions: {
+    gap: 6,
+    padding: 8,
+  },
+  photoAction: {
+    minHeight: 30,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
+  },
+  photoActionActive: {
+    borderColor: colors.accent,
+    backgroundColor: colors.accent,
+  },
+  photoActionText: {
+    color: colors.text,
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  photoActionTextActive: {
+    color: "#FFFFFF",
+  },
+  photoRemoveText: {
+    color: colors.danger,
+    fontSize: 11,
+    fontWeight: "800",
+  },
   difficultyRow: {
     flexDirection: "row",
     gap: 8,
+  },
+  buttonDisabled: {
+    opacity: 0.55,
   },
   difficultyChip: {
     paddingHorizontal: 14,

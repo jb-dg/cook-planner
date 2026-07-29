@@ -24,6 +24,8 @@ export type Recipe = {
   ingredients: Ingredient[];
   steps: RecipeStep[];
   sourceUrl: string;
+  imageUrls: string[];
+  coverImageUrl: string;
 };
 
 export type RecipeFormState = {
@@ -35,6 +37,8 @@ export type RecipeFormState = {
   ingredients: Ingredient[];
   steps: RecipeStep[];
   sourceUrl: string;
+  imageUrls: string[];
+  coverImageUrl: string;
 };
 
 export type RecipeInput = {
@@ -46,6 +50,8 @@ export type RecipeInput = {
   ingredients: Ingredient[];
   steps: RecipeStep[];
   source_url: string | null;
+  image_urls: string[];
+  cover_image_url: string | null;
 };
 
 export const DIFFICULTIES: Difficulty[] = ["Facile", "Moyen", "Expert"];
@@ -122,6 +128,14 @@ export const sanitizeRecipeSteps = (
   return steps.length ? steps : [createRecipeStep()];
 };
 
+export const sanitizeImageUrls = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    : [];
+
 export const mapRecipe = (row: {
   id: string | number;
   title: string;
@@ -133,6 +147,10 @@ export const mapRecipe = (row: {
   steps?: RecipeStep[] | string[] | null;
   source_url?: string | null;
   sourceUrl?: string | null;
+  image_urls?: string[] | null;
+  imageUrls?: string[] | null;
+  cover_image_url?: string | null;
+  coverImageUrl?: string | null;
 }): Recipe => ({
   id: String(row.id),
   title: row.title,
@@ -143,6 +161,12 @@ export const mapRecipe = (row: {
   ingredients: Array.isArray(row.ingredients) ? row.ingredients : [],
   steps: sanitizeRecipeSteps(row.steps, row.description ?? ""),
   sourceUrl: row.source_url ?? row.sourceUrl ?? "",
+  imageUrls: sanitizeImageUrls(row.image_urls ?? row.imageUrls),
+  coverImageUrl:
+    row.cover_image_url ??
+    row.coverImageUrl ??
+    sanitizeImageUrls(row.image_urls ?? row.imageUrls)[0] ??
+    "",
 });
 
 export const createEmptyFormState = (): RecipeFormState => ({
@@ -154,6 +178,8 @@ export const createEmptyFormState = (): RecipeFormState => ({
   ingredients: [createIngredient()],
   steps: [createRecipeStep()],
   sourceUrl: "",
+  imageUrls: [],
+  coverImageUrl: "",
 });
 
 export const recipeToFormState = (recipe: Recipe): RecipeFormState => ({
@@ -173,4 +199,6 @@ export const recipeToFormState = (recipe: Recipe): RecipeFormState => ({
       : [createIngredient()],
   steps: sanitizeRecipeSteps(recipe.steps, recipe.description),
   sourceUrl: recipe.sourceUrl ?? "",
+  imageUrls: sanitizeImageUrls(recipe.imageUrls),
+  coverImageUrl: recipe.coverImageUrl || recipe.imageUrls[0] || "",
 });

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -26,9 +27,18 @@ import { colors, layout, radii, spacing } from "../../../theme/design";
 import RecipeForm from "./RecipeForm";
 
 type ScreenMode = "view" | "edit";
+type RecipeRow = Parameters<typeof mapRecipe>[0] & {
+  user_id?: string | null;
+  household_id?: string | null;
+};
 
 const getScreenMode = (mode?: string): ScreenMode =>
   mode === "edit" ? "edit" : "view";
+
+const RECIPE_SELECT_WITH_IMAGES =
+  "id,title,duration,difficulty,servings,description,ingredients,steps,source_url,image_urls,cover_image_url,user_id,household_id";
+const RECIPE_SELECT_BASIC =
+  "id,title,duration,difficulty,servings,description,ingredients,steps,source_url,user_id,household_id";
 
 export default function RecipeScreen() {
   const { id, mode } = useLocalSearchParams<{ id: string; mode?: string }>();
@@ -65,13 +75,24 @@ export default function RecipeScreen() {
     setError(null);
     try {
       const scope = await fetchHouseholdScope(session.user.id);
-      const { data, error: fetchError } = await supabase
+      const primary = await supabase
         .from("recipes")
-        .select(
-          "id,title,duration,difficulty,servings,description,ingredients,steps,source_url,user_id,household_id",
-        )
+        .select(RECIPE_SELECT_WITH_IMAGES)
         .eq("id", id)
         .maybeSingle();
+      let data = primary.data as RecipeRow | null;
+      let fetchError = primary.error;
+
+      if (fetchError?.code === "42703") {
+        const fallback = await supabase
+          .from("recipes")
+          .select(RECIPE_SELECT_BASIC)
+          .eq("id", id)
+          .maybeSingle();
+
+        data = fallback.data as RecipeRow | null;
+        fetchError = fallback.error;
+      }
 
       if (fetchError) {
         throw fetchError;
@@ -105,20 +126,36 @@ export default function RecipeScreen() {
       const scope = await fetchHouseholdScope(session.user.id);
       const column = scope.householdId ? "household_id" : "user_id";
       const value = scope.householdId ?? session.user.id;
-      const { error: updateError } = await supabase
+      const basePayload = {
+        title: input.title,
+        duration: input.duration,
+        description: input.description,
+        servings: input.servings,
+        difficulty: input.difficulty,
+        ingredients: input.ingredients,
+        steps: input.steps,
+        source_url: input.source_url,
+      };
+
+      let { error: updateError } = await supabase
         .from("recipes")
         .update({
-          title: input.title,
-          duration: input.duration,
-          description: input.description,
-          servings: input.servings,
-          difficulty: input.difficulty,
-          ingredients: input.ingredients,
-          steps: input.steps,
-          source_url: input.source_url,
+          ...basePayload,
+          image_urls: input.image_urls,
+          cover_image_url: input.cover_image_url,
         })
         .eq("id", id)
         .eq(column, value);
+
+      if (updateError?.code === "42703") {
+        const fallback = await supabase
+          .from("recipes")
+          .update(basePayload)
+          .eq("id", id)
+          .eq(column, value);
+
+        updateError = fallback.error;
+      }
 
       if (updateError) {
         throw updateError;
@@ -239,6 +276,14 @@ export default function RecipeScreen() {
 
           {screenMode === "view" ? (
             <View style={styles.recipeCard}>
+              {initialValues.coverImageUrl || initialValues.imageUrls[0] ? (
+                <Image
+                  source={{
+                    uri: initialValues.coverImageUrl || initialValues.imageUrls[0],
+                  }}
+                  style={styles.recipeCover}
+                />
+              ) : null}
               <Text style={styles.recipeTitle}>{initialValues.title}</Text>
 
               <View style={styles.recipeMetaRow}>
@@ -260,6 +305,21 @@ export default function RecipeScreen() {
                   </View>
                 ) : null}
               </View>
+
+              {initialValues.imageUrls.length > 1 ? (
+                <View style={styles.recipeSection}>
+                  <Text style={styles.recipeSectionLabel}>Photos</Text>
+                  <View style={styles.photoStrip}>
+                    {initialValues.imageUrls.map((url) => (
+                      <Image
+                        key={url}
+                        source={{ uri: url }}
+                        style={styles.photoThumb}
+                      />
+                    ))}
+                  </View>
+                </View>
+              ) : null}
 
               <View style={styles.recipeSection}>
                 <Text style={styles.recipeSectionLabel}>Note</Text>
@@ -325,6 +385,7 @@ export default function RecipeScreen() {
               <RecipeForm
                 initialValues={initialValues}
                 submitLabel="Mettre à jour"
+                uploadPathPrefix={`recipes/${session?.user.id ?? "unknown"}`}
                 onSubmit={handleUpdate}
               />
               <View style={styles.deleteWrapper}>
@@ -418,6 +479,23 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: colors.text,
     letterSpacing: -0.5,
+  },
+  recipeCover: {
+    width: "100%",
+    aspectRatio: 4 / 3,
+    borderRadius: 20,
+    backgroundColor: colors.surfaceAlt,
+  },
+  photoStrip: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  photoThumb: {
+    width: 86,
+    height: 64,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceAlt,
   },
   recipeMetaRow: {
     flexDirection: "row",

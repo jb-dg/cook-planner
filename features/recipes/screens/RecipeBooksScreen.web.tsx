@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import { ActivityIndicator, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Image, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import RecipeBooksList from "@/features/recipes/components/RecipeBooksList";
@@ -79,6 +79,12 @@ export default function RecipeBooksScreenWeb() {
                       <View pointerEvents="none" style={styles.recipeAndroidShadow} />
                     )}
                     <View style={styles.recipeCardSurface}>
+                      {recipe.coverImageUrl || recipe.imageUrls[0] ? (
+                        <Image
+                          source={{ uri: recipe.coverImageUrl || recipe.imageUrls[0] }}
+                          style={styles.recipeThumb}
+                        />
+                      ) : null}
                       <View style={styles.recipeHeader}>
                         <View style={styles.recipeHeadingBlock}>
                           <Text style={styles.recipeEyebrow}>Recette</Text>

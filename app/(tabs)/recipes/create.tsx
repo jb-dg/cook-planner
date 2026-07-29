@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -40,6 +41,7 @@ import {
   INGREDIENT_UNITS,
 } from "../../../features/recipes/types";
 import { fetchHouseholdScope, HouseholdScope } from "../../../lib/households";
+import { pickAndUploadImage } from "../../../lib/mediaUpload";
 import { supabase } from "../../../lib/supabase";
 import { colors, layout, radii, spacing } from "../../../theme/design";
 
@@ -128,6 +130,7 @@ export default function CreateRecipeScreen() {
   const [step, setStep] = useState<Step>(1);
   const [draftHydrated, setDraftHydrated] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
 
   const extractionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -474,6 +477,53 @@ export default function CreateRecipeScreen() {
     });
   };
 
+  const handleAddRecipeImage = async () => {
+    if (!session || uploadingImage) return;
+    setUploadingImage(true);
+    try {
+      const url = await pickAndUploadImage({
+        pathPrefix: `recipes/${session.user.id}`,
+        fileNamePrefix: "recipe",
+        aspect: [4, 3],
+      });
+
+      if (!url) return;
+
+      updateDraft((prev) => ({
+        ...prev,
+        imageUrls: [...prev.imageUrls, url],
+        coverImageUrl: prev.coverImageUrl || url,
+      }));
+    } catch (error) {
+      console.error("upload recipe image", error);
+      if (error instanceof Error && error.message === "media-bucket-not-found") {
+        Alert.alert(
+          "Migration Supabase requise",
+          "Le bucket media n'existe pas encore. Applique la migration Supabase puis réessaie."
+        );
+        return;
+      }
+      Alert.alert(
+        "Erreur",
+        "Impossible d'ajouter cette photo. Vérifie les permissions et réessaie."
+      );
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveRecipeImage = (url: string) => {
+    updateDraft((prev) => {
+      const nextUrls = prev.imageUrls.filter((item) => item !== url);
+      return {
+        ...prev,
+        imageUrls: nextUrls,
+        coverImageUrl:
+          prev.coverImageUrl === url ? nextUrls[0] ?? "" : prev.coverImageUrl,
+      };
+    });
+  };
+
   const handleSaveRecipe = async () => {
     if (!session) return;
 
@@ -492,16 +542,39 @@ export default function CreateRecipeScreen() {
     try {
       const activeScope = scope ?? (await fetchHouseholdScope(session.user.id));
       const input = toRecipeInput(draft);
+      const basePayload = {
+        user_id: session.user.id,
+        household_id: activeScope.householdId,
+        title: input.title,
+        duration: input.duration,
+        description: input.description,
+        servings: input.servings,
+        difficulty: input.difficulty,
+        ingredients: input.ingredients,
+        steps: input.steps,
+        source_url: input.source_url,
+      };
 
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from("recipes")
         .insert({
-          user_id: session.user.id,
-          household_id: activeScope.householdId,
-          ...input,
+          ...basePayload,
+          image_urls: input.image_urls,
+          cover_image_url: input.cover_image_url,
         })
         .select("id")
         .single();
+
+      if (error?.code === "42703") {
+        const fallback = await supabase
+          .from("recipes")
+          .insert(basePayload)
+          .select("id")
+          .single();
+
+        data = fallback.data;
+        error = fallback.error;
+      }
 
       if (error) throw error;
 
@@ -771,6 +844,68 @@ export default function CreateRecipeScreen() {
               onChangeText={(value) => updateDraft((prev) => ({ ...prev, title: value }))}
             />
 
+            <View style={styles.photosWrap}>
+              <View style={styles.stepHeaderRow}>
+                <Text style={styles.sectionLabel}>Photos</Text>
+                <Pressable
+                  style={[
+                    styles.secondaryInlineButton,
+                    uploadingImage && styles.buttonDisabled,
+                  ]}
+                  onPress={handleAddRecipeImage}
+                  disabled={uploadingImage}
+                >
+                  <Feather name="image" size={13} color={colors.accent} />
+                  <Text style={styles.secondaryInlineButtonText}>
+                    {uploadingImage ? "Upload..." : "Ajouter"}
+                  </Text>
+                </Pressable>
+              </View>
+              {draft.imageUrls.length ? (
+                <View style={styles.photoGrid}>
+                  {draft.imageUrls.map((url) => {
+                    const isCover = (draft.coverImageUrl || draft.imageUrls[0]) === url;
+                    return (
+                      <View key={url} style={styles.photoTile}>
+                        <Image source={{ uri: url }} style={styles.photoPreview} />
+                        <View style={styles.photoActions}>
+                          <Pressable
+                            style={[
+                              styles.photoAction,
+                              isCover && styles.photoActionActive,
+                            ]}
+                            onPress={() =>
+                              updateDraft((prev) => ({
+                                ...prev,
+                                coverImageUrl: url,
+                              }))
+                            }
+                          >
+                            <Text
+                              style={[
+                                styles.photoActionText,
+                                isCover && styles.photoActionTextActive,
+                              ]}
+                            >
+                              {isCover ? "Couverture" : "Définir"}
+                            </Text>
+                          </Pressable>
+                          <Pressable
+                            style={styles.photoAction}
+                            onPress={() => handleRemoveRecipeImage(url)}
+                          >
+                            <Text style={styles.photoRemoveText}>Retirer</Text>
+                          </Pressable>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              ) : (
+                <Text style={styles.photoEmptyText}>Aucune photo ajoutée.</Text>
+              )}
+            </View>
+
             <View style={styles.inlineFormRow}>
               <TextInput
                 style={[styles.input, styles.growInput]}
@@ -947,6 +1082,12 @@ export default function CreateRecipeScreen() {
             <Text style={styles.sectionLabel}>Aperçu final</Text>
 
             <View style={styles.previewCard}>
+              {draft.coverImageUrl || draft.imageUrls[0] ? (
+                <Image
+                  source={{ uri: draft.coverImageUrl || draft.imageUrls[0] }}
+                  style={styles.previewCover}
+                />
+              ) : null}
               <Text style={styles.previewTitle}>
                 {draft.title.trim() || "Recette sans titre"}
               </Text>
@@ -1421,6 +1562,62 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 13,
   },
+  photosWrap: {
+    gap: 10,
+  },
+  photoGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  photoTile: {
+    width: 138,
+    borderRadius: 18,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    backgroundColor: colors.surface,
+  },
+  photoPreview: {
+    width: "100%",
+    height: 104,
+    backgroundColor: colors.surfaceAlt,
+  },
+  photoActions: {
+    gap: 6,
+    padding: 8,
+  },
+  photoAction: {
+    minHeight: 30,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
+  },
+  photoActionActive: {
+    borderColor: colors.accent,
+    backgroundColor: colors.accent,
+  },
+  photoActionText: {
+    color: colors.text,
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  photoActionTextActive: {
+    color: "#FFFFFF",
+  },
+  photoRemoveText: {
+    color: colors.danger,
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  photoEmptyText: {
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: "600",
+  },
   previewCard: {
     borderRadius: 24,
     borderWidth: 1,
@@ -1428,6 +1625,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     padding: 16,
     gap: 10,
+  },
+  previewCover: {
+    width: "100%",
+    aspectRatio: 4 / 3,
+    borderRadius: 18,
+    backgroundColor: colors.surfaceAlt,
   },
   previewTitle: {
     fontSize: 24,

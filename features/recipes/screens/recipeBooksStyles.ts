@@ -389,6 +389,12 @@ export const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.8)",
     gap: 12,
   },
+  recipeThumb: {
+    width: "100%",
+    aspectRatio: 16 / 9,
+    borderRadius: 22,
+    backgroundColor: "#F5EFE4",
+  },
   recipeHeader: {
     flexDirection: "row",
     justifyContent: "space-between",

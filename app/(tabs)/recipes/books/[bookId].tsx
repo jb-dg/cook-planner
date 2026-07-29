@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Platform,
   Pressable,
   StyleSheet,
@@ -28,6 +29,8 @@ import { fetchHouseholdScope, HouseholdScope } from "../../../../lib/households"
 import { supabase } from "../../../../lib/supabase";
 import { colors, layout, spacing } from "../../../../theme/design";
 
+type RecipeRow = Parameters<typeof mapRecipe>[0];
+
 const shadowCard = Platform.select({
   ios: {
     shadowColor: "#6B705C",
@@ -41,6 +44,11 @@ const shadowCard = Platform.select({
   },
   default: {},
 });
+
+const RECIPE_SELECT_WITH_IMAGES =
+  "id,title,duration,difficulty,servings,description,ingredients,steps,source_url,image_urls,cover_image_url";
+const RECIPE_SELECT_BASIC =
+  "id,title,duration,difficulty,servings,description,ingredients,steps,source_url";
 
 export default function RecipeBookScreen() {
   const { session } = useAuth();
@@ -74,11 +82,24 @@ export default function RecipeBookScreen() {
     try {
       const nextScope = await fetchHouseholdScope(session.user.id);
       setScope(nextScope);
-      const { data, error: fetchError } = await supabase
+      const primary = await supabase
         .from("recipes")
-        .select("id,title,duration,difficulty,servings,description,ingredients,steps,source_url")
+        .select(RECIPE_SELECT_WITH_IMAGES)
         .eq(nextScope.filterColumn, nextScope.filterValue)
         .order("created_at", { ascending: false });
+      let data = primary.data as RecipeRow[] | null;
+      let fetchError = primary.error;
+
+      if (fetchError?.code === "42703") {
+        const fallback = await supabase
+          .from("recipes")
+          .select(RECIPE_SELECT_BASIC)
+          .eq(nextScope.filterColumn, nextScope.filterValue)
+          .order("created_at", { ascending: false });
+
+        data = fallback.data as RecipeRow[] | null;
+        fetchError = fallback.error;
+      }
 
       if (fetchError) {
         throw fetchError;
@@ -264,6 +285,12 @@ export default function RecipeBookScreen() {
         <View pointerEvents="none" style={styles.recipeAndroidShadow} />
       )}
       <View style={styles.recipeCardSurface}>
+        {item.coverImageUrl || item.imageUrls[0] ? (
+          <Image
+            source={{ uri: item.coverImageUrl || item.imageUrls[0] }}
+            style={styles.recipeThumb}
+          />
+        ) : null}
         <View style={styles.recipeHeader}>
           <View style={styles.recipeHeadingBlock}>
             <Text style={styles.recipeEyebrow}>Recette</Text>
@@ -545,6 +572,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.8)",
     gap: 12,
+  },
+  recipeThumb: {
+    width: "100%",
+    aspectRatio: 16 / 9,
+    borderRadius: 22,
+    backgroundColor: "#F5EFE4",
   },
   recipeHeader: {
     flexDirection: "row",
