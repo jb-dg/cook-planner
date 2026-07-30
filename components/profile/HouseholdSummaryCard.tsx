@@ -42,10 +42,14 @@ export default function HouseholdSummaryCard({
         </Text>
         <View style={styles.householdActions}>
           <Pressable style={styles.secondaryButton} onPress={onOpenCreate}>
-            <Text style={styles.secondaryButtonText}>Créer un foyer</Text>
+            <Text style={styles.secondaryButtonText} numberOfLines={1}>
+              Créer un foyer
+            </Text>
           </Pressable>
           <Pressable style={styles.secondaryButton} onPress={onOpenJoin}>
-            <Text style={styles.secondaryButtonText}>Rejoindre</Text>
+            <Text style={styles.secondaryButtonText} numberOfLines={1}>
+              Rejoindre
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -55,13 +59,17 @@ export default function HouseholdSummaryCard({
   return (
     <View style={styles.householdCard}>
       <View style={styles.householdHeader}>
-        <View>
+        <View style={styles.householdTitleBlock}>
           <Text style={styles.householdLabel}>Foyer actif</Text>
-          <Text style={styles.householdName}>{household.name}</Text>
+          <Text style={styles.householdName} numberOfLines={1}>
+            {household.name}
+          </Text>
         </View>
         <View style={styles.householdBadges}>
-          <Text style={styles.statusPill}>{isOwner ? "Admin" : "Membre"}</Text>
-          <Text style={styles.statusPill}>
+          <Text style={styles.statusPill} numberOfLines={1}>
+            {isOwner ? "Admin" : "Membre"}
+          </Text>
+          <Text style={styles.statusPill} numberOfLines={1}>
             {householdMembers.length} membre
             {householdMembers.length > 1 ? "s" : ""}
           </Text>
@@ -99,7 +107,7 @@ export default function HouseholdSummaryCard({
         )}
       </ScrollView>
       <Pressable style={styles.manageButton} onPress={onOpenManage}>
-        <Text style={styles.manageButtonText}>
+        <Text style={styles.manageButtonText} numberOfLines={1}>
           {isOwner ? "Gérer le foyer" : "Voir les membres"}
         </Text>
       </Pressable>
@@ -135,10 +143,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: 8,
+  },
+  householdTitleBlock: {
+    flex: 1,
+    minWidth: 0,
   },
   householdBadges: {
     flexDirection: "row",
     gap: 8,
+    flexShrink: 0,
   },
   householdMetaRow: {
     flexDirection: "row",
@@ -174,6 +188,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 12,
     overflow: "hidden",
+    flexShrink: 1,
   },
   membersTitle: {
     fontSize: 13,
@@ -214,6 +229,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.accent,
     paddingVertical: 12,
+    paddingHorizontal: spacing.base,
     alignItems: "center",
     backgroundColor: "rgba(188, 108, 37, 0.05)",
   },
@@ -221,6 +237,7 @@ const styles = StyleSheet.create({
     color: colors.accent,
     fontWeight: "700",
     fontSize: 14,
+    flexShrink: 1,
   },
   helper: {
     color: colors.accentTertiary,
@@ -233,8 +250,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   secondaryButton: {
+    flex: 1,
+    minWidth: 0,
     borderRadius: radii.lg,
     paddingVertical: 14,
+    paddingHorizontal: spacing.base,
     alignItems: "center",
     borderWidth: 1.5,
     borderColor: colors.accent,
@@ -244,5 +264,6 @@ const styles = StyleSheet.create({
     color: colors.accent,
     fontWeight: "700",
     fontSize: 15,
+    flexShrink: 1,
   },
 });

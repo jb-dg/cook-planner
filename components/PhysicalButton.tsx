@@ -64,7 +64,9 @@ const styles = StyleSheet.create({
   },
   button: {
     paddingVertical: 18,
+    paddingHorizontal: 16,
     alignItems: "center",
+    justifyContent: "center",
   },
   buttonPressed: {
     transform: [{ translateY: DEPTH }],

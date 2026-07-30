@@ -221,8 +221,10 @@ export const styles = StyleSheet.create({
   },
 
   secondaryButton: {
+    minWidth: 0,
     borderRadius: radii.lg,
     paddingVertical: 14,
+    paddingHorizontal: spacing.base,
     alignItems: "center",
     borderWidth: 1.5,
     borderColor: colors.accent,
@@ -232,6 +234,7 @@ export const styles = StyleSheet.create({
     color: colors.accent,
     fontWeight: "700",
     fontSize: 15,
+    flexShrink: 1,
   },
   buttonDisabled: {
     opacity: 0.55,

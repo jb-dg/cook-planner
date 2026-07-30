@@ -153,7 +153,7 @@ export default function ProfileScreenView({ variant }: Props) {
             onPress={state.handlePickAvatar}
             disabled={state.uploadingAvatar}
           >
-            <Text style={styles.secondaryButtonText}>
+            <Text style={styles.secondaryButtonText} numberOfLines={1}>
               {state.uploadingAvatar ? "Upload..." : "Choisir une photo"}
             </Text>
           </Pressable>
@@ -184,7 +184,7 @@ export default function ProfileScreenView({ variant }: Props) {
               onPress={state.handleSavePseudo}
               disabled={state.savingPseudo}
             >
-              <Text style={styles.primaryButtonText}>
+              <Text style={styles.primaryButtonText} numberOfLines={1}>
                 {state.savingPseudo ? "Enregistrement…" : "Sauvegarder"}
               </Text>
             </PhysicalButton>
@@ -222,7 +222,7 @@ export default function ProfileScreenView({ variant }: Props) {
               onPress={state.handleCreateHousehold}
               disabled={state.creatingHousehold}
             >
-              <Text style={styles.secondaryButtonText}>
+              <Text style={styles.secondaryButtonText} numberOfLines={1}>
                 {state.creatingHousehold ? "Création…" : "Créer"}
               </Text>
             </Pressable>
@@ -251,7 +251,7 @@ export default function ProfileScreenView({ variant }: Props) {
               <Text style={styles.successText}>{state.joinSuccess}</Text>
             ) : null}
             <PhysicalButton onPress={state.handleJoinHousehold} disabled={state.joining}>
-              <Text style={styles.primaryButtonText}>
+              <Text style={styles.primaryButtonText} numberOfLines={1}>
                 {state.joining ? "Connexion…" : "Rejoindre"}
               </Text>
             </PhysicalButton>
@@ -300,7 +300,7 @@ export default function ProfileScreenView({ variant }: Props) {
                       onPress={state.handleInviteMember}
                       disabled={state.inviting}
                     >
-                      <Text style={styles.secondaryButtonText}>
+                      <Text style={styles.secondaryButtonText} numberOfLines={1}>
                         {state.inviting ? "Ajout…" : "Inviter"}
                       </Text>
                     </Pressable>
