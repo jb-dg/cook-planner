@@ -76,6 +76,15 @@ export default function AppTabs({ mode, tabBarBottom = 16 }: AppTabsProps) {
         }}
       />
       <Tabs.Screen
+        name="shopping-list"
+        options={{
+          title: "Courses",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="shopping-cart" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: "Profil",

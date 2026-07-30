@@ -13,7 +13,20 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 2. Start the app
 
    ```bash
-   npx expo start
+   npm start
+   ```
+
+   The default start script opens the project with Expo Go. If the QR code does
+   not load on your phone while using the same Wi-Fi network, use the tunnel:
+
+   ```bash
+   npm run start:tunnel
+   ```
+
+   To use a custom development build instead of Expo Go, run:
+
+   ```bash
+   npm run start:dev-client
    ```
 
 In the output, you'll find options to open the app in a

@@ -2,6 +2,7 @@ import {
   validateConfirmPassword,
   validateEmail,
   validatePassword,
+  validatePasswordPresence,
 } from "../lib/validation/auth";
 
 describe("validateEmail", () => {
@@ -33,6 +34,17 @@ describe("validatePassword", () => {
 
   it("accepts strong password", () => {
     expect(validatePassword("Securite123")).toBeNull();
+  });
+});
+
+describe("validatePasswordPresence", () => {
+  it("requires a value", () => {
+    expect(validatePasswordPresence("")).toBe("Le mot de passe est requis.");
+  });
+
+  it("accepts any non-empty password, regardless of complexity", () => {
+    expect(validatePasswordPresence("skimming-equate-anaconda")).toBeNull();
+    expect(validatePasswordPresence("short")).toBeNull();
   });
 });
 

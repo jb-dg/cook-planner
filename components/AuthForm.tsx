@@ -16,6 +16,7 @@ import {
   validateConfirmPassword,
   validateEmail,
   validatePassword,
+  validatePasswordPresence,
 } from "../lib/validation/auth";
 import { useTheme } from "../theme/useTheme";
 
@@ -54,7 +55,11 @@ export default function AuthForm() {
   const errors = useMemo(() => {
     const emailError = activeMode === "recovery" ? null : validateEmail(email);
     const passwordError =
-      activeMode === "forgot" ? null : validatePassword(password);
+      activeMode === "forgot"
+        ? null
+        : activeMode === "signin"
+          ? validatePasswordPresence(password)
+          : validatePassword(password);
     const confirmError =
       activeMode === "signup" || activeMode === "recovery"
         ? validateConfirmPassword(password, confirmPassword)

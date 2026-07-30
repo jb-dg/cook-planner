@@ -23,6 +23,17 @@ export const validatePassword = (value: string) => {
   return null;
 };
 
+// Used at sign-in: the server is the source of truth for whether a password
+// is correct, so the client only needs to prevent an empty submission —
+// applying the full complexity rules here would lock out accounts whose
+// (valid, already-registered) password predates those rules.
+export const validatePasswordPresence = (value: string) => {
+  if (!value) {
+    return "Le mot de passe est requis.";
+  }
+  return null;
+};
+
 export const validateConfirmPassword = (
   password: string,
   confirm: string

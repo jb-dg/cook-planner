@@ -22,13 +22,15 @@ export default function TabsLayoutWeb() {
   const { width } = useWindowDimensions();
   const isWideWeb = width >= breakpoints.webNavWide;
 
-  const activeWebSection = pathname.includes("recipes")
-    ? "recipes"
-    : pathname.includes("profile")
-      ? "profile"
-      : pathname.includes("planner")
-        ? "planner"
-        : "home";
+  const activeWebSection = pathname.includes("shopping-list")
+    ? "shopping-list"
+    : pathname.includes("recipes")
+      ? "recipes"
+      : pathname.includes("profile")
+        ? "profile"
+        : pathname.includes("planner")
+          ? "planner"
+          : "home";
 
   if (initializing) {
     return <ActivityIndicator style={{ flex: 1 }} size="large" />;
@@ -81,6 +83,20 @@ export default function TabsLayoutWeb() {
                 ]}
               >
                 Recettes
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push("/(tabs)/shopping-list")}
+              style={styles.webPillNavLink}
+            >
+              <Text
+                style={[
+                  styles.webPillNavText,
+                  activeWebSection === "shopping-list" &&
+                    styles.webPillNavTextActive,
+                ]}
+              >
+                Courses
               </Text>
             </Pressable>
             {!isWideWeb && (
