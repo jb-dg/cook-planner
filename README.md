@@ -1,63 +1,120 @@
-# Welcome to your Expo app 👋
+# Weatly
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Weatly est une application de planification des repas pour organiser les recettes, préparer les menus de la semaine et générer une liste de courses partagée.
 
-## Get started
+L'app fonctionne avec Expo et React Native pour iOS, Android et le web. Les données sont synchronisées avec Supabase afin de conserver les recettes, les plannings, les listes de courses et les foyers utilisateurs.
 
-1. Install dependencies
+## Fonctionnalités
 
-   ```bash
-   npm install
-   ```
+- Authentification par email/mot de passe, Google et Apple via Supabase Auth.
+- Création ou rattachement à un foyer pour partager recettes, menus et courses.
+- Planning hebdomadaire avec navigation par semaine, vue focus, vue liste et sauvegarde automatique.
+- Synchronisation en temps réel des menus et listes partagées entre membres du foyer.
+- Carnets de recettes avec livre système "Recettes du foyer" et livres personnalisés.
+- Création et édition de recettes avec titre, durée, portions, difficulté, ingrédients, étapes, source et photos.
+- Import de recettes depuis une URL ou un texte collé quand les métadonnées de recette sont disponibles.
+- Liste de courses avec ajout manuel, ajout depuis une recette et génération depuis le planning de la semaine.
+- Fusion intelligente des ingrédients similaires pour éviter les doublons dans la liste de courses.
+- Profil utilisateur avec pseudo, avatar, gestion du foyer et déconnexion.
 
-2. Start the app
+## Stack technique
 
-   ```bash
-   npm start
-   ```
+- Expo 54
+- React 19
+- React Native 0.81
+- Expo Router
+- Supabase Auth, Database, Realtime, Storage et Edge Functions
+- TypeScript
+- Vitest
+- ESLint Expo
 
-   The default start script opens the project with Expo Go. If the QR code does
-   not load on your phone while using the same Wi-Fi network, use the tunnel:
+## Structure du projet
 
-   ```bash
-   npm run start:tunnel
-   ```
-
-   To use a custom development build instead of Expo Go, run:
-
-   ```bash
-   npm run start:dev-client
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+app/                     Routes Expo Router
+components/              Composants UI partagés
+contexts/                Contextes globaux, dont AuthContext
+features/auth/           Écrans et hooks d'authentification
+features/planner/        Planning hebdomadaire et sauvegarde
+features/profile/        Profil et gestion du foyer
+features/recipes/        Carnets, recettes et flux d'ajout
+features/shoppingList/   Liste de courses et fusion d'ingrédients
+lib/                     Clients et helpers Supabase
+supabase/                Migrations SQL et Edge Functions
+tests/                   Tests unitaires Vitest
+theme/                   Design tokens, couleurs et styles partagés
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Prérequis
 
-## Learn more
+- Node.js
+- npm
+- Expo CLI via `npx expo`
+- Un projet Supabase configuré avec les migrations du dossier `supabase/migrations`
 
-To learn more about developing your project with Expo, look at the following resources:
+## Configuration
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Créer un fichier `.env` à la racine avec les variables publiques utilisées par Expo :
 
-## Join the community
+```bash
+EXPO_PUBLIC_SUPABASE_URL=https://votre-projet.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=votre-clé-anon
+EXPO_PUBLIC_WEB_URL=http://localhost:8081
+```
 
-Join our community of developers creating universal apps.
+`EXPO_PUBLIC_WEB_URL` sert aux redirections d'authentification sur le web. Sur mobile, le schéma d'URL configuré est `cookplanner://auth/callback`.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Pour l'import depuis une URL, déployer aussi l'Edge Function Supabase `recipe-html` présente dans `supabase/functions/recipe-html`.
+
+## Installation
+
+```bash
+npm install
+```
+
+## Lancement
+
+```bash
+npm start
+```
+
+Commandes utiles :
+
+```bash
+npm run start:lan
+npm run start:tunnel
+npm run start:dev-client
+npm run web
+npm run ios
+npm run android
+```
+
+## Qualité
+
+```bash
+npm run lint
+npm test
+```
+
+Les tests couvrent notamment la validation d'authentification et la fusion des ingrédients de la liste de courses.
+
+## Supabase
+
+Les tables principales utilisées par l'application sont :
+
+- `profiles`
+- `households`
+- `household_members`
+- `recipes`
+- `weekly_menus`
+- `shopping_list_items`
+
+Le stockage média est utilisé pour les avatars et les photos de recettes. Les politiques RLS et buckets doivent être alignés avec les migrations Supabase du projet.
+
+## Plateformes
+
+Weatly cible :
+
+- iOS avec le bundle `com.jbdg.weatly`
+- Android avec le package `com.jbdg.weatly`
+- Web avec Expo Router et Metro

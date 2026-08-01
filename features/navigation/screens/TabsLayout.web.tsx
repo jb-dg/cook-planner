@@ -1,4 +1,6 @@
 import { Feather } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 import { Redirect, usePathname, useRouter } from "expo-router";
 import {
   ActivityIndicator,
@@ -43,6 +45,23 @@ export default function TabsLayoutWeb() {
   return (
     <View style={styles.webRoot}>
       <View style={[styles.webNavWrap, styles.webNavWrapFixed]} pointerEvents="box-none">
+        <BlurView
+          intensity={45}
+          tint="light"
+          style={styles.webNavBlur}
+          pointerEvents="none"
+        >
+          <LinearGradient
+            colors={[
+              "rgba(253, 248, 241, 0.8)",
+              "rgba(253, 248, 241, 0.55)",
+              "rgba(253, 248, 241, 0.72)",
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+          />
+        </BlurView>
         <View style={[styles.webNav, isWideWeb && styles.webNavWide]}>
           <Pressable
             onPress={() => router.push("/(tabs)")}
@@ -155,9 +174,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 24,
     paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.5)",
   },
   webNavWrapFixed: {
     position: "fixed" as any,
+  },
+  webNavBlur: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: "hidden",
   },
   webNav: {
     width: "100%",
@@ -225,9 +250,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   webPillNavText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 1.2,
+    letterSpacing: 0.8,
     textTransform: "uppercase",
     color: "#6B705C",
   },

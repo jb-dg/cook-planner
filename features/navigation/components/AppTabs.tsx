@@ -24,18 +24,18 @@ export default function AppTabs({ mode, tabBarBottom = 16 }: AppTabsProps) {
         tabBarInactiveTintColor: "#6B705C",
         tabBarHideOnKeyboard: true,
         tabBarLabelStyle: {
-          fontSize: 10,
+          fontSize: 9,
           fontWeight: "600",
           textTransform: "uppercase",
-          letterSpacing: 1,
+          letterSpacing: 0.5,
         },
         tabBarBackground: () => (
-          <BlurView intensity={40} tint="light" style={styles.tabBarBackground}>
+          <BlurView intensity={55} tint="light" style={styles.tabBarBackground}>
             <LinearGradient
               colors={[
-                "rgba(255,255,255,0.72)",
-                "rgba(255,255,255,0.60)",
-                "rgba(255,255,255,0.68)",
+                "rgba(255,255,255,0.55)",
+                "rgba(255,255,255,0.38)",
+                "rgba(255,255,255,0.5)",
               ]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   tabBarMobile: {
     position: "absolute",
     marginHorizontal: 24,
-    backgroundColor: "rgba(255,255,255,0.60)",
+    backgroundColor: "rgba(255,255,255,0.35)",
     borderRadius: 9999,
     borderTopWidth: 1,
     borderWidth: 1,
