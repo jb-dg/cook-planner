@@ -3,7 +3,6 @@ import { Feather } from "@expo/vector-icons";
 import { spacing } from "../../../theme/design";
 import { ViewMode } from "../utils/types";
 import { SaveStatusIndicator } from "./SaveStatusIndicator";
-import PhysicalIconButton from "../../../components/PhysicalIconButton";
 import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
 
 type Props = {
@@ -35,20 +34,27 @@ export const PlannerHeader = ({
           <Text style={styles.weekBadgeText}>Semaine {weekNumber}</Text>
         </View>
         <View style={styles.actions}>
-          {/* View toggle — physical dark button */}
-          <PhysicalIconButton
+          {/* View toggle — same component/effect as "Aujourd'hui" */}
+          <PhysicalButtonAnimated
             onPress={onViewModeToggle}
-            active={viewMode === "list"}
+            variant="primary"
+            innerStyle={styles.viewToggleInner}
             accessibilityLabel="Basculer en vue liste"
           >
             <Feather
               name={viewMode === "list" ? "grid" : "list"}
               size={18}
-              color={viewMode === "list" ? "#FDF8F1" : "#2D2D2A"}
+              color="#FFFFFF"
             />
-          </PhysicalIconButton>
-          {/* Calendar trigger */}
-          <PhysicalButtonAnimated variant="secondary" onPress={onWeekPickerOpen}>
+          </PhysicalButtonAnimated>
+          {/* Calendar trigger — same style as the nav arrows */}
+          <PhysicalButtonAnimated
+            variant="secondary"
+            onPress={onWeekPickerOpen}
+            borderRadius={14}
+            innerStyle={styles.calendarBtnInner}
+          >
+            <Feather name="calendar" size={16} color="#6B705C" />
             <Text style={styles.calendarBtnText}>Changer</Text>
           </PhysicalButtonAnimated>
         </View>
@@ -95,6 +101,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.base * 0.6,
+  },
+  viewToggleInner: {
+    width: 44,
+    height: 44,
+    minHeight: 44,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+  },
+  calendarBtnInner: {
+    flexDirection: "row",
+    gap: 6,
   },
   calendarBtnText: {
     color: "#6B705C",

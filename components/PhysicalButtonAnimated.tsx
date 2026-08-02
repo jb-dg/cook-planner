@@ -13,7 +13,7 @@ import { PhysicalVariant, physicalVariants } from "../theme/shadows";
 const SHADOW_OFFSET_REST = 5;
 const SHADOW_OFFSET_PRESSED = 2;
 const PRESS_TRANSLATE_Y = SHADOW_OFFSET_REST - SHADOW_OFFSET_PRESSED;
-const BORDER_RADIUS = 18;
+const DEFAULT_BORDER_RADIUS = 18;
 const TRANSITION_DURATION_MS = 200;
 const PRESS_EASING = Easing.bezier(0.175, 0.885, 0.32, 1.275);
 
@@ -23,6 +23,8 @@ interface Props {
   variant?: PhysicalVariant;
   /** Override the inner button style (padding, borderRadius, etc.) */
   innerStyle?: ViewStyle;
+  /** Override the corner radius (applies to both the face and its shadow) */
+  borderRadius?: number;
   accessibilityRole?: AccessibilityRole;
   accessibilityLabel?: string;
   children: React.ReactNode;
@@ -33,6 +35,7 @@ export default function PhysicalButtonAnimated({
   disabled = false,
   variant = "primary",
   innerStyle,
+  borderRadius = DEFAULT_BORDER_RADIUS,
   accessibilityRole,
   accessibilityLabel,
   children,
@@ -72,7 +75,7 @@ export default function PhysicalButtonAnimated({
           styles.shadowBase,
           {
             backgroundColor: disabled ? "transparent" : shadowColor,
-            borderRadius: BORDER_RADIUS,
+            borderRadius,
           },
         ]}
       />
@@ -95,7 +98,7 @@ export default function PhysicalButtonAnimated({
             styles.button,
             {
               backgroundColor: disabled ? "#E4D9C8" : bgColor,
-              borderRadius: BORDER_RADIUS,
+              borderRadius,
             },
             borderColor && { borderWidth: 2, borderColor },
             innerStyle,
