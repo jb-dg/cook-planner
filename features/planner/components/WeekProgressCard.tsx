@@ -1,8 +1,7 @@
 import { Feather } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
-import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import PhysicalIconButton from "../../../components/PhysicalIconButton";
-import { spacing } from "../../../theme/design";
+import { colors, radius, shadows, spacing } from "../../../theme/design";
 
 type Props = {
   weekNumber: number;
@@ -22,36 +21,50 @@ export const WeekProgressCard = ({
   onNavigate,
   onGoToToday,
 }: Props) => {
-  const missing = Math.max(progress.total - progress.filled, 0);
+  const summaryText =
+    progress.filled > 1
+      ? `${progress.filled} repas planifiés sur ${progress.total} · ${progress.percent}%`
+      : `${progress.filled} repas planifié sur ${progress.total} · ${progress.percent}%`;
 
   return (
     <View style={styles.softCard}>
       <View style={styles.header}>
-        <Text style={styles.dayLabel} numberOfLines={1}>
-          {selectedDayLabel}
-        </Text>
-        <View style={styles.navGroup}>
-          <PhysicalIconButton
-            variant="secondary"
-            onPress={() => onNavigate("prev")}
-            accessibilityLabel="Jour précédent"
-          >
-            <Feather name="chevron-left" size={16} color="#6B705C" />
-          </PhysicalIconButton>
-          <PhysicalButtonAnimated variant="primary" onPress={onGoToToday}>
-            <Text style={styles.todayText}>Aujourd&apos;hui</Text>
-          </PhysicalButtonAnimated>
-          <PhysicalIconButton
-            variant="secondary"
-            onPress={() => onNavigate("next")}
-            accessibilityLabel="Jour suivant"
-          >
-            <Feather name="chevron-right" size={16} color="#6B705C" />
-          </PhysicalIconButton>
-        </View>
+        <PhysicalIconButton
+          variant="secondary"
+          onPress={() => onNavigate("prev")}
+          accessibilityLabel="Semaine précédente"
+        >
+          <Feather name="chevron-left" size={16} color={colors.muted} />
+        </PhysicalIconButton>
+
+        <Text style={styles.dayLabel}>{selectedDayLabel}</Text>
+
+        <PhysicalIconButton
+          variant="secondary"
+          onPress={() => onNavigate("next")}
+          accessibilityLabel="Semaine suivante"
+        >
+          <Feather name="chevron-right" size={16} color={colors.muted} />
+        </PhysicalIconButton>
+
+        {/* De-emphasized on purpose: a plain link, not a heavy button */}
+        <Pressable
+          hitSlop={10}
+          onPress={onGoToToday}
+          style={styles.todayLink}
+          accessibilityRole="button"
+          accessibilityLabel="Revenir à aujourd'hui"
+        >
+          <Text style={styles.todayLinkText}>Aujourd&apos;hui</Text>
+        </Pressable>
       </View>
 
-      {/* Progress bar */}
+      {/* Compact one-line summary instead of a 3-column stat block */}
+      <View style={styles.summary}>
+        <Text style={styles.summaryLabel}>Résumé de la semaine</Text>
+        <Text style={styles.summaryText}>{summaryText}</Text>
+      </View>
+
       <View style={styles.progressTrack}>
         <View
           style={[
@@ -60,109 +73,67 @@ export const WeekProgressCard = ({
           ]}
         />
       </View>
-
-      {/* Stats row */}
-      <View style={styles.statsRow}>
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>{progress.percent}%</Text>
-          <Text style={styles.statLabel}>Planifiés</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>{progress.filled}</Text>
-          <Text style={styles.statLabel}>Prêts</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text
-            style={[styles.statValue, missing > 0 && styles.statValueMissing]}
-          >
-            {missing}
-          </Text>
-          <Text style={styles.statLabel}>À planifier</Text>
-        </View>
-      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   softCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.85)",
-    borderRadius: 24,
-    padding: 20,
-    gap: spacing.base * 1.2,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: radius.large,
+    padding: spacing.base * 1.4,
+    gap: spacing.base * 0.7,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.9)",
-    shadowColor: "#6B705C",
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.15,
-    shadowRadius: 25,
-    elevation: 4,
+    ...shadows.floating,
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  dayLabel: {
-    flex: 1,
-    marginRight: 8,
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#2D2D2A",
-    textTransform: "capitalize",
-  },
-  navGroup: {
-    flexShrink: 0,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
-  todayText: {
-    color: "#FFFFFF",
+  dayLabel: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 15,
+    lineHeight: 19,
+    fontWeight: "700",
+    color: colors.text,
+    textTransform: "capitalize",
+  },
+  todayLink: {
+    marginLeft: 4,
+    paddingVertical: 4,
+  },
+  todayLinkText: {
+    color: colors.accent,
     fontWeight: "700",
     fontSize: 13,
   },
+  summary: {
+    gap: 2,
+  },
+  summaryLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: colors.muted,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  summaryText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.text,
+  },
   progressTrack: {
-    height: 6,
-    backgroundColor: "#F5EFE4",
-    borderRadius: 999,
+    height: 5,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.pill,
     overflow: "hidden",
   },
   progressFill: {
     height: "100%",
-    backgroundColor: "#BC6C25",
-    borderRadius: 999,
-  },
-  statsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-around",
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-    gap: 2,
-  },
-  statDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: "#E4D9C8",
-  },
-  statValue: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#2D2D2A",
-  },
-  statValueMissing: {
-    color: "#BC6C25",
-  },
-  statLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#6B705C",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    backgroundColor: colors.accent,
+    borderRadius: radius.pill,
   },
 });

@@ -8,7 +8,7 @@ export const styles = StyleSheet.create({
   },
   container: {
     padding: spacing.screen,
-    gap: spacing.base * 2,
+    gap: spacing.base * 1.2,
     paddingBottom: spacing.screen * 2,
   },
   topBar: {

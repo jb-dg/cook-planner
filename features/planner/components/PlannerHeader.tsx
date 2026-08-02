@@ -38,7 +38,7 @@ export const PlannerHeader = ({
           <PhysicalButtonAnimated
             onPress={onViewModeToggle}
             variant="primary"
-            innerStyle={styles.viewToggleInner}
+            innerStyle={styles.calendarBtnInner}
             accessibilityLabel="Basculer en vue liste"
           >
             <Feather
@@ -55,7 +55,6 @@ export const PlannerHeader = ({
             innerStyle={styles.calendarBtnInner}
           >
             <Feather name="calendar" size={16} color="#6B705C" />
-            <Text style={styles.calendarBtnText}>Changer</Text>
           </PhysicalButtonAnimated>
         </View>
       </View>
@@ -119,10 +118,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   heading: {
-    fontSize: 28,
+    fontSize: 23,
     fontWeight: "900",
     color: "#2D2D2A",
     letterSpacing: -0.5,
-    lineHeight: 32,
+    lineHeight: 27,
   },
 });

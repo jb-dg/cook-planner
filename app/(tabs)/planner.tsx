@@ -15,6 +15,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useAuth } from "../../contexts/AuthContext";
 import { DayGridSelector } from "../../features/planner/components/DayGridSelector";
 import { FocusView } from "../../features/planner/components/FocusView";
@@ -45,6 +46,7 @@ export default function PlannerScreen() {
   const { session } = useAuth();
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
+  const tabBarHeight = useBottomTabBarHeight();
 
   // Navigation
   const {
@@ -197,7 +199,7 @@ export default function PlannerScreen() {
             {
               paddingBottom: isWeb
                 ? spacing.screen * 2
-                : spacing.screen + insets.bottom + 140,
+                : tabBarHeight + insets.bottom + 24,
             },
           ]}
           showsVerticalScrollIndicator={false}
@@ -231,6 +233,7 @@ export default function PlannerScreen() {
                   referenceDate={referenceDate}
                   selectedDate={selectedDate}
                   onSelectDate={setSelectedDate}
+                  days={days}
                 />
                 <FocusView
                   days={days}
@@ -287,6 +290,7 @@ export default function PlannerScreen() {
                     referenceDate={referenceDate}
                     selectedDate={selectedDate}
                     onSelectDate={setSelectedDate}
+                    days={days}
                   />
                   <FocusView
                     days={days}

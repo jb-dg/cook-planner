@@ -27,6 +27,15 @@ export const radii = {
   md: 14,
 };
 
+// Coherent radius scale — pill only for filters/status/small buttons,
+// medium/large for cards, more moderate radii for square buttons.
+export const radius = {
+  small: 10,
+  medium: 16,
+  large: 24,
+  pill: 999,
+};
+
 export const spacing = {
   base: 10,
   screen: 20,
@@ -67,5 +76,13 @@ export const shadows = {
     shadowRadius: 22,
     shadowOffset: { width: 0, height: 14 },
     elevation: 6,
+  },
+  // Light shadow for floating elements — keep hard/heavy shadows off cards.
+  floating: {
+    shadowColor: "rgba(45, 45, 42, 0.16)",
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
 };

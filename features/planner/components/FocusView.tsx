@@ -263,13 +263,13 @@ const styles = StyleSheet.create({
   // shellCardSurface mirrors HearthWeeklyPlanner's shellCard
   shellCardSurface: {
     borderRadius: 24,
-    paddingHorizontal: 18,
-    paddingTop: 18,
-    paddingBottom: 18,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 14,
     backgroundColor: "#ffffff",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.74)",
-    gap: spacing.base * 1.2,
+    gap: spacing.base * 0.9,
   },
   statusChip: {
     alignSelf: "flex-start",
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   noteLabel: {
     fontSize: 10,
     fontWeight: "800",
-    color: "#A5A58D",
+    color: "#6B705C",
     textTransform: "uppercase",
     letterSpacing: 1,
   },

@@ -115,11 +115,16 @@ export const DayMealCard = ({
           {!filled && !isEditing && (
             <Pressable style={styles.addRow} onPress={onOpenRecipePicker}>
               <View style={styles.addCircle}>
-                <Feather name="plus" size={16} color="#A5A58D" />
+                <Feather name="plus" size={16} color={colors.muted} />
               </View>
-              <Text style={styles.addText}>
-                Ajouter {isLunch ? "un déjeuner" : "un dîner"}
-              </Text>
+              <View style={styles.addTextBlock}>
+                <Text style={styles.addText}>
+                  Ajouter {isLunch ? "un déjeuner" : "un dîner"}
+                </Text>
+                <Text style={styles.addSubtext}>
+                  Rechercher une recette ou saisir directement
+                </Text>
+              </View>
             </Pressable>
           )}
 
@@ -131,7 +136,7 @@ export const DayMealCard = ({
             onBlur={handleBlur}
             editable={!syncing}
             placeholder="Saisir directement..."
-            placeholderTextColor="#A5A58D"
+            placeholderTextColor={colors.muted}
             style={[
               styles.input,
               showAsFilled && styles.inputFilled,
@@ -167,23 +172,25 @@ const styles = StyleSheet.create({
   // mealCardSurface mirrors HearthWeeklyPlanner's mealCard
   mealCardSurface: {
     borderRadius: 24,
-    paddingHorizontal: 28,
-    paddingTop: 28,
-    paddingBottom: 22,
-    minHeight: 136,
-    gap: spacing.base,
+    paddingHorizontal: 22,
+    paddingTop: 18,
+    paddingBottom: 16,
+    gap: spacing.base * 0.7,
   },
   mealCardLunch: {
     backgroundColor: "#FBFBFA",
+    minHeight: 118,
   },
   mealCardDinner: {
     backgroundColor: "#F4F0EA",
+    minHeight: 118,
   },
   mealCardEmpty: {
     backgroundColor: "rgba(255,255,255,0.42)",
     borderWidth: 1.5,
     borderStyle: "dashed",
     borderColor: "rgba(184,179,164,0.28)",
+    minHeight: 92,
   },
   slotHeader: {
     flexDirection: "row",
@@ -263,9 +270,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  addTextBlock: {
+    flexShrink: 1,
+    gap: 1,
+  },
   addText: {
-    color: "#A5A58D",
+    color: colors.muted,
     fontWeight: "700",
     fontSize: 14,
+  },
+  addSubtext: {
+    color: colors.muted,
+    fontWeight: "500",
+    fontSize: 11,
+    opacity: 0.85,
   },
 });

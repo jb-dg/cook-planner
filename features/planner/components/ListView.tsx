@@ -58,7 +58,8 @@ export const ListView = ({
 }: Props) => {
   const { width } = useWindowDimensions();
   const isWeb = Platform.OS === "web";
-  const isWideWeb = Platform.OS === "web" && width >= breakpoints.webPlannerWide;
+  const isWideWeb =
+    Platform.OS === "web" && width >= breakpoints.webPlannerWide;
 
   return (
     <View style={styles.weekList}>
@@ -386,7 +387,7 @@ const styles = StyleSheet.create({
   mealRowWebWideFilledLunch: {
     borderWidth: 0,
     borderStyle: "solid",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#ffffff",
   },
   mealRowWebWideFilledDinner: {
     borderWidth: 0,
