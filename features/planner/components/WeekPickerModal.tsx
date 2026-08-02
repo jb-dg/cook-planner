@@ -47,10 +47,12 @@ export const WeekPickerModal = ({
   onMonthNavigate,
   onSelectDate,
 }: Props) => {
-  const calendarLabel = useMemo(
-    () => format(calendarMonth, "MMMM yyyy", { locale: fr }),
-    [calendarMonth]
-  );
+  const calendarLabel = useMemo(() => {
+    // Capitalize only the first letter — CSS `textTransform: "capitalize"`
+    // would wrongly capitalize the month name too (e.g. "Août 2026").
+    const raw = format(calendarMonth, "MMMM yyyy", { locale: fr });
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  }, [calendarMonth]);
 
   const weekDayLabels = useMemo(() => {
     const base = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -330,7 +332,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 16,
     color: colors.text,
-    textTransform: "capitalize",
   },
   sheetWeekDays: {
     flexDirection: "row",

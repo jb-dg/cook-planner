@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
 import PhysicalIconButton from "../../../components/PhysicalIconButton";
 import { colors, radius, shadows, spacing } from "../../../theme/design";
 
@@ -47,16 +48,17 @@ export const WeekProgressCard = ({
           <Feather name="chevron-right" size={16} color={colors.muted} />
         </PhysicalIconButton>
 
-        {/* De-emphasized on purpose: a plain link, not a heavy button */}
-        <Pressable
-          hitSlop={10}
+        {/* Compact secondary button — stays less dominant than the date itself */}
+        <PhysicalButtonAnimated
+          variant="secondary"
           onPress={onGoToToday}
-          style={styles.todayLink}
+          borderRadius={14}
+          innerStyle={styles.todayButtonInner}
           accessibilityRole="button"
           accessibilityLabel="Revenir à aujourd'hui"
         >
-          <Text style={styles.todayLinkText}>Aujourd&apos;hui</Text>
-        </Pressable>
+          <Text style={styles.todayButtonText}>Aujourd&apos;hui</Text>
+        </PhysicalButtonAnimated>
       </View>
 
       {/* Compact one-line summary instead of a 3-column stat block */}
@@ -99,13 +101,13 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     fontWeight: "700",
     color: colors.text,
-    textTransform: "capitalize",
   },
-  todayLink: {
-    marginLeft: 4,
-    paddingVertical: 4,
+  todayButtonInner: {
+    minHeight: 44,
+    paddingHorizontal: 12,
+    paddingVertical: 0,
   },
-  todayLinkText: {
+  todayButtonText: {
     color: colors.accent,
     fontWeight: "700",
     fontSize: 13,

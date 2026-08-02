@@ -197,9 +197,13 @@ export default function PlannerScreen() {
             sharedStyles.container,
             isWeb && styles.containerWeb,
             {
+              // The tab bar floats (position: absolute) above the screen edge by an
+              // extra safe-area-driven offset that useBottomTabBarHeight() doesn't
+              // report — Math.max guards against that value coming back smaller
+              // than the tab bar's own height on some devices.
               paddingBottom: isWeb
                 ? spacing.screen * 2
-                : tabBarHeight + insets.bottom + 24,
+                : Math.max(tabBarHeight, 68) + insets.bottom + 24,
             },
           ]}
           showsVerticalScrollIndicator={false}

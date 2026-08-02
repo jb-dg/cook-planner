@@ -172,25 +172,25 @@ const styles = StyleSheet.create({
   // mealCardSurface mirrors HearthWeeklyPlanner's mealCard
   mealCardSurface: {
     borderRadius: 24,
-    paddingHorizontal: 22,
-    paddingTop: 18,
-    paddingBottom: 16,
-    gap: spacing.base * 0.7,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 14,
+    gap: spacing.base * 0.6,
   },
   mealCardLunch: {
     backgroundColor: "#FBFBFA",
-    minHeight: 118,
+    minHeight: 108,
   },
   mealCardDinner: {
     backgroundColor: "#F4F0EA",
-    minHeight: 118,
+    minHeight: 108,
   },
   mealCardEmpty: {
     backgroundColor: "rgba(255,255,255,0.42)",
     borderWidth: 1.5,
     borderStyle: "dashed",
-    borderColor: "rgba(184,179,164,0.28)",
-    minHeight: 92,
+    borderColor: "rgba(184,179,164,0.45)",
+    minHeight: 84,
   },
   slotHeader: {
     flexDirection: "row",
@@ -219,14 +219,14 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   body: {
-    gap: spacing.base * 0.75,
+    gap: spacing.base * 0.6,
   },
   input: {
     fontSize: 13,
     color: "#6B705C",
     borderTopWidth: 1,
     borderTopColor: "rgba(165, 165, 141, 0.2)",
-    paddingTop: spacing.base * 0.8,
+    paddingTop: spacing.base * 0.7,
     paddingVertical: 0,
     minHeight: 36,
   },
@@ -281,8 +281,7 @@ const styles = StyleSheet.create({
   },
   addSubtext: {
     color: colors.muted,
-    fontWeight: "500",
+    fontWeight: "600",
     fontSize: 11,
-    opacity: 0.85,
   },
 });

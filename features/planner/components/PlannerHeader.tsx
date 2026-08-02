@@ -53,6 +53,8 @@ export const PlannerHeader = ({
             onPress={onWeekPickerOpen}
             borderRadius={14}
             innerStyle={styles.calendarBtnInner}
+            accessibilityRole="button"
+            accessibilityLabel="Changer de semaine"
           >
             <Feather name="calendar" size={16} color="#6B705C" />
           </PhysicalButtonAnimated>
@@ -101,21 +103,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.base * 0.6,
   },
-  viewToggleInner: {
-    width: 44,
-    height: 44,
-    minHeight: 44,
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-  },
   calendarBtnInner: {
     flexDirection: "row",
     gap: 6,
-  },
-  calendarBtnText: {
-    color: "#6B705C",
-    fontWeight: "700",
-    fontSize: 13,
   },
   heading: {
     fontSize: 23,

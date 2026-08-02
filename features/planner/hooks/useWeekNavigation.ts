@@ -27,10 +27,13 @@ export const useWeekNavigation = () => {
     return `${startLabel} → ${endLabel}`;
   }, [referenceDate]);
 
-  const selectedDayLabel = useMemo(
-    () => format(selectedDate, "EEEE d MMM", { locale: fr }),
-    [selectedDate]
-  );
+  const selectedDayLabel = useMemo(() => {
+    // French weekday/month names come back lowercase from date-fns — capitalize
+    // only the first letter here rather than via CSS `textTransform: "capitalize"`,
+    // which would wrongly capitalize the month too (e.g. "Lun. 27 Juil.").
+    const raw = format(selectedDate, "EEE d MMM", { locale: fr });
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  }, [selectedDate]);
 
   useEffect(() => {
     setCalendarMonth(startOfMonth(selectedDate));
