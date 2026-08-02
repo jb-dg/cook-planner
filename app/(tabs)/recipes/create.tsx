@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../contexts/AuthContext";
+import PhysicalButton from "../../../components/PhysicalButton";
 import WebFooter from "../../../components/WebFooter";
 import {
   AddRecipeDraft,
@@ -1060,12 +1061,9 @@ export default function CreateRecipeScreen() {
             />
 
             <View style={styles.actionsRow}>
-              <Pressable
-                style={styles.secondaryButton}
-                onPress={() => setStep(1)}
-              >
+              <PhysicalButton variant="secondary" onPress={() => setStep(1)}>
                 <Text style={styles.secondaryButtonText}>Retour</Text>
-              </Pressable>
+              </PhysicalButton>
               <Pressable
                 style={[styles.primaryButton, !canGoToFinalize && styles.buttonDisabled]}
                 onPress={handleContinueFromReview}
@@ -1152,9 +1150,9 @@ export default function CreateRecipeScreen() {
             </View>
 
             <View style={styles.actionsRow}>
-              <Pressable style={styles.secondaryButton} onPress={() => setStep(2)}>
+              <PhysicalButton variant="secondary" onPress={() => setStep(2)}>
                 <Text style={styles.secondaryButtonText}>Retour</Text>
-              </Pressable>
+              </PhysicalButton>
               <Pressable
                 style={[styles.primaryButton, saving && styles.buttonDisabled]}
                 onPress={() => {
@@ -1212,7 +1210,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   heading: {
-    fontSize: 30,
+    fontSize: 28,
+    lineHeight: 32,
     fontWeight: "900",
     color: colors.text,
     letterSpacing: -0.8,
@@ -1356,7 +1355,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     flex: 1,
-    minHeight: 47,
+    minHeight: 48,
     borderRadius: 999,
     backgroundColor: colors.accent,
     alignItems: "center",
@@ -1369,16 +1368,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "800",
-  },
-  secondaryButton: {
-    minHeight: 47,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
   },
   secondaryButtonText: {
     color: colors.muted,
@@ -1399,7 +1388,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(188, 108, 37, 0.3)",
     backgroundColor: "rgba(188, 108, 37, 0.08)",
     borderRadius: 999,
-    minHeight: 32,
+    minHeight: 48,
     paddingHorizontal: 10,
     alignItems: "center",
     justifyContent: "center",
@@ -1553,7 +1542,7 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     borderColor: colors.cardBorder,
     borderRadius: radii.lg,
-    minHeight: 42,
+    minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
   },

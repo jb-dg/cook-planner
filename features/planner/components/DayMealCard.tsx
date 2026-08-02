@@ -9,7 +9,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { spacing } from "../../../theme/design";
+import { colors, spacing } from "../../../theme/design";
 import { MealKey } from "../utils/types";
 
 const shadowCard = Platform.select({
@@ -159,14 +159,14 @@ export const DayMealCard = ({
 
 const styles = StyleSheet.create({
   mealCardShadow: {
-    borderRadius: 32,
+    borderRadius: 24,
   },
   mealCardRaised: {
     ...shadowCard,
   },
   // mealCardSurface mirrors HearthWeeklyPlanner's mealCard
   mealCardSurface: {
-    borderRadius: 32,
+    borderRadius: 24,
     paddingHorizontal: 28,
     paddingTop: 28,
     paddingBottom: 22,
@@ -197,10 +197,10 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: 3.1,
     textTransform: "uppercase",
-    color: "#A8A38F",
+    color: colors.accentTertiary,
   },
   slotLabelDinner: {
-    color: "#BF6B1F",
+    color: colors.accent,
   },
   recipeBtn: {
     width: 28,
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingVertical: 4,
+    minHeight: 48,
   },
   addCircle: {
     width: 32,

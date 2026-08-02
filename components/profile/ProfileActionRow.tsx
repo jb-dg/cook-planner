@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors, radii } from "@/theme/design";
+import { colors, radii, shadows } from "@/theme/design";
 
 import type { QuickActionItem } from "./types";
 
@@ -37,11 +37,7 @@ const styles = StyleSheet.create({
     gap: 14,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    ...shadows.subtle,
   },
   actionIcon: {
     width: 40,

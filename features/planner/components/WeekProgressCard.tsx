@@ -1,5 +1,7 @@
 import { Feather } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
+import PhysicalIconButton from "../../../components/PhysicalIconButton";
 import { spacing } from "../../../theme/design";
 
 type Props = {
@@ -25,17 +27,27 @@ export const WeekProgressCard = ({
   return (
     <View style={styles.softCard}>
       <View style={styles.header}>
-        <Text style={styles.dayLabel}>{selectedDayLabel}</Text>
+        <Text style={styles.dayLabel} numberOfLines={1}>
+          {selectedDayLabel}
+        </Text>
         <View style={styles.navGroup}>
-          <Pressable style={styles.navBtn} onPress={() => onNavigate("prev")}>
-            <Feather name="chevron-left" size={16} color="#2D2D2A" />
-          </Pressable>
-          <Pressable style={styles.todayBtn} onPress={onGoToToday}>
+          <PhysicalIconButton
+            variant="secondary"
+            onPress={() => onNavigate("prev")}
+            accessibilityLabel="Jour précédent"
+          >
+            <Feather name="chevron-left" size={16} color="#6B705C" />
+          </PhysicalIconButton>
+          <PhysicalButtonAnimated variant="primary" onPress={onGoToToday}>
             <Text style={styles.todayText}>Aujourd&apos;hui</Text>
-          </Pressable>
-          <Pressable style={styles.navBtn} onPress={() => onNavigate("next")}>
-            <Feather name="chevron-right" size={16} color="#2D2D2A" />
-          </Pressable>
+          </PhysicalButtonAnimated>
+          <PhysicalIconButton
+            variant="secondary"
+            onPress={() => onNavigate("next")}
+            accessibilityLabel="Jour suivant"
+          >
+            <Feather name="chevron-right" size={16} color="#6B705C" />
+          </PhysicalIconButton>
         </View>
       </View>
 
@@ -77,7 +89,7 @@ export const WeekProgressCard = ({
 const styles = StyleSheet.create({
   softCard: {
     backgroundColor: "rgba(255, 255, 255, 0.85)",
-    borderRadius: 28,
+    borderRadius: 24,
     padding: 20,
     gap: spacing.base * 1.2,
     borderWidth: 1,
@@ -94,36 +106,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   dayLabel: {
+    flex: 1,
+    marginRight: 8,
     fontSize: 16,
     fontWeight: "700",
     color: "#2D2D2A",
     textTransform: "capitalize",
   },
   navGroup: {
+    flexShrink: 0,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-  },
-  navBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E4D9C8",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F5EFE4",
-  },
-  todayBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: "#BC6C25",
-    shadowColor: "#BC6C25",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
   },
   todayText: {
     color: "#FFFFFF",

@@ -34,7 +34,7 @@ export const styles = StyleSheet.create({
     alignSelf: "center",
   },
   headerCard: {
-    borderRadius: radii.lg,
+    borderRadius: 24,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.cardBorder,
@@ -66,8 +66,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.base * 0.6,
-    minHeight: 46,
-    paddingVertical: spacing.base * 0.8,
+    minHeight: 48,
     paddingHorizontal: spacing.base,
     borderRadius: radii.lg,
     backgroundColor: colors.surface,
@@ -89,7 +88,7 @@ export const styles = StyleSheet.create({
     marginTop: spacing.screen,
   },
   emptyState: {
-    borderRadius: radii.lg,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     backgroundColor: colors.surface,
@@ -113,7 +112,8 @@ export const styles = StyleSheet.create({
   clearButton: {
     alignSelf: "center",
     paddingHorizontal: spacing.card,
-    paddingVertical: 10,
+    minHeight: 48,
+    justifyContent: "center",
     borderRadius: radii.xl,
     borderWidth: 1,
     borderColor: colors.cardBorder,

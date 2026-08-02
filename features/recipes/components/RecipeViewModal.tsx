@@ -10,8 +10,8 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
+import PhysicalButton from "@/components/PhysicalButton";
 import { colors, radii, spacing } from "@/theme/design";
 
 import type { Recipe } from "../types";
@@ -44,12 +44,13 @@ export default function RecipeViewModal({
     <Modal
       visible={visible}
       animationType="slide"
-      transparent={Platform.OS === "web"}
+      transparent
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.modalScreen} edges={["top", "left", "right"]}>
-        <View style={styles.backdrop}>
-          <View style={styles.sheet}>
+      <Pressable style={styles.backdrop} onPress={onClose} />
+      <View style={styles.sheetPositioner} pointerEvents="box-none">
+        <View style={styles.sheet}>
+            {Platform.OS !== "web" && <View style={styles.sheetHandle} />}
             <View style={styles.header}>
               <View style={styles.titleBlock}>
                 <Text style={styles.kicker}>Recette</Text>
@@ -153,41 +154,49 @@ export default function RecipeViewModal({
 
             {recipe && onEdit ? (
               <View style={styles.footer}>
-                <Pressable
-                  style={styles.secondaryButton}
+                <PhysicalButton
+                  variant="secondary"
                   onPress={() => onEdit(recipe.id)}
+                  innerStyle={styles.secondaryButtonInner}
                 >
-                  <Feather name="edit-2" size={14} color={colors.accent} />
+                  <Feather name="edit-2" size={14} color={colors.muted} />
                   <Text style={styles.secondaryButtonText}>Modifier</Text>
-                </Pressable>
+                </PhysicalButton>
               </View>
             ) : null}
-          </View>
         </View>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalScreen: {
-    flex: 1,
-    backgroundColor: Platform.OS === "web" ? "rgba(45, 45, 42, 0.35)" : colors.background,
-  },
   backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.35)",
+  },
+  sheetPositioner: {
     flex: 1,
     justifyContent: Platform.OS === "web" ? "center" : "flex-end",
     alignItems: "center",
     padding: Platform.OS === "web" ? spacing.screen : 0,
   },
+  sheetHandle: {
+    alignSelf: "center",
+    marginTop: 8,
+    width: 42,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: colors.cardBorder,
+  },
   sheet: {
     width: "100%",
     maxWidth: 720,
     maxHeight: Platform.OS === "web" ? "86%" : "94%",
-    borderTopLeftRadius: Platform.OS === "web" ? 28 : 30,
-    borderTopRightRadius: Platform.OS === "web" ? 28 : 30,
-    borderBottomLeftRadius: Platform.OS === "web" ? 28 : 0,
-    borderBottomRightRadius: Platform.OS === "web" ? 28 : 0,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderBottomLeftRadius: Platform.OS === "web" ? 24 : 0,
+    borderBottomRightRadius: Platform.OS === "web" ? 24 : 0,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.9)",
@@ -223,9 +232,9 @@ const styles = StyleSheet.create({
     lineHeight: 31,
   },
   iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.surfaceAlt,
@@ -340,7 +349,7 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   sourceButton: {
-    minHeight: 42,
+    minHeight: 48,
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: "rgba(188, 108, 37, 0.18)",
@@ -363,20 +372,13 @@ const styles = StyleSheet.create({
     borderTopColor: "rgba(228, 217, 200, 0.7)",
     backgroundColor: "#FFFFFF",
   },
-  secondaryButton: {
-    minHeight: 46,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(188, 108, 37, 0.35)",
-    backgroundColor: "rgba(188, 108, 37, 0.08)",
-    alignItems: "center",
-    justifyContent: "center",
+  secondaryButtonInner: {
     flexDirection: "row",
     gap: 8,
   },
   secondaryButtonText: {
-    color: colors.accent,
+    color: colors.muted,
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "900",
   },
 });

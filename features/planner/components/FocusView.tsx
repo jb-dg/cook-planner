@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   shellCardShadow: {
-    borderRadius: 42,
+    borderRadius: 24,
     position: "relative",
     ...shadowShell.sm,
   },
@@ -256,13 +256,13 @@ const styles = StyleSheet.create({
     left: -1,
     right: -1,
     bottom: -2,
-    borderRadius: 42,
+    borderRadius: 24,
     backgroundColor: "#000000",
     opacity: 0.12,
   },
   // shellCardSurface mirrors HearthWeeklyPlanner's shellCard
   shellCardSurface: {
-    borderRadius: 42,
+    borderRadius: 24,
     paddingHorizontal: 18,
     paddingTop: 18,
     paddingBottom: 18,

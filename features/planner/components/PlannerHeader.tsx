@@ -4,6 +4,7 @@ import { spacing } from "../../../theme/design";
 import { ViewMode } from "../utils/types";
 import { SaveStatusIndicator } from "./SaveStatusIndicator";
 import PhysicalIconButton from "../../../components/PhysicalIconButton";
+import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
 
 type Props = {
   weekNumber: number;
@@ -47,10 +48,14 @@ export const PlannerHeader = ({
             />
           </PhysicalIconButton>
           {/* Calendar trigger */}
-          <Pressable style={styles.calendarBtn} onPress={onWeekPickerOpen}>
+          <PhysicalButtonAnimated
+            variant="secondary"
+            onPress={onWeekPickerOpen}
+            innerStyle={styles.calendarBtnInner}
+          >
             <Feather name="calendar" size={18} color="#BC6C25" />
             <Text style={styles.calendarBtnText}>Changer</Text>
-          </Pressable>
+          </PhysicalButtonAnimated>
         </View>
       </View>
 
@@ -96,32 +101,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.base * 0.6,
   },
-  calendarBtn: {
+  calendarBtnInner: {
     flexDirection: "row",
-    alignItems: "center",
     gap: 8,
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "rgba(165, 165, 141, 0.25)",
-    shadowColor: "rgba(107, 112, 92, 0.12)",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 6,
-    elevation: 2,
   },
   calendarBtnText: {
-    color: "#2D2D2A",
-    fontWeight: "700",
+    color: "#6B705C",
+    fontWeight: "900",
     fontSize: 14,
   },
   heading: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: "900",
     color: "#2D2D2A",
     letterSpacing: -0.5,
-    lineHeight: 36,
+    lineHeight: 32,
   },
 });

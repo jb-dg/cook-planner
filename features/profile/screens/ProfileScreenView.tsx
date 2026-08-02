@@ -144,19 +144,17 @@ export default function ProfileScreenView({ variant }: Props) {
               <Text style={styles.avatarEditorLetter}>{state.badgeLetter}</Text>
             )}
           </View>
-          <Pressable
-            style={[
-              styles.secondaryButton,
-              styles.avatarUploadButton,
-              state.uploadingAvatar && styles.buttonDisabled,
-            ]}
-            onPress={state.handlePickAvatar}
-            disabled={state.uploadingAvatar}
-          >
-            <Text style={styles.secondaryButtonText} numberOfLines={1}>
-              {state.uploadingAvatar ? "Upload..." : "Choisir une photo"}
-            </Text>
-          </Pressable>
+          <View style={styles.avatarUploadButton}>
+            <PhysicalButton
+              variant="secondary"
+              onPress={state.handlePickAvatar}
+              disabled={state.uploadingAvatar}
+            >
+              <Text style={styles.secondaryButtonText} numberOfLines={1}>
+                {state.uploadingAvatar ? "Upload..." : "Choisir une photo"}
+              </Text>
+            </PhysicalButton>
+          </View>
         </View>
         <Text style={[styles.label, { marginTop: 16 }]}>Pseudo unique</Text>
         {state.loadingProfile ? (
@@ -214,18 +212,15 @@ export default function ProfileScreenView({ variant }: Props) {
             {state.householdError ? (
               <Text style={styles.errorText}>{state.householdError}</Text>
             ) : null}
-            <Pressable
-              style={[
-                styles.secondaryButton,
-                state.creatingHousehold && styles.buttonDisabled,
-              ]}
+            <PhysicalButton
+              variant="secondary"
               onPress={state.handleCreateHousehold}
               disabled={state.creatingHousehold}
             >
               <Text style={styles.secondaryButtonText} numberOfLines={1}>
                 {state.creatingHousehold ? "Création…" : "Créer"}
               </Text>
-            </Pressable>
+            </PhysicalButton>
           </View>
         )}
         {state.householdModalMode === "join" && (
@@ -292,18 +287,15 @@ export default function ProfileScreenView({ variant }: Props) {
                     {state.inviteSuccess ? (
                       <Text style={styles.successText}>{state.inviteSuccess}</Text>
                     ) : null}
-                    <Pressable
-                      style={[
-                        styles.secondaryButton,
-                        state.inviting && styles.buttonDisabled,
-                      ]}
+                    <PhysicalButton
+                      variant="secondary"
                       onPress={state.handleInviteMember}
                       disabled={state.inviting}
                     >
                       <Text style={styles.secondaryButtonText} numberOfLines={1}>
                         {state.inviting ? "Ajout…" : "Inviter"}
                       </Text>
-                    </Pressable>
+                    </PhysicalButton>
                   </View>
                 ) : (
                   <Text style={styles.helper}>

@@ -88,10 +88,10 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   addButton: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     flexShrink: 0,
-    borderRadius: 21,
+    borderRadius: 14,
     backgroundColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",

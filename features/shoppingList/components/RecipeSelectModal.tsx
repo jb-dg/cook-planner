@@ -138,9 +138,9 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.surfaceAlt,

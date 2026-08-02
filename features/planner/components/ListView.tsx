@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   softCardSurface: {
     flex: 1,
     backgroundColor: "rgb(255, 255, 255)",
-    borderRadius: 28,
+    borderRadius: 24,
     padding: 18,
     gap: spacing.base,
     borderWidth: 1,
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   },
   softCardSurfaceWeb: {
     backgroundColor: "rgba(255, 255, 255, 0.72)",
-    borderRadius: 40,
+    borderRadius: 24,
     borderColor: "rgba(255,255,255,1)",
     padding: 20,
   },

@@ -269,11 +269,11 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
   heading: {
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: "900",
     color: "#2D2D2A",
     letterSpacing: -0.5,
-    lineHeight: 40,
+    lineHeight: 32,
   },
   headingWeb: {
     fontSize: 64,
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   },
   softCard: {
     backgroundColor: "rgba(255, 255, 255, 0.85)",
-    borderRadius: 32,
+    borderRadius: 24,
     padding: 24,
     gap: spacing.base * 1.2,
     borderWidth: 1,
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 20 },
     shadowOpacity: 0.15,
     shadowRadius: 25,
-    elevation: 25,
+    elevation: 4,
   },
   progressHeader: {
     flexDirection: "row",
@@ -370,6 +370,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.1,
     shadowRadius: 16,
+    elevation: 2,
   },
   statValue: {
     fontSize: 26,

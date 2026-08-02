@@ -315,7 +315,7 @@ export default function AuthForm() {
           alignItems: "center",
           justifyContent: "center",
           gap: t.spacing.xs,
-          height: 52,
+          minHeight: 48,
           borderRadius: t.radius.lg,
           backgroundColor: "rgba(255, 255, 255, 0.6)",
           borderWidth: 1,

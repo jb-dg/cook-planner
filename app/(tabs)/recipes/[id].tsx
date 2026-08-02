@@ -434,6 +434,7 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 28,
+    lineHeight: 32,
     fontWeight: "900",
     color: colors.text,
     letterSpacing: -0.5,
@@ -450,7 +451,8 @@ const styles = StyleSheet.create({
   modeButton: {
     flex: 1,
     borderRadius: 999,
-    paddingVertical: 10,
+    minHeight: 48,
+    justifyContent: "center",
     alignItems: "center",
   },
   modeButtonActive: {
@@ -584,7 +586,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.accent,
     borderRadius: radii.lg,
-    minHeight: 44,
+    minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -617,7 +619,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.danger,
     borderRadius: radii.lg,
-    paddingVertical: 14,
+    minHeight: 48,
+    justifyContent: "center",
     alignItems: "center",
   },
   deleteButtonText: {

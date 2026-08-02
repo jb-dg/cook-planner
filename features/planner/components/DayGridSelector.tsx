@@ -1,7 +1,7 @@
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, spacing } from "../../../theme/design";
+import { colors, shadows, spacing } from "../../../theme/design";
 
 type Props = {
   referenceDate: Date;
@@ -87,11 +87,7 @@ const styles = StyleSheet.create({
     gap: spacing.base * 0.15,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    ...shadows.subtle,
   },
   dayGridItemActive: {
     borderColor: colors.accent,

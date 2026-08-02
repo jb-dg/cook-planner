@@ -45,6 +45,15 @@ export const breakpoints = {
 };
 
 export const shadows = {
+  // Lightweight elevation for small inline cards/rows (profile rows, chips-as-buttons).
+  // Kept distinct from `card`/`soft` below, which are for larger surfaces.
+  subtle: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
   card: {
     shadowColor: "rgba(45, 45, 42, 0.15)",
     shadowOpacity: 0.12,

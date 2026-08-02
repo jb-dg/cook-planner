@@ -39,8 +39,9 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.surfaceAlt,
   },
   heading: {
-    fontSize: 26,
-    fontWeight: "700",
+    fontSize: 28,
+    lineHeight: 32,
+    fontWeight: "900",
     color: colors.text,
   },
   rangeText: {
@@ -55,7 +56,8 @@ export const styles = StyleSheet.create({
     marginTop: 16,
     backgroundColor: colors.accent,
     borderRadius: radii.lg,
-    paddingVertical: 16,
+    minHeight: 48,
+    justifyContent: "center",
     alignItems: "center",
   },
   saveButtonDisabled: {
@@ -63,7 +65,7 @@ export const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: "#fff",
-    fontWeight: "600",
+    fontWeight: "800",
     fontSize: 16,
   },
   saveButtonTextDisabled: {

@@ -6,6 +6,12 @@ import { Platform } from "react-native";
 
 export const physicalVariants = {
   primary:      { bgColor: "#BC6C25", shadowColor: "#8B4513" },
+  secondary:    {
+    bgColor: "rgba(255, 255, 255, 0.42)",
+    shadowColor: "rgba(165, 165, 141, 0.38)",
+    borderColor: "rgba(165, 165, 141, 0.2)",
+    textColor: "#6B705C", // hearth-sage — matches weatly-web's .secondary-button
+  },
   danger:       { bgColor: "#C75252", shadowColor: "#8B2020" },
   neutralLight: { bgColor: "#F5EFE4", shadowColor: "#8B4513" },
   neutralDark:  { bgColor: "#2D2D2A", shadowColor: "#000000" },

@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     alignSelf: "flex-start",
-    minHeight: 30,
+    minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
     gap: 2,
@@ -512,11 +512,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   heading: {
-    fontSize: 29,
+    fontSize: 28,
     fontWeight: "900",
     color: "#2D2D2A",
     letterSpacing: -0.8,
-    lineHeight: 34,
+    lineHeight: 32,
   },
   subtitle: {
     color: "#6B705C",
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
   },
   createRecipeButton: {
     marginTop: 6,
-    minHeight: 40,
+    minHeight: 48,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: "#BC6C25",
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   recipeCardShadow: {
-    borderRadius: 32,
+    borderRadius: 24,
     position: "relative",
     ...shadowCard,
   },
@@ -559,12 +559,12 @@ const styles = StyleSheet.create({
     left: -1,
     right: -1,
     bottom: -2,
-    borderRadius: 32,
+    borderRadius: 24,
     backgroundColor: "#000000",
     opacity: 0.11,
   },
   recipeCardSurface: {
-    borderRadius: 32,
+    borderRadius: 24,
     paddingHorizontal: 18,
     paddingTop: 18,
     paddingBottom: 16,
@@ -640,7 +640,7 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    minHeight: 40,
+    minHeight: 48,
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
@@ -668,7 +668,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   membershipButton: {
-    minHeight: 40,
+    minHeight: 48,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: "#E4D9C8",
@@ -718,7 +718,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   availableAddButton: {
-    minHeight: 32,
+    minHeight: 48,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: "rgba(188, 108, 37, 0.25)",
@@ -746,7 +746,7 @@ const styles = StyleSheet.create({
     marginTop: 32,
     paddingVertical: 26,
     paddingHorizontal: 18,
-    borderRadius: 32,
+    borderRadius: 24,
     borderWidth: 1.4,
     borderStyle: "dashed",
     borderColor: "rgba(165, 165, 141, 0.36)",

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import {
+  AccessibilityRole,
   Animated,
   Easing,
   Pressable,
@@ -9,10 +10,10 @@ import {
 } from "react-native";
 import { PhysicalVariant, physicalVariants } from "../theme/shadows";
 
-const SHADOW_OFFSET_REST = 4;
-const SHADOW_OFFSET_PRESSED = 1;
+const SHADOW_OFFSET_REST = 5;
+const SHADOW_OFFSET_PRESSED = 2;
 const PRESS_TRANSLATE_Y = SHADOW_OFFSET_REST - SHADOW_OFFSET_PRESSED;
-const BORDER_RADIUS = 16;
+const BORDER_RADIUS = 18;
 const TRANSITION_DURATION_MS = 200;
 const PRESS_EASING = Easing.bezier(0.175, 0.885, 0.32, 1.275);
 
@@ -22,6 +23,8 @@ interface Props {
   variant?: PhysicalVariant;
   /** Override the inner button style (padding, borderRadius, etc.) */
   innerStyle?: ViewStyle;
+  accessibilityRole?: AccessibilityRole;
+  accessibilityLabel?: string;
   children: React.ReactNode;
 }
 
@@ -30,10 +33,14 @@ export default function PhysicalButtonAnimated({
   disabled = false,
   variant = "primary",
   innerStyle,
+  accessibilityRole,
+  accessibilityLabel,
   children,
 }: Props) {
   const pressAnim = useRef(new Animated.Value(0)).current;
-  const { bgColor, shadowColor } = physicalVariants[variant];
+  const variantConfig = physicalVariants[variant];
+  const { bgColor, shadowColor } = variantConfig;
+  const borderColor = "borderColor" in variantConfig ? variantConfig.borderColor : undefined;
 
   useEffect(() => {
     if (disabled) {
@@ -82,12 +89,15 @@ export default function PhysicalButtonAnimated({
           onPressIn={() => !disabled && animateTo(1)}
           onPressOut={() => !disabled && animateTo(0)}
           disabled={disabled}
+          accessibilityRole={accessibilityRole}
+          accessibilityLabel={accessibilityLabel}
           style={[
             styles.button,
             {
               backgroundColor: disabled ? "#E4D9C8" : bgColor,
               borderRadius: BORDER_RADIUS,
             },
+            borderColor && { borderWidth: 2, borderColor },
             innerStyle,
           ]}
         >
@@ -116,7 +126,8 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   button: {
-    paddingVertical: 18,
+    minHeight: 48,
+    paddingVertical: 12,
     paddingHorizontal: 16,
     alignItems: "center",
     justifyContent: "center",

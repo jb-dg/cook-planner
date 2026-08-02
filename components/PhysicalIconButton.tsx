@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, View } from "react-native";
 
-import { physicalVariants } from "../theme/shadows";
+import { PhysicalVariant, physicalVariants } from "../theme/shadows";
 
 const SIZE = 44;
 const DEPTH = 3;
@@ -10,6 +10,8 @@ interface Props {
   onPress: () => void;
   /** When active, switches to the neutralDark variant */
   active?: boolean;
+  /** Explicit variant override (e.g. "secondary") — takes precedence over active/inactive */
+  variant?: PhysicalVariant;
   children: React.ReactNode;
   accessibilityLabel?: string;
 }
@@ -24,16 +26,27 @@ interface Props {
 export default function PhysicalIconButton({
   onPress,
   active = false,
+  variant,
   children,
   accessibilityLabel,
 }: Props) {
-  const variant = active ? physicalVariants.neutralDark : physicalVariants.neutralLight;
+  const variantConfig = variant
+    ? physicalVariants[variant]
+    : active
+      ? physicalVariants.neutralDark
+      : physicalVariants.neutralLight;
+  const borderColor =
+    "borderColor" in variantConfig
+      ? variantConfig.borderColor
+      : active
+        ? "#2D2D2A"
+        : "#E4D9C8";
 
   return (
     <View
       style={[
         styles.wrapper,
-        { backgroundColor: variant.shadowColor, borderRadius: BORDER_RADIUS },
+        { backgroundColor: variantConfig.shadowColor, borderRadius: BORDER_RADIUS },
       ]}
     >
       <Pressable
@@ -41,8 +54,11 @@ export default function PhysicalIconButton({
         accessibilityLabel={accessibilityLabel}
         style={({ pressed }) => [
           styles.button,
-          { backgroundColor: variant.bgColor, borderRadius: BORDER_RADIUS },
-          active && styles.buttonActive,
+          {
+            backgroundColor: variantConfig.bgColor,
+            borderRadius: BORDER_RADIUS,
+            borderColor,
+          },
           pressed && styles.buttonPressed,
         ]}
       >
@@ -62,10 +78,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#E4D9C8",
-  },
-  buttonActive: {
-    borderColor: "#2D2D2A",
   },
   buttonPressed: {
     transform: [{ translateY: DEPTH }],

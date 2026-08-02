@@ -1,6 +1,7 @@
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { colors, radii, spacing } from "@/theme/design";
+import PhysicalButton from "@/components/PhysicalButton";
+import { colors, radii, shadows, spacing } from "@/theme/design";
 
 import type { Household, HouseholdMember } from "./types";
 
@@ -41,16 +42,20 @@ export default function HouseholdSummaryCard({
           Utilise les actions ci-dessous pour créer ou rejoindre un foyer partagé.
         </Text>
         <View style={styles.householdActions}>
-          <Pressable style={styles.secondaryButton} onPress={onOpenCreate}>
-            <Text style={styles.secondaryButtonText} numberOfLines={1}>
-              Créer un foyer
-            </Text>
-          </Pressable>
-          <Pressable style={styles.secondaryButton} onPress={onOpenJoin}>
-            <Text style={styles.secondaryButtonText} numberOfLines={1}>
-              Rejoindre
-            </Text>
-          </Pressable>
+          <View style={styles.secondaryButtonWrapper}>
+            <PhysicalButton variant="secondary" onPress={onOpenCreate}>
+              <Text style={styles.secondaryButtonText} numberOfLines={1}>
+                Créer un foyer
+              </Text>
+            </PhysicalButton>
+          </View>
+          <View style={styles.secondaryButtonWrapper}>
+            <PhysicalButton variant="secondary" onPress={onOpenJoin}>
+              <Text style={styles.secondaryButtonText} numberOfLines={1}>
+                Rejoindre
+              </Text>
+            </PhysicalButton>
+          </View>
         </View>
       </View>
     );
@@ -124,11 +129,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgb(255, 255, 255)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.95)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    ...shadows.subtle,
   },
   householdCardEmpty: {
     borderStyle: "dashed",
@@ -228,7 +229,8 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     borderWidth: 1.5,
     borderColor: colors.accent,
-    paddingVertical: 12,
+    minHeight: 48,
+    justifyContent: "center",
     paddingHorizontal: spacing.base,
     alignItems: "center",
     backgroundColor: "rgba(188, 108, 37, 0.05)",
@@ -249,20 +251,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
   },
-  secondaryButton: {
+  secondaryButtonWrapper: {
     flex: 1,
-    minWidth: 0,
-    borderRadius: radii.lg,
-    paddingVertical: 14,
-    paddingHorizontal: spacing.base,
-    alignItems: "center",
-    borderWidth: 1.5,
-    borderColor: colors.accent,
-    backgroundColor: "rgba(188, 108, 37, 0.06)",
   },
   secondaryButtonText: {
-    color: colors.accent,
-    fontWeight: "700",
+    color: colors.muted,
+    fontWeight: "900",
     fontSize: 15,
     flexShrink: 1,
   },

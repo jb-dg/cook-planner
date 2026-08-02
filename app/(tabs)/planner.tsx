@@ -38,6 +38,7 @@ import {
 } from "../../features/planner/utils/types";
 import { Recipe } from "../../features/recipes/types";
 import { colors, layout, spacing } from "../../theme/design";
+import PhysicalButtonAnimated from "../../components/PhysicalButtonAnimated";
 import WebFooter from "../../components/WebFooter";
 
 export default function PlannerScreen() {
@@ -244,17 +245,18 @@ export default function PlannerScreen() {
                   onOpenRecipePicker={openRecipePicker}
                   onBlur={save}
                 />
-                <Pressable
-                  style={styles.listButton}
+                <PhysicalButtonAnimated
+                  variant="primary"
                   onPress={() => setViewMode("list")}
+                  innerStyle={styles.listButtonInner}
                   accessibilityRole="button"
                   accessibilityLabel="Voir la semaine en liste"
                 >
-                  <Feather name="list" size={16} color={colors.accent} />
+                  <Feather name="list" size={16} color="#FFFFFF" />
                   <Text style={styles.listButtonText}>
                     Voir la semaine en liste
                   </Text>
-                </Pressable>
+                </PhysicalButtonAnimated>
               </View>
             </View>
           ) : (
@@ -299,17 +301,18 @@ export default function PlannerScreen() {
                     onOpenRecipePicker={openRecipePicker}
                     onBlur={save}
                   />
-                  <Pressable
-                    style={styles.listButton}
+                  <PhysicalButtonAnimated
+                    variant="primary"
                     onPress={() => setViewMode("list")}
+                    innerStyle={styles.listButtonInner}
                     accessibilityRole="button"
                     accessibilityLabel="Voir la semaine en liste"
                   >
-                    <Feather name="list" size={16} color={colors.accent} />
+                    <Feather name="list" size={16} color="#FFFFFF" />
                     <Text style={styles.listButtonText}>
                       Voir la semaine en liste
                     </Text>
-                  </Pressable>
+                  </PhysicalButtonAnimated>
                 </>
               )}
             </>
@@ -376,25 +379,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  listButton: {
+  listButtonInner: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
     gap: spacing.base * 0.6,
-    paddingVertical: spacing.base * 1.1,
-    borderRadius: 20,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
   },
   listButtonText: {
-    color: colors.text,
-    fontWeight: "700",
+    color: "#FFFFFF",
+    fontWeight: "900",
     fontSize: 14,
   },
   containerWeb: {

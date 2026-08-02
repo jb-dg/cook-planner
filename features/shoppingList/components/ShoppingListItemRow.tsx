@@ -95,9 +95,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   deleteButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },

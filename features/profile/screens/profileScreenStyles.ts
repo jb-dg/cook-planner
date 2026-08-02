@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native";
 
-import { colors, layout, radii, spacing } from "@/theme/design";
+import { colors, layout, radii, shadows, spacing } from "@/theme/design";
 
 export const styles = StyleSheet.create({
   screen: {
@@ -18,16 +18,12 @@ export const styles = StyleSheet.create({
   },
 
   heroCard: {
-    borderRadius: 32,
+    borderRadius: 24,
     padding: spacing.screen,
     gap: 16,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.95)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    ...shadows.subtle,
   },
   heroHeader: {
     flexDirection: "row",
@@ -74,16 +70,12 @@ export const styles = StyleSheet.create({
 
   section: {
     padding: spacing.screen,
-    borderRadius: 28,
+    borderRadius: 24,
     gap: 14,
     backgroundColor: "rgb(255, 255, 255)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.95)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    ...shadows.subtle,
   },
   sectionTitle: {
     fontSize: 18,
@@ -117,19 +109,15 @@ export const styles = StyleSheet.create({
     top: spacing.screen - 6,
     right: spacing.screen,
     zIndex: 10,
-    width: 38,
-    height: 38,
+    width: 44,
+    height: 44,
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    ...shadows.subtle,
   },
   modalContent: {
     paddingHorizontal: spacing.screen,
@@ -220,23 +208,10 @@ export const styles = StyleSheet.create({
     fontSize: 15,
   },
 
-  secondaryButton: {
-    minWidth: 0,
-    borderRadius: radii.lg,
-    paddingVertical: 14,
-    paddingHorizontal: spacing.base,
-    alignItems: "center",
-    borderWidth: 1.5,
-    borderColor: colors.accent,
-    backgroundColor: "rgba(188, 108, 37, 0.06)",
-  },
   secondaryButtonText: {
-    color: colors.accent,
-    fontWeight: "700",
+    color: colors.muted,
+    fontWeight: "900",
     fontSize: 15,
     flexShrink: 1,
-  },
-  buttonDisabled: {
-    opacity: 0.55,
   },
 });
