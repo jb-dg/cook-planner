@@ -7,7 +7,10 @@ import { Platform } from "react-native";
 export const physicalVariants = {
   primary:      { bgColor: "#BC6C25", shadowColor: "#8B4513" },
   secondary:    {
-    bgColor: "rgba(255, 255, 255, 0.42)",
+    // Solid, not translucent: the face sits directly on top of the (translucent)
+    // shadowColor wrapper below it, so a translucent bg here double-blends with
+    // it and produces a muddy gradient instead of a clean fill.
+    bgColor: "#FFFFFF",
     shadowColor: "rgba(165, 165, 141, 0.38)",
     borderColor: "rgba(165, 165, 141, 0.2)",
     textColor: "#6B705C", // hearth-sage — matches weatly-web's .secondary-button

@@ -48,12 +48,7 @@ export const PlannerHeader = ({
             />
           </PhysicalIconButton>
           {/* Calendar trigger */}
-          <PhysicalButtonAnimated
-            variant="secondary"
-            onPress={onWeekPickerOpen}
-            innerStyle={styles.calendarBtnInner}
-          >
-            <Feather name="calendar" size={18} color="#BC6C25" />
+          <PhysicalButtonAnimated variant="secondary" onPress={onWeekPickerOpen}>
             <Text style={styles.calendarBtnText}>Changer</Text>
           </PhysicalButtonAnimated>
         </View>
@@ -101,14 +96,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.base * 0.6,
   },
-  calendarBtnInner: {
-    flexDirection: "row",
-    gap: 8,
-  },
   calendarBtnText: {
     color: "#6B705C",
-    fontWeight: "900",
-    fontSize: 14,
+    fontWeight: "700",
+    fontSize: 13,
   },
   heading: {
     fontSize: 28,
