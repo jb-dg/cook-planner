@@ -4,14 +4,17 @@ import { PhysicalVariant, physicalVariants } from "../theme/shadows";
 
 const SIZE = 44;
 const DEPTH = 3;
-const BORDER_RADIUS = 14;
+const DEFAULT_BORDER_RADIUS = 14;
 
 interface Props {
   onPress: () => void;
+  disabled?: boolean;
   /** When active, switches to the neutralDark variant */
   active?: boolean;
   /** Explicit variant override (e.g. "secondary") — takes precedence over active/inactive */
   variant?: PhysicalVariant;
+  /** Override the corner radius — e.g. 22 for a fully round "add" FAB, distinct from the default rounded-square utility/toggle icon buttons */
+  borderRadius?: number;
   children: React.ReactNode;
   accessibilityLabel?: string;
 }
@@ -25,8 +28,10 @@ interface Props {
  */
 export default function PhysicalIconButton({
   onPress,
+  disabled = false,
   active = false,
   variant,
+  borderRadius = DEFAULT_BORDER_RADIUS,
   children,
   accessibilityLabel,
 }: Props) {
@@ -46,20 +51,24 @@ export default function PhysicalIconButton({
     <View
       style={[
         styles.wrapper,
-        { backgroundColor: variantConfig.shadowColor, borderRadius: BORDER_RADIUS },
+        {
+          backgroundColor: disabled ? "transparent" : variantConfig.shadowColor,
+          borderRadius,
+        },
       ]}
     >
       <Pressable
         onPress={onPress}
+        disabled={disabled}
         accessibilityLabel={accessibilityLabel}
         style={({ pressed }) => [
           styles.button,
           {
-            backgroundColor: variantConfig.bgColor,
-            borderRadius: BORDER_RADIUS,
+            backgroundColor: disabled ? "#E4D9C8" : variantConfig.bgColor,
+            borderRadius,
             borderColor,
           },
-          pressed && styles.buttonPressed,
+          pressed && !disabled && styles.buttonPressed,
         ]}
       >
         {children}

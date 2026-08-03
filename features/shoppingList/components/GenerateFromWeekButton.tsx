@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
-import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
+import { ActivityIndicator, StyleSheet, Text } from "react-native";
 
-import { colors, radii, spacing } from "@/theme/design";
+import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
+import { colors } from "@/theme/design";
 
 type Props = {
   loading: boolean;
@@ -9,10 +10,11 @@ type Props = {
 };
 
 export const GenerateFromWeekButton = ({ loading, onPress }: Props) => (
-  <Pressable
-    style={[styles.button, loading && styles.buttonDisabled]}
+  <PhysicalButtonAnimated
+    variant="secondary"
     onPress={onPress}
     disabled={loading}
+    innerStyle={styles.buttonInner}
     accessibilityRole="button"
     accessibilityLabel="Générer la liste depuis cette semaine"
   >
@@ -24,28 +26,17 @@ export const GenerateFromWeekButton = ({ loading, onPress }: Props) => (
     <Text style={styles.text} numberOfLines={2}>
       {loading ? "Génération…" : "Depuis la semaine"}
     </Text>
-  </Pressable>
+  </PhysicalButtonAnimated>
 );
 
 const styles = StyleSheet.create({
-  button: {
+  buttonInner: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.base * 0.6,
-    minHeight: 48,
-    paddingHorizontal: spacing.base,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
+    gap: 6,
   },
   text: {
     flexShrink: 1,
-    color: colors.text,
+    color: colors.muted,
     fontWeight: "700",
     fontSize: 14,
     textAlign: "center",

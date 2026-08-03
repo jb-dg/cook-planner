@@ -12,6 +12,7 @@ import {
 } from "react-native";
 
 import type { Recipe } from "@/features/recipes/types";
+import PhysicalIconButton from "@/components/PhysicalIconButton";
 import { colors, radii, spacing } from "@/theme/design";
 
 type Props = {
@@ -51,9 +52,13 @@ export const RecipeSelectModal = ({
         <View style={styles.handle} />
         <View style={styles.headerRow}>
           <Text style={styles.title}>Ajouter depuis une recette</Text>
-          <Pressable style={styles.closeButton} onPress={onClose}>
-            <Feather name="x" size={18} color={colors.text} />
-          </Pressable>
+          <PhysicalIconButton
+            variant="secondary"
+            onPress={onClose}
+            accessibilityLabel="Fermer"
+          >
+            <Feather name="x" size={18} color={colors.muted} />
+          </PhysicalIconButton>
         </View>
 
         <View style={styles.search}>
@@ -136,16 +141,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     color: colors.text,
-  },
-  closeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
   },
   search: {
     flexDirection: "row",

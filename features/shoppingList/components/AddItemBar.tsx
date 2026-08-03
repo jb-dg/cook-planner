@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, TextInput, View } from "react-native";
 
+import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
 import { colors, radii } from "@/theme/design";
 
 type Props = {
@@ -50,15 +51,15 @@ export const AddItemBar = ({ onSubmit }: Props) => {
         onSubmitEditing={handleSubmit}
         returnKeyType="done"
       />
-      <Pressable
-        style={[styles.addButton, !name.trim() && styles.addButtonDisabled]}
+      <PhysicalButtonAnimated
+        variant="primary"
         onPress={handleSubmit}
         disabled={!name.trim()}
-        accessibilityRole="button"
+        innerStyle={styles.addButtonInner}
         accessibilityLabel="Ajouter l'article"
       >
         <Feather name="plus" size={18} color="#FFFFFF" />
-      </Pressable>
+      </PhysicalButtonAnimated>
     </View>
   );
 };
@@ -87,16 +88,11 @@ const styles = StyleSheet.create({
     width: 64,
     flexShrink: 0,
   },
-  addButton: {
+  addButtonInner: {
     width: 44,
     height: 44,
-    flexShrink: 0,
-    borderRadius: 14,
-    backgroundColor: colors.accent,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  addButtonDisabled: {
-    opacity: 0.5,
+    minHeight: 44,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
   },
 });

@@ -1,6 +1,6 @@
 import { Platform, StyleSheet } from "react-native";
 
-import { colors, layout, radii, spacing } from "@/theme/design";
+import { colors, layout, spacing } from "@/theme/design";
 
 const shadowCard = Platform.select({
   ios: {
@@ -60,18 +60,10 @@ export const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
   },
-  recipeButton: {
-    flex: 1,
+  recipeButtonInner: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
     gap: spacing.base * 0.6,
-    minHeight: 48,
     paddingHorizontal: spacing.base,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
   },
   recipeButtonText: {
     flexShrink: 1,
@@ -109,14 +101,8 @@ export const styles = StyleSheet.create({
   list: {
     gap: spacing.base * 0.7,
   },
-  clearButton: {
+  clearButtonWrapper: {
     alignSelf: "center",
-    paddingHorizontal: spacing.card,
-    minHeight: 48,
-    justifyContent: "center",
-    borderRadius: radii.xl,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
   },
   clearButtonText: {
     color: colors.danger,

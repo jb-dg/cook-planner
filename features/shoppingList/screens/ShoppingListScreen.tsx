@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   RefreshControl,
   ScrollView,
   Text,
@@ -12,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Toast } from "@/features/planner/components/Toast";
+import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
 import { colors } from "@/theme/design";
 
 import { AddItemBar } from "../components/AddItemBar";
@@ -59,17 +59,20 @@ export default function ShoppingListScreen() {
                 onPress={state.handleGenerateFromWeek}
               />
             </View>
-            <Pressable
-              style={styles.recipeButton}
-              onPress={state.handleOpenAddFromRecipe}
-              accessibilityRole="button"
-              accessibilityLabel="Ajouter les ingrédients d'une recette"
-            >
-              <Feather name="book-open" size={16} color={colors.accent} />
-              <Text style={styles.recipeButtonText} numberOfLines={2}>
-                Depuis une recette
-              </Text>
-            </Pressable>
+            <View style={styles.actionButton}>
+              <PhysicalButtonAnimated
+                variant="secondary"
+                onPress={state.handleOpenAddFromRecipe}
+                innerStyle={styles.recipeButtonInner}
+                accessibilityRole="button"
+                accessibilityLabel="Ajouter les ingrédients d'une recette"
+              >
+                <Feather name="book-open" size={16} color={colors.accent} />
+                <Text style={styles.recipeButtonText} numberOfLines={2}>
+                  Depuis une recette
+                </Text>
+              </PhysicalButtonAnimated>
+            </View>
           </View>
 
           <AddItemBar onSubmit={state.handleAddManualItem} />
@@ -102,16 +105,18 @@ export default function ShoppingListScreen() {
           )}
 
           {state.checkedCount > 0 ? (
-            <Pressable
-              style={styles.clearButton}
-              onPress={state.handleClearChecked}
-              accessibilityRole="button"
-              accessibilityLabel="Vider les articles cochés"
-            >
-              <Text style={styles.clearButtonText}>
-                Vider les articles cochés
-              </Text>
-            </Pressable>
+            <View style={styles.clearButtonWrapper}>
+              <PhysicalButtonAnimated
+                variant="secondary"
+                onPress={state.handleClearChecked}
+                accessibilityRole="button"
+                accessibilityLabel="Vider les articles cochés"
+              >
+                <Text style={styles.clearButtonText}>
+                  Vider les articles cochés
+                </Text>
+              </PhysicalButtonAnimated>
+            </View>
           ) : null}
         </ScrollView>
 

@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import PhysicalIconButton from "@/components/PhysicalIconButton";
 import { colors, radii, spacing } from "@/theme/design";
 
 import type { ShoppingListItem } from "../types";
@@ -38,14 +39,13 @@ export const ShoppingListItemRow = ({ item, onToggle, onDelete }: Props) => {
         ) : null}
       </View>
 
-      <Pressable
-        style={styles.deleteButton}
+      <PhysicalIconButton
+        variant="secondary"
         onPress={() => onDelete(item.id)}
-        accessibilityRole="button"
         accessibilityLabel={`Supprimer ${item.name}`}
       >
         <Feather name="trash-2" size={16} color={colors.muted} />
-      </Pressable>
+      </PhysicalIconButton>
     </View>
   );
 };
@@ -93,12 +93,5 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 12,
     fontWeight: "600",
-  },
-  deleteButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
   },
 });
