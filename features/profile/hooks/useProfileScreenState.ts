@@ -77,11 +77,6 @@ export const useProfileScreenState = () => {
 
   const displayName = pseudo || session?.user.email?.split("@")[0] || "Chef";
 
-  const openHouseholdModal = useCallback((mode: HouseholdModalMode) => {
-    setHouseholdModalMode(mode);
-    setHouseholdActionsOpen(true);
-  }, []);
-
   const loadProfile = useCallback(async () => {
     if (!session) return;
     setLoadingProfile(true);
@@ -271,6 +266,18 @@ export const useProfileScreenState = () => {
       }
     },
     [],
+  );
+
+  const openHouseholdModal = useCallback(
+    (mode: HouseholdModalMode) => {
+      setHouseholdModalMode(mode);
+      setHouseholdActionsOpen(true);
+      if (mode === "join") {
+        // Refetch so an invite received while the app was already open shows up.
+        loadMyInvites();
+      }
+    },
+    [loadMyInvites],
   );
 
   useEffect(() => {
@@ -562,15 +569,44 @@ export const useProfileScreenState = () => {
     }
   };
 
+  const deleteHousehold = async () => {
+    if (!household) return;
+    setLeavingHousehold(true);
+    try {
+      const { error } = await supabase.from("households").delete().eq("id", household.id);
+      if (error) throw error;
+      await loadHousehold();
+      setHouseholdActionsOpen(false);
+    } catch (err) {
+      console.error("delete household", err);
+      Alert.alert("Erreur", "Impossible de supprimer le foyer. Réessaie plus tard.");
+    } finally {
+      setLeavingHousehold(false);
+    }
+  };
+
   const handleLeaveHousehold = async () => {
     if (!session || !household) return;
-    if (isOwner) {
+    if (isOwner && householdMembers.length > 1) {
       Alert.alert(
         "Action impossible",
         "En tant qu'administrateur, retire d'abord tous les autres membres avant de quitter le foyer.",
       );
       return;
     }
+
+    if (isOwner) {
+      Alert.alert(
+        "Supprimer le foyer ?",
+        `"${household.name}" sera définitivement supprimé. Tes recettes et ton planning resteront disponibles en solo.`,
+        [
+          { text: "Annuler", style: "cancel" },
+          { text: "Supprimer", style: "destructive", onPress: () => void deleteHousehold() },
+        ],
+      );
+      return;
+    }
+
     setLeavingHousehold(true);
     try {
       const { error } = await supabase

@@ -143,7 +143,7 @@ export default function HouseholdSummaryCard({
         )}
       </View>
 
-      {!isOwner ? (
+      {!isOwner || householdMembers.length <= 1 ? (
         <Pressable
           style={styles.leaveButton}
           onPress={onLeaveHousehold}
@@ -151,7 +151,11 @@ export default function HouseholdSummaryCard({
         >
           <Feather name="log-out" size={14} color={colors.danger} />
           <Text style={styles.leaveButtonText} numberOfLines={1}>
-            {leavingHousehold ? "…" : "Quitter le foyer"}
+            {leavingHousehold
+              ? "…"
+              : isOwner
+                ? "Supprimer le foyer"
+                : "Quitter le foyer"}
           </Text>
         </Pressable>
       ) : null}
