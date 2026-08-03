@@ -201,6 +201,22 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
   },
+  inviteRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.cardBorder,
+  },
+  inviteRowText: {
+    flex: 1,
+  },
+  inviteRowActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
 
   primaryButtonText: {
     color: "#fff",

@@ -1,13 +1,15 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert } from "react-native";
+import { Alert, Share } from "react-native";
 
 import type {
   Household,
   HouseholdMember,
   HouseholdModalMode,
+  PendingInvite,
   QuickActionItem,
+  SentInvite,
 } from "@/components/profile/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { pickAndUploadImage } from "@/lib/mediaUpload";
@@ -42,10 +44,21 @@ export const useProfileScreenState = () => {
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
   const [inviting, setInviting] = useState(false);
 
-  const [joinPseudo, setJoinPseudo] = useState("");
+  const [joinCode, setJoinCode] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joinSuccess, setJoinSuccess] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+
+  const [sentInvites, setSentInvites] = useState<SentInvite[]>([]);
+  const [loadingSentInvites, setLoadingSentInvites] = useState(false);
+  const [cancelingInviteId, setCancelingInviteId] = useState<string | null>(null);
+
+  const [myInvites, setMyInvites] = useState<PendingInvite[]>([]);
+  const [loadingMyInvites, setLoadingMyInvites] = useState(false);
+  const [respondingInviteId, setRespondingInviteId] = useState<string | null>(null);
+
+  const [leavingHousehold, setLeavingHousehold] = useState(false);
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
 
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [householdActionsOpen, setHouseholdActionsOpen] = useState(false);
@@ -148,7 +161,7 @@ export const useProfileScreenState = () => {
 
       const { data: householdData, error: householdFetchError } = await supabase
         .from("households")
-        .select("id,name,owner_id")
+        .select("id,name,owner_id,invite_code")
         .eq("id", householdId)
         .single();
 
@@ -224,10 +237,55 @@ export const useProfileScreenState = () => {
     }
   }, [migrateOwnerDataToHousehold, session]);
 
+  const loadMyInvites = useCallback(async () => {
+    if (!session) return;
+    setLoadingMyInvites(true);
+    try {
+      const { data, error } = await supabase.rpc("fetch_my_pending_invites");
+      if (error) throw error;
+      setMyInvites((data as PendingInvite[]) ?? []);
+    } catch (err) {
+      console.error("load my invites", err);
+    } finally {
+      setLoadingMyInvites(false);
+    }
+  }, [session]);
+
+  const loadSentInvites = useCallback(
+    async (householdId: string) => {
+      setLoadingSentInvites(true);
+      try {
+        const { data, error } = await supabase
+          .from("household_invites")
+          .select("id,email,created_at")
+          .eq("household_id", householdId)
+          .eq("status", "pending")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setSentInvites(data ?? []);
+      } catch (err) {
+        console.error("load sent invites", err);
+      } finally {
+        setLoadingSentInvites(false);
+      }
+    },
+    [],
+  );
+
   useEffect(() => {
     loadProfile();
     loadHousehold();
-  }, [loadProfile, loadHousehold]);
+    loadMyInvites();
+  }, [loadProfile, loadHousehold, loadMyInvites]);
+
+  useEffect(() => {
+    if (household && isOwner) {
+      loadSentInvites(household.id);
+    } else {
+      setSentInvites([]);
+    }
+  }, [household, isOwner, loadSentInvites]);
 
   const handleSavePseudo = async () => {
     if (!session) return;
@@ -332,7 +390,7 @@ export const useProfileScreenState = () => {
       const { data: newHousehold, error: createError } = await supabase
         .from("households")
         .insert({ name: trimmed, owner_id: session.user.id })
-        .select("id,name,owner_id")
+        .select("id,name,owner_id,invite_code")
         .single();
 
       if (createError) throw createError;
@@ -385,81 +443,170 @@ export const useProfileScreenState = () => {
         return;
       }
 
-      let targetUserId: string | null = null;
-      const { data: resolvedUserId, error: resolveError } = await supabase.rpc(
-        "resolve_household_member_by_email",
-        {
-          p_household_id: household.id,
-          p_email: normalizedEmail,
-        },
-      );
-
-      if (!resolveError && typeof resolvedUserId === "string") {
-        targetUserId = resolvedUserId;
-      } else {
-        const { data: targetProfile, error: targetError } = await supabase
-          .from("profiles")
-          .select("user_id")
-          .ilike("email", normalizedEmail)
-          .maybeSingle();
-
-        if (targetError) throw targetError;
-        targetUserId = targetProfile?.user_id ?? null;
-      }
-
-      if (!targetUserId) {
-        setInviteError(
-          "Email introuvable. Vérifie l'adresse et exécute la migration SQL des invitations.",
-        );
-        return;
-      }
-      const { data: existingMembership, error: membershipLookupError } =
-        await supabase
-          .from("household_members")
-          .select("household_id")
-          .eq("user_id", targetUserId)
-          .maybeSingle();
-
-      if (membershipLookupError) throw membershipLookupError;
-      if (existingMembership) {
-        setInviteError("Cet utilisateur appartient déjà à un foyer.");
-        return;
-      }
-
       const { error: inviteErrorRes } = await supabase
-        .from("household_members")
+        .from("household_invites")
         .insert({
           household_id: household.id,
-          user_id: targetUserId,
+          invited_by: session.user.id,
+          email: normalizedEmail,
         });
 
       if (inviteErrorRes) {
         if ((inviteErrorRes as PostgrestError).code === "23505") {
-          setInviteError("Ce membre est déjà ajouté.");
+          setInviteError("Une invitation est déjà en attente pour cet email.");
           return;
         }
         throw inviteErrorRes;
       }
 
-      await supabase.from("profiles").upsert(
-        {
-          user_id: targetUserId,
-          email: normalizedEmail,
-        },
-        { onConflict: "user_id", ignoreDuplicates: true },
-      );
-
       setInviteEmail("");
-      setInviteSuccess("Membre ajouté au foyer !");
-      await loadHousehold();
+      setInviteSuccess(
+        "Invitation envoyée ! Elle apparaîtra chez ce membre à sa prochaine connexion.",
+      );
+      await loadSentInvites(household.id);
     } catch (err) {
       console.error("invite member", err);
       Alert.alert(
         "Erreur",
-        "Impossible d'ajouter ce membre. Vérifie l'email et réessaie.",
+        "Impossible d'envoyer cette invitation. Vérifie l'email et réessaie.",
       );
     } finally {
       setInviting(false);
+    }
+  };
+
+  const handleCancelInvite = async (inviteId: string) => {
+    if (!household) return;
+    setCancelingInviteId(inviteId);
+    try {
+      const { error } = await supabase
+        .from("household_invites")
+        .update({ status: "cancelled", responded_at: new Date().toISOString() })
+        .eq("id", inviteId);
+
+      if (error) throw error;
+      await loadSentInvites(household.id);
+    } catch (err) {
+      console.error("cancel invite", err);
+      Alert.alert("Erreur", "Impossible d'annuler cette invitation.");
+    } finally {
+      setCancelingInviteId(null);
+    }
+  };
+
+  const handleAcceptInvite = async (invite: PendingInvite) => {
+    if (!session) return;
+    if (household) {
+      setJoinError("Tu appartiens déjà à un foyer.");
+      return;
+    }
+    setRespondingInviteId(invite.id);
+    try {
+      const { error: memberError } = await supabase
+        .from("household_members")
+        .insert({ household_id: invite.household_id, user_id: session.user.id });
+
+      if (memberError) {
+        if ((memberError as PostgrestError).code === "23505") {
+          Alert.alert("Déjà membre", "Tu appartiens déjà à un foyer.");
+        } else {
+          throw memberError;
+        }
+      } else {
+        await supabase
+          .from("household_invites")
+          .update({
+            status: "accepted",
+            accepted_user_id: session.user.id,
+            responded_at: new Date().toISOString(),
+          })
+          .eq("id", invite.id);
+      }
+
+      await Promise.all([loadHousehold(), loadMyInvites()]);
+      setHouseholdActionsOpen(false);
+    } catch (err) {
+      console.error("accept invite", err);
+      Alert.alert("Erreur", "Impossible de rejoindre ce foyer. Réessaie plus tard.");
+    } finally {
+      setRespondingInviteId(null);
+    }
+  };
+
+  const handleDeclineInvite = async (invite: PendingInvite) => {
+    setRespondingInviteId(invite.id);
+    try {
+      const { error } = await supabase
+        .from("household_invites")
+        .update({ status: "declined", responded_at: new Date().toISOString() })
+        .eq("id", invite.id);
+
+      if (error) throw error;
+      await loadMyInvites();
+    } catch (err) {
+      console.error("decline invite", err);
+      Alert.alert("Erreur", "Impossible de refuser cette invitation.");
+    } finally {
+      setRespondingInviteId(null);
+    }
+  };
+
+  const handleShareInviteCode = async () => {
+    if (!household) return;
+    try {
+      await Share.share({
+        message: `Rejoins notre foyer "${household.name}" sur CookPlanner ! Code d'invitation : ${household.invite_code}`,
+      });
+    } catch (err) {
+      console.error("share invite code", err);
+    }
+  };
+
+  const handleLeaveHousehold = async () => {
+    if (!session || !household) return;
+    if (isOwner) {
+      Alert.alert(
+        "Action impossible",
+        "En tant qu'administrateur, retire d'abord tous les autres membres avant de quitter le foyer.",
+      );
+      return;
+    }
+    setLeavingHousehold(true);
+    try {
+      const { error } = await supabase
+        .from("household_members")
+        .delete()
+        .eq("household_id", household.id)
+        .eq("user_id", session.user.id);
+
+      if (error) throw error;
+      await loadHousehold();
+      setHouseholdActionsOpen(false);
+    } catch (err) {
+      console.error("leave household", err);
+      Alert.alert("Erreur", "Impossible de quitter le foyer. Réessaie plus tard.");
+    } finally {
+      setLeavingHousehold(false);
+    }
+  };
+
+  const handleRemoveMember = async (memberUserId: string) => {
+    if (!household || !isOwner) return;
+    setRemovingMemberId(memberUserId);
+    try {
+      const { error } = await supabase
+        .from("household_members")
+        .delete()
+        .eq("household_id", household.id)
+        .eq("user_id", memberUserId);
+
+      if (error) throw error;
+      await loadHousehold();
+    } catch (err) {
+      console.error("remove member", err);
+      Alert.alert("Erreur", "Impossible de retirer ce membre. Réessaie plus tard.");
+    } finally {
+      setRemovingMemberId(null);
     }
   };
 
@@ -469,36 +616,24 @@ export const useProfileScreenState = () => {
       setJoinError("Tu es déjà dans un foyer.");
       return;
     }
-    const trimmed = joinPseudo.trim();
-    if (trimmed.length < 3) {
-      setJoinError("Renseigne le pseudo de l'admin du foyer.");
+    const trimmed = joinCode.trim().toUpperCase();
+    if (trimmed.length < 4) {
+      setJoinError("Renseigne le code d'invitation du foyer.");
       return;
     }
     setJoinError(null);
     setJoinSuccess(null);
     setJoining(true);
     try {
-      const { data: ownerProfile, error: ownerError } = await supabase
-        .from("profiles")
-        .select("user_id")
-        .eq("pseudo", trimmed)
-        .maybeSingle();
+      const { data: resolvedHouseholds, error: resolveError } = await supabase.rpc(
+        "resolve_household_by_invite_code",
+        { p_code: trimmed },
+      );
 
-      if (ownerError) throw ownerError;
-      if (!ownerProfile) {
-        setJoinError("Aucun foyer associé à ce pseudo.");
-        return;
-      }
-
-      const { data: ownerHousehold, error: householdErrorRes } = await supabase
-        .from("households")
-        .select("id")
-        .eq("owner_id", ownerProfile.user_id)
-        .maybeSingle();
-
-      if (householdErrorRes) throw householdErrorRes;
+      if (resolveError) throw resolveError;
+      const ownerHousehold = resolvedHouseholds?.[0];
       if (!ownerHousehold) {
-        setJoinError("Cet utilisateur n'a pas de foyer actif.");
+        setJoinError("Aucun foyer associé à ce code.");
         return;
       }
 
@@ -522,15 +657,15 @@ export const useProfileScreenState = () => {
 
       if (joinInsertError) throw joinInsertError;
 
-      setJoinPseudo("");
-      setJoinSuccess("Demande acceptée ! Tu partages maintenant ce foyer.");
+      setJoinCode("");
+      setJoinSuccess("Tu partages maintenant ce foyer !");
       await loadHousehold();
       setHouseholdActionsOpen(false);
     } catch (err) {
       console.error("join household", err);
       Alert.alert(
         "Erreur",
-        "Impossible de rejoindre le foyer. Vérifie le pseudo communiqué.",
+        "Impossible de rejoindre le foyer. Vérifie le code communiqué.",
       );
     } finally {
       setJoining(false);
@@ -566,7 +701,7 @@ export const useProfileScreenState = () => {
         id: "household-join",
         icon: "link-2",
         label: "Rejoindre un foyer",
-        helper: "Avec le pseudo de l'administrateur",
+        helper: "Avec le code d'invitation",
         onPress: () => openHouseholdModal("join"),
       },
       {
@@ -599,10 +734,18 @@ export const useProfileScreenState = () => {
     inviteError,
     inviteSuccess,
     inviting,
-    joinPseudo,
+    joinCode,
     joinError,
     joinSuccess,
     joining,
+    sentInvites,
+    loadingSentInvites,
+    cancelingInviteId,
+    myInvites,
+    loadingMyInvites,
+    respondingInviteId,
+    leavingHousehold,
+    removingMemberId,
     profileModalOpen,
     householdActionsOpen,
     householdModalMode,
@@ -613,14 +756,20 @@ export const useProfileScreenState = () => {
     setPseudo,
     setHouseholdName,
     setInviteEmail,
-    setJoinPseudo,
+    setJoinCode,
     setProfileModalOpen,
     setHouseholdActionsOpen,
     handleSavePseudo,
     handlePickAvatar,
     handleCreateHousehold,
     handleInviteMember,
+    handleCancelInvite,
     handleJoinHousehold,
+    handleAcceptInvite,
+    handleDeclineInvite,
+    handleShareInviteCode,
+    handleLeaveHousehold,
+    handleRemoveMember,
     handleSignOut,
     openHouseholdModal,
   };

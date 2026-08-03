@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 import PhysicalButton from "@/components/PhysicalButton";
 import { colors, radii, shadows, spacing } from "@/theme/design";
@@ -11,9 +12,14 @@ type HouseholdSummaryCardProps = {
   householdMembers: HouseholdMember[];
   householdError: string | null;
   isOwner: boolean;
+  removingMemberId: string | null;
+  leavingHousehold: boolean;
   onOpenCreate: () => void;
   onOpenJoin: () => void;
   onOpenManage: () => void;
+  onShareInviteCode: () => void;
+  onRemoveMember: (userId: string) => void;
+  onLeaveHousehold: () => void;
 };
 
 export default function HouseholdSummaryCard({
@@ -22,9 +28,13 @@ export default function HouseholdSummaryCard({
   householdMembers,
   householdError,
   isOwner,
+  removingMemberId,
+  leavingHousehold,
   onOpenCreate,
   onOpenJoin,
-  onOpenManage,
+  onShareInviteCode,
+  onRemoveMember,
+  onLeaveHousehold,
 }: HouseholdSummaryCardProps) {
   if (loadingHousehold) {
     return (
@@ -90,32 +100,61 @@ export default function HouseholdSummaryCard({
           <Text style={styles.householdValue}>En temps réel</Text>
         </View>
       </View>
+
+      <Pressable style={styles.inviteCodeRow} onPress={onShareInviteCode}>
+        <View style={styles.inviteCodeText}>
+          <Text style={styles.householdLabel}>Code d'invitation</Text>
+          <Text style={styles.inviteCodeValue}>{household.invite_code}</Text>
+        </View>
+        <View style={styles.shareButton}>
+          <Feather name="share-2" size={16} color={colors.accent} />
+          <Text style={styles.shareButtonText}>Partager</Text>
+        </View>
+      </Pressable>
+
       <Text style={styles.membersTitle}>Membres</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.memberCarousel}
-      >
+      <View style={styles.memberList}>
         {householdMembers.length === 0 ? (
           <Text style={styles.helper}>{"Aucun membre pour l'instant."}</Text>
         ) : (
           householdMembers.map((member) => (
-            <View key={member.user_id} style={styles.memberBadge}>
-              <Text style={styles.memberBadgeLetter}>
-                {(member.pseudo ?? "?").charAt(0).toUpperCase()}
-              </Text>
-              <Text style={styles.memberBadgeLabel}>
+            <View key={member.user_id} style={styles.memberRow}>
+              <View style={styles.memberBadge}>
+                <Text style={styles.memberBadgeLetter}>
+                  {(member.pseudo ?? "?").charAt(0).toUpperCase()}
+                </Text>
+              </View>
+              <Text style={styles.memberRowLabel} numberOfLines={1}>
                 {member.isCurrentUser ? "Moi" : (member.pseudo ?? "Invité")}
               </Text>
+              {isOwner && !member.isCurrentUser ? (
+                <Pressable
+                  style={styles.removeButton}
+                  onPress={() => onRemoveMember(member.user_id)}
+                  disabled={removingMemberId === member.user_id}
+                >
+                  <Text style={styles.removeButtonText}>
+                    {removingMemberId === member.user_id ? "…" : "Retirer"}
+                  </Text>
+                </Pressable>
+              ) : null}
             </View>
           ))
         )}
-      </ScrollView>
-      <Pressable style={styles.manageButton} onPress={onOpenManage}>
-        <Text style={styles.manageButtonText} numberOfLines={1}>
-          {isOwner ? "Gérer le foyer" : "Voir les membres"}
-        </Text>
-      </Pressable>
+      </View>
+
+      {!isOwner ? (
+        <Pressable
+          style={styles.leaveButton}
+          onPress={onLeaveHousehold}
+          disabled={leavingHousehold}
+        >
+          <Feather name="log-out" size={14} color={colors.danger} />
+          <Text style={styles.leaveButtonText} numberOfLines={1}>
+            {leavingHousehold ? "…" : "Quitter le foyer"}
+          </Text>
+        </Pressable>
+      ) : null}
       {householdError ? <Text style={styles.errorText}>{householdError}</Text> : null}
     </View>
   );
@@ -191,6 +230,36 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     flexShrink: 1,
   },
+  inviteCodeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderStyle: "dashed",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  inviteCodeText: {
+    gap: 2,
+  },
+  inviteCodeValue: {
+    fontSize: 18,
+    fontWeight: "800",
+    letterSpacing: 2,
+    color: colors.text,
+  },
+  shareButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  shareButtonText: {
+    color: colors.accent,
+    fontWeight: "700",
+    fontSize: 13,
+  },
   membersTitle: {
     fontSize: 13,
     fontWeight: "700",
@@ -198,48 +267,60 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
-  memberCarousel: {
-    gap: 14,
-    paddingVertical: 6,
+  memberList: {
+    gap: 10,
+  },
+  memberRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  memberRowLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.text,
   },
   memberBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: "center",
-    gap: 6,
+    justifyContent: "center",
+    backgroundColor: colors.accent,
   },
   memberBadgeLetter: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    textAlign: "center",
-    textAlignVertical: "center",
-    backgroundColor: colors.accent,
     color: "#FFFFFF",
     fontWeight: "800",
-    fontSize: 20,
-    lineHeight: 48,
-    overflow: "hidden",
+    fontSize: 15,
   },
-  memberBadgeLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: colors.muted,
-  },
-  manageButton: {
-    marginTop: 6,
+  removeButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: radii.md,
-    borderWidth: 1.5,
-    borderColor: colors.accent,
-    minHeight: 48,
-    justifyContent: "center",
-    paddingHorizontal: spacing.base,
-    alignItems: "center",
-    backgroundColor: "rgba(188, 108, 37, 0.05)",
+    borderWidth: 1,
+    borderColor: colors.danger,
   },
-  manageButtonText: {
-    color: colors.accent,
+  removeButtonText: {
+    color: colors.danger,
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  leaveButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 4,
+    minHeight: 44,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.danger,
+  },
+  leaveButtonText: {
+    color: colors.danger,
     fontWeight: "700",
     fontSize: 14,
-    flexShrink: 1,
   },
   helper: {
     color: colors.accentTertiary,

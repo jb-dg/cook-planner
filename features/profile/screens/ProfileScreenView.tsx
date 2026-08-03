@@ -225,19 +225,55 @@ export default function ProfileScreenView({ variant }: Props) {
         )}
         {state.householdModalMode === "join" && (
           <View style={styles.modalBlock}>
-            <Text style={styles.subheading}>Rejoindre un foyer</Text>
+            {state.myInvites.length > 0 ? (
+              <>
+                <Text style={styles.subheading}>Invitations reçues</Text>
+                {state.myInvites.map((invite) => (
+                  <View key={invite.id} style={styles.inviteRow}>
+                    <View style={styles.inviteRowText}>
+                      <Text style={styles.helper} numberOfLines={2}>
+                        {(invite.invited_by_pseudo ?? "Quelqu'un") +
+                          " t'invite à rejoindre \"" +
+                          invite.household_name +
+                          "\""}
+                      </Text>
+                    </View>
+                    <View style={styles.inviteRowActions}>
+                      <PhysicalButton
+                        variant="secondary"
+                        onPress={() => state.handleDeclineInvite(invite)}
+                        disabled={state.respondingInviteId === invite.id}
+                      >
+                        <Text style={styles.secondaryButtonText} numberOfLines={1}>
+                          Refuser
+                        </Text>
+                      </PhysicalButton>
+                      <PhysicalButton
+                        onPress={() => state.handleAcceptInvite(invite)}
+                        disabled={state.respondingInviteId === invite.id}
+                      >
+                        <Text style={styles.primaryButtonText} numberOfLines={1}>
+                          {state.respondingInviteId === invite.id
+                            ? "…"
+                            : "Accepter"}
+                        </Text>
+                      </PhysicalButton>
+                    </View>
+                  </View>
+                ))}
+              </>
+            ) : null}
+            <Text style={styles.subheading}>Rejoindre avec un code</Text>
             <Text style={styles.helper}>
-              {
-                "Demande à l'admin de te partager son pseudo, puis saisis-le ici."
-              }
+              Demande à l'admin de te partager le code d'invitation de son foyer.
             </Text>
             <TextInput
-              placeholder="Pseudo de l'administrateur"
+              placeholder="Code d'invitation"
               placeholderTextColor="#A5A58D"
-              value={state.joinPseudo}
-              onChangeText={state.setJoinPseudo}
+              value={state.joinCode}
+              onChangeText={state.setJoinCode}
               style={styles.input}
-              autoCapitalize="none"
+              autoCapitalize="characters"
             />
             {state.joinError ? (
               <Text style={styles.errorText}>{state.joinError}</Text>
@@ -262,15 +298,21 @@ export default function ProfileScreenView({ variant }: Props) {
                   householdMembers={state.householdMembers}
                   householdError={state.householdError}
                   isOwner={state.isOwner}
+                  removingMemberId={state.removingMemberId}
+                  leavingHousehold={state.leavingHousehold}
                   onOpenCreate={() => state.openHouseholdModal("create")}
                   onOpenJoin={() => state.openHouseholdModal("join")}
                   onOpenManage={() => state.openHouseholdModal("manage")}
+                  onShareInviteCode={state.handleShareInviteCode}
+                  onRemoveMember={state.handleRemoveMember}
+                  onLeaveHousehold={state.handleLeaveHousehold}
                 />
                 {state.isOwner ? (
                   <View style={styles.modalBlock}>
-                    <Text style={styles.subheading}>Ajouter un membre</Text>
+                    <Text style={styles.subheading}>Inviter un membre</Text>
                     <Text style={styles.helper}>
-                      Invite un proche en indiquant son email de connexion.
+                      Invite un proche par email, même s'il n'a pas encore de compte.
+                      L'invitation apparaîtra chez lui à sa prochaine connexion.
                     </Text>
                     <TextInput
                       placeholder="Email du membre"
@@ -293,15 +335,36 @@ export default function ProfileScreenView({ variant }: Props) {
                       disabled={state.inviting}
                     >
                       <Text style={styles.secondaryButtonText} numberOfLines={1}>
-                        {state.inviting ? "Ajout…" : "Inviter"}
+                        {state.inviting ? "Envoi…" : "Inviter"}
                       </Text>
                     </PhysicalButton>
+                    {state.sentInvites.length > 0 ? (
+                      <>
+                        <Text style={[styles.subheading, { marginTop: 12 }]}>
+                          Invitations en attente
+                        </Text>
+                        {state.sentInvites.map((invite) => (
+                          <View key={invite.id} style={styles.inviteRow}>
+                            <Text style={styles.helper} numberOfLines={1}>
+                              {invite.email}
+                            </Text>
+                            <PhysicalButton
+                              variant="secondary"
+                              onPress={() => state.handleCancelInvite(invite.id)}
+                              disabled={state.cancelingInviteId === invite.id}
+                            >
+                              <Text style={styles.secondaryButtonText} numberOfLines={1}>
+                                {state.cancelingInviteId === invite.id
+                                  ? "…"
+                                  : "Annuler"}
+                              </Text>
+                            </PhysicalButton>
+                          </View>
+                        ))}
+                      </>
+                    ) : null}
                   </View>
-                ) : (
-                  <Text style={styles.helper}>
-                    {"Demande à l'admin de ton foyer actuel pour ajouter quelqu'un."}
-                  </Text>
-                )}
+                ) : null}
               </>
             ) : (
               <Text style={styles.helper}>
