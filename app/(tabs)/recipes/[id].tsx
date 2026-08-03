@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import PhysicalButton from "../../../components/PhysicalButton";
+import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
 import WebFooter from "../../../components/WebFooter";
 import { useAuth } from "../../../contexts/AuthContext";
 import {
@@ -23,7 +25,7 @@ import {
 } from "../../../features/recipes/types";
 import { fetchHouseholdScope } from "../../../lib/households";
 import { supabase } from "../../../lib/supabase";
-import { colors, layout, radii, spacing } from "../../../theme/design";
+import { colors, layout, spacing } from "../../../theme/design";
 import RecipeForm from "./RecipeForm";
 
 type ScreenMode = "view" | "edit";
@@ -371,14 +373,14 @@ export default function RecipeScreen() {
                 </View>
               ) : null}
 
-              <Pressable
-                style={styles.editFromViewButton}
+              <PhysicalButton
+                variant="secondary"
                 onPress={() => setScreenMode("edit")}
               >
                 <Text style={styles.editFromViewButtonText}>
                   Modifier la recette
                 </Text>
-              </Pressable>
+              </PhysicalButton>
             </View>
           ) : (
             <>
@@ -390,18 +392,15 @@ export default function RecipeScreen() {
               />
               <View style={styles.deleteWrapper}>
                 <Text style={styles.deleteLabel}>Danger</Text>
-                <Pressable
-                  style={[
-                    styles.deleteButton,
-                    deleting && styles.deleteDisabled,
-                  ]}
+                <PhysicalButtonAnimated
+                  variant="danger"
                   onPress={handleDelete}
                   disabled={deleting}
                 >
                   <Text style={styles.deleteButtonText}>
                     {deleting ? "Suppression…" : "Supprimer cette recette"}
                   </Text>
-                </Pressable>
+                </PhysicalButtonAnimated>
               </View>
             </>
           )}
@@ -581,17 +580,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
   },
-  editFromViewButton: {
-    marginTop: 6,
-    borderWidth: 1.5,
-    borderColor: colors.accent,
-    borderRadius: radii.lg,
-    minHeight: 48,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   editFromViewButtonText: {
-    color: colors.accent,
+    color: colors.muted,
     fontWeight: "700",
     fontSize: 14,
   },
@@ -615,19 +605,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1,
   },
-  deleteButton: {
-    borderWidth: 1.5,
-    borderColor: colors.danger,
-    borderRadius: radii.lg,
-    minHeight: 48,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   deleteButtonText: {
-    color: colors.danger,
+    color: "#FFFFFF",
     fontWeight: "700",
-  },
-  deleteDisabled: {
-    opacity: 0.6,
   },
 });

@@ -12,7 +12,9 @@ import {
 } from "react-native";
 
 import PhysicalButton from "@/components/PhysicalButton";
-import { colors, radii, spacing } from "@/theme/design";
+import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
+import PhysicalIconButton from "@/components/PhysicalIconButton";
+import { colors, spacing } from "@/theme/design";
 
 import type { Recipe } from "../types";
 
@@ -58,9 +60,13 @@ export default function RecipeViewModal({
                   {recipe?.title ?? "Recette"}
                 </Text>
               </View>
-              <Pressable style={styles.iconButton} onPress={onClose} hitSlop={8}>
-                <Feather name="x" size={18} color="#2D2D2A" />
-              </Pressable>
+              <PhysicalIconButton
+                variant="secondary"
+                onPress={onClose}
+                accessibilityLabel="Fermer"
+              >
+                <Feather name="x" size={18} color={colors.muted} />
+              </PhysicalIconButton>
             </View>
 
             {recipe ? (
@@ -141,12 +147,16 @@ export default function RecipeViewModal({
                 {recipe.sourceUrl ? (
                   <View style={styles.section}>
                     <Text style={styles.sectionLabel}>Source</Text>
-                    <Pressable style={styles.sourceButton} onPress={openSource}>
-                      <Feather name="external-link" size={14} color={colors.accent} />
+                    <PhysicalButtonAnimated
+                      variant="secondary"
+                      onPress={openSource}
+                      innerStyle={styles.sourceButtonInner}
+                    >
+                      <Feather name="external-link" size={14} color={colors.muted} />
                       <Text style={styles.sourceText} numberOfLines={2}>
                         {recipe.sourceUrl}
                       </Text>
-                    </Pressable>
+                    </PhysicalButtonAnimated>
                   </View>
                 ) : null}
               </ScrollView>
@@ -230,16 +240,6 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: -0.4,
     lineHeight: 31,
-  },
-  iconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
   },
   content: {
     padding: spacing.card,
@@ -348,21 +348,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
   },
-  sourceButton: {
-    minHeight: 48,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: "rgba(188, 108, 37, 0.18)",
-    backgroundColor: "rgba(188, 108, 37, 0.06)",
+  sourceButtonInner: {
     paddingHorizontal: 12,
-    paddingVertical: 10,
     flexDirection: "row",
-    alignItems: "center",
     gap: 8,
   },
   sourceText: {
     flex: 1,
-    color: colors.accent,
+    color: colors.muted,
     fontSize: 13,
     fontWeight: "700",
   },

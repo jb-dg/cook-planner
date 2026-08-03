@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../../contexts/AuthContext";
+import PhysicalButtonAnimated from "../../../../components/PhysicalButtonAnimated";
 import WebFooter from "../../../../components/WebFooter";
 import RecipeViewModal from "../../../../features/recipes/components/RecipeViewModal";
 import {
@@ -315,41 +316,37 @@ export default function RecipeBookScreen() {
         </View>
 
         <View style={styles.actionsRow}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              styles.actionButtonSoft,
-              pressed && styles.cardPressed,
-            ]}
-            onPress={() => handleOpenRecipe(item.id, "view")}
-          >
-            <Feather name="eye" size={14} color="#6B705C" />
-            <Text style={styles.actionButtonSoftText}>Afficher</Text>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              styles.actionButtonAccent,
-              pressed && styles.cardPressed,
-            ]}
-            onPress={() => handleOpenRecipe(item.id, "edit")}
-          >
-            <Feather name="edit-2" size={14} color="#FFFFFF" />
-            <Text style={styles.actionButtonAccentText}>Modifier</Text>
-          </Pressable>
+          <View style={styles.actionButtonWrapper}>
+            <PhysicalButtonAnimated
+              variant="secondary"
+              onPress={() => handleOpenRecipe(item.id, "view")}
+              innerStyle={styles.actionButtonInner}
+            >
+              <Feather name="eye" size={14} color="#6B705C" />
+              <Text style={styles.actionButtonSoftText}>Afficher</Text>
+            </PhysicalButtonAnimated>
+          </View>
+          <View style={styles.actionButtonWrapper}>
+            <PhysicalButtonAnimated
+              variant="primary"
+              onPress={() => handleOpenRecipe(item.id, "edit")}
+              innerStyle={styles.actionButtonInner}
+            >
+              <Feather name="edit-2" size={14} color="#FFFFFF" />
+              <Text style={styles.actionButtonAccentText}>Modifier</Text>
+            </PhysicalButtonAnimated>
+          </View>
         </View>
 
         {activeCustomBook ? (
-          <Pressable
-            style={({ pressed }) => [
-              styles.membershipButton,
-              pressed && styles.cardPressed,
-            ]}
+          <PhysicalButtonAnimated
+            variant="secondary"
             onPress={() => handleRemoveRecipeFromBook(item.id)}
+            innerStyle={styles.membershipButtonInner}
           >
             <Feather name="minus-circle" size={14} color="#6B705C" />
             <Text style={styles.membershipButtonText}>Retirer du livre</Text>
-          </Pressable>
+          </PhysicalButtonAnimated>
         ) : null}
       </View>
     </View>
@@ -388,16 +385,16 @@ export default function RecipeBookScreen() {
                 : "Livre introuvable"}
             </Text>
             {selectedBook ? (
-              <Pressable
-                style={({ pressed }) => [
-                  styles.createRecipeButton,
-                  pressed && styles.cardPressed,
-                ]}
-                onPress={handleCreateRecipeInBook}
-              >
-                <Feather name="plus" size={14} color="#FFFFFF" />
-                <Text style={styles.createRecipeButtonText}>Nouvelle recette</Text>
-              </Pressable>
+              <View style={styles.createRecipeButtonWrapper}>
+                <PhysicalButtonAnimated
+                  variant="primary"
+                  onPress={handleCreateRecipeInBook}
+                  innerStyle={styles.createRecipeButtonInner}
+                >
+                  <Feather name="plus" size={14} color="#FFFFFF" />
+                  <Text style={styles.createRecipeButtonText}>Nouvelle recette</Text>
+                </PhysicalButtonAnimated>
+              </View>
             ) : null}
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
           </View>
@@ -411,13 +408,15 @@ export default function RecipeBookScreen() {
                   availableRecipes.map((recipe) => (
                     <View key={recipe.id} style={styles.availableRow}>
                       <Text style={styles.availableName}>{recipe.title}</Text>
-                      <Pressable
-                        style={styles.availableAddButton}
+                      <PhysicalButtonAnimated
+                        variant="secondary"
                         onPress={() => handleAddRecipeToBook(recipe.id)}
+                        borderRadius={14}
+                        innerStyle={styles.availableAddButtonInner}
                       >
-                        <Feather name="plus" size={14} color="#BC6C25" />
+                        <Feather name="plus" size={14} color="#6B705C" />
                         <Text style={styles.availableAddText}>Ajouter</Text>
-                      </Pressable>
+                      </PhysicalButtonAnimated>
                     </View>
                   ))
                 ) : (
@@ -529,19 +528,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
-  createRecipeButton: {
+  createRecipeButtonWrapper: {
+    alignSelf: "flex-start",
     marginTop: 6,
-    minHeight: 48,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "#BC6C25",
-    backgroundColor: "#BC6C25",
-    alignItems: "center",
-    justifyContent: "center",
+  },
+  createRecipeButtonInner: {
     flexDirection: "row",
     gap: 6,
     paddingHorizontal: 14,
-    alignSelf: "flex-start",
   },
   createRecipeButtonText: {
     color: "#FFFFFF",
@@ -638,24 +632,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
-  actionButton: {
+  actionButtonWrapper: {
     flex: 1,
-    minHeight: 48,
-    borderRadius: 999,
-    alignItems: "center",
-    justifyContent: "center",
+  },
+  actionButtonInner: {
     flexDirection: "row",
     gap: 6,
-  },
-  actionButtonSoft: {
-    borderWidth: 1,
-    borderColor: "#E4D9C8",
-    backgroundColor: "#F5EFE4",
-  },
-  actionButtonAccent: {
-    borderWidth: 1,
-    borderColor: "#BC6C25",
-    backgroundColor: "#BC6C25",
   },
   actionButtonSoftText: {
     color: "#6B705C",
@@ -667,14 +649,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
   },
-  membershipButton: {
-    minHeight: 48,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "#E4D9C8",
-    backgroundColor: "#FCFAF7",
-    alignItems: "center",
-    justifyContent: "center",
+  membershipButtonInner: {
     flexDirection: "row",
     gap: 6,
     paddingHorizontal: 12,
@@ -717,20 +692,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-  availableAddButton: {
-    minHeight: 48,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(188, 108, 37, 0.25)",
-    backgroundColor: "rgba(188, 108, 37, 0.08)",
-    alignItems: "center",
-    justifyContent: "center",
+  availableAddButtonInner: {
     flexDirection: "row",
     gap: 5,
     paddingHorizontal: 10,
   },
   availableAddText: {
-    color: "#BC6C25",
+    color: "#6B705C",
     fontSize: 12,
     fontWeight: "700",
   },

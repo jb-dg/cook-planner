@@ -19,6 +19,7 @@ import {
   RecipeInput,
 } from "../../../features/recipes/types";
 import { pickAndUploadImage } from "../../../lib/mediaUpload";
+import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
 
 type RecipeFormProps = {
   initialValues?: RecipeFormState;
@@ -266,15 +267,17 @@ export default function RecipeForm({
       <View style={styles.photosSection}>
         <View style={styles.photosHeader}>
           <Text style={styles.label}>Photos</Text>
-          <Pressable
-            style={[styles.addPhotoButton, uploadingImage && styles.buttonDisabled]}
+          <PhysicalButtonAnimated
+            variant="secondary"
             onPress={handleAddImage}
             disabled={!uploadPathPrefix || uploadingImage}
+            borderRadius={14}
+            innerStyle={styles.addPhotoButtonInner}
           >
             <Text style={styles.addPhotoText}>
               {uploadingImage ? "Upload..." : "+ Ajouter"}
             </Text>
-          </Pressable>
+          </PhysicalButtonAnimated>
         </View>
         {form.imageUrls.length ? (
           <View style={styles.photoGrid}>
@@ -381,15 +384,15 @@ export default function RecipeForm({
               </View>
             </View>
           ))}
-          <Pressable
-            style={styles.addIngredientButton}
+          <PhysicalButtonAnimated
+            variant="secondary"
             onPress={handleAddIngredient}
             disabled={submitting}
           >
             <Text style={styles.addIngredientText}>
               + Ajouter un ingrédient
             </Text>
-          </Pressable>
+          </PhysicalButtonAnimated>
         </View>
       </View>
       <TextInput
@@ -432,13 +435,13 @@ export default function RecipeForm({
               />
             </View>
           ))}
-          <Pressable
-            style={styles.addIngredientButton}
+          <PhysicalButtonAnimated
+            variant="secondary"
             onPress={handleAddStep}
             disabled={submitting}
           >
             <Text style={styles.addIngredientText}>+ Ajouter une étape</Text>
-          </Pressable>
+          </PhysicalButtonAnimated>
         </View>
       </View>
       <TextInput
@@ -453,15 +456,17 @@ export default function RecipeForm({
         keyboardType="url"
         editable={!submitting}
       />
-      <Pressable
-        disabled={!canSubmit}
-        onPress={handleSubmit}
-        style={[styles.saveButton, !canSubmit && styles.saveButtonDisabled]}
-      >
-        <Text style={styles.saveButtonText}>
-          {submitting ? "Enregistrement…" : submitLabel}
-        </Text>
-      </Pressable>
+      <View style={styles.saveButtonWrapper}>
+        <PhysicalButtonAnimated
+          disabled={!canSubmit}
+          onPress={handleSubmit}
+          variant="primary"
+        >
+          <Text style={styles.saveButtonText}>
+            {submitting ? "Enregistrement…" : submitLabel}
+          </Text>
+        </PhysicalButtonAnimated>
+      </View>
     </View>
   );
 }
@@ -513,17 +518,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 12,
   },
-  addPhotoButton: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(188, 108, 37, 0.3)",
-    backgroundColor: "rgba(188, 108, 37, 0.08)",
+  addPhotoButtonInner: {
     paddingHorizontal: 12,
-    minHeight: 48,
-    justifyContent: "center",
   },
   addPhotoText: {
-    color: colors.accent,
+    color: colors.muted,
     fontSize: 12,
     fontWeight: "800",
   },
@@ -578,9 +577,6 @@ const styles = StyleSheet.create({
   difficultyRow: {
     flexDirection: "row",
     gap: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.55,
   },
   difficultyChip: {
     paddingHorizontal: 14,
@@ -667,35 +663,13 @@ const styles = StyleSheet.create({
   unitChipTextActive: {
     color: "#fff",
   },
-  addIngredientButton: {
-    borderWidth: 1.5,
-    borderStyle: "dashed",
-    borderColor: colors.cardBorder,
-    borderRadius: radii.lg,
-    minHeight: 48,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   addIngredientText: {
-    color: colors.accentTertiary,
+    color: colors.muted,
     fontWeight: "700",
     fontSize: 14,
   },
-  saveButton: {
+  saveButtonWrapper: {
     marginTop: 12,
-    backgroundColor: colors.accent,
-    borderRadius: radii.lg,
-    minHeight: 48,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  saveButtonDisabled: {
-    opacity: 0.5,
   },
   saveButtonText: {
     color: "#fff",

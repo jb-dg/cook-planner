@@ -1,9 +1,10 @@
 import { Feather } from "@expo/vector-icons";
-import { ActivityIndicator, Image, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Image, Platform, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import RecipeBooksList from "@/features/recipes/components/RecipeBooksList";
 import RecipeViewModal from "@/features/recipes/components/RecipeViewModal";
+import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
 import WebFooter from "@/components/WebFooter";
 import { colors } from "@/theme/design";
 
@@ -55,13 +56,14 @@ export default function RecipeBooksScreenWeb() {
                 </Text>
               </View>
               {state.selectedBook ? (
-                <Pressable
-                  style={styles.webContentAdd}
+                <PhysicalButtonAnimated
+                  variant="primary"
                   onPress={state.handleCreateRecipeInBook}
+                  innerStyle={styles.webContentAddInner}
                 >
                   <Feather name="plus" size={14} color="#FFFFFF" />
                   <Text style={styles.webContentAddText}>Nouvelle recette</Text>
-                </Pressable>
+                </PhysicalButtonAnimated>
               ) : null}
             </View>
 
@@ -109,28 +111,26 @@ export default function RecipeBooksScreenWeb() {
                       </View>
 
                       <View style={styles.actionsRow}>
-                        <Pressable
-                          style={({ pressed }) => [
-                            styles.actionButton,
-                            styles.actionButtonSoft,
-                            pressed && styles.cardPressed,
-                          ]}
-                          onPress={() => state.handleOpenRecipe(recipe.id, "view")}
-                        >
-                          <Feather name="eye" size={14} color="#6B705C" />
-                          <Text style={styles.actionButtonSoftText}>Afficher</Text>
-                        </Pressable>
-                        <Pressable
-                          style={({ pressed }) => [
-                            styles.actionButton,
-                            styles.actionButtonAccent,
-                            pressed && styles.cardPressed,
-                          ]}
-                          onPress={() => state.handleOpenRecipe(recipe.id, "edit")}
-                        >
-                          <Feather name="edit-2" size={14} color="#FFFFFF" />
-                          <Text style={styles.actionButtonAccentText}>Modifier</Text>
-                        </Pressable>
+                        <View style={styles.actionButtonWrapper}>
+                          <PhysicalButtonAnimated
+                            variant="secondary"
+                            onPress={() => state.handleOpenRecipe(recipe.id, "view")}
+                            innerStyle={styles.actionButtonInner}
+                          >
+                            <Feather name="eye" size={14} color="#6B705C" />
+                            <Text style={styles.actionButtonSoftText}>Afficher</Text>
+                          </PhysicalButtonAnimated>
+                        </View>
+                        <View style={styles.actionButtonWrapper}>
+                          <PhysicalButtonAnimated
+                            variant="primary"
+                            onPress={() => state.handleOpenRecipe(recipe.id, "edit")}
+                            innerStyle={styles.actionButtonInner}
+                          >
+                            <Feather name="edit-2" size={14} color="#FFFFFF" />
+                            <Text style={styles.actionButtonAccentText}>Modifier</Text>
+                          </PhysicalButtonAnimated>
+                        </View>
                       </View>
                     </View>
                   </View>

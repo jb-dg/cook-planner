@@ -11,6 +11,8 @@ import {
   View,
 } from "react-native";
 
+import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
+import PhysicalIconButton from "@/components/PhysicalIconButton";
 import { styles } from "../screens/recipeBooksStyles";
 
 type Props = {
@@ -105,9 +107,13 @@ export default function RecipeBooksList({
               <Text style={styles.headingKicker}>Carnet</Text>
               <Text style={styles.heading}>Livres de recettes</Text>
             </View>
-            <Pressable style={styles.addButton} onPress={onCreateRecipe}>
-              <Feather name="plus" size={20} color="#BC6C25" />
-            </Pressable>
+            <PhysicalIconButton
+              variant="secondary"
+              onPress={onCreateRecipe}
+              accessibilityLabel="Nouvelle recette"
+            >
+              <Feather name="plus" size={20} color={colors.muted} />
+            </PhysicalIconButton>
           </View>
           <Text style={styles.subtitle}>
             Choisis un livre pour ouvrir sa liste de recettes. Le livre
@@ -129,10 +135,14 @@ export default function RecipeBooksList({
               placeholderTextColor="#A5A58D"
               style={styles.bookInput}
             />
-            <Pressable style={styles.createBookButton} onPress={onCreateBook}>
+            <PhysicalButtonAnimated
+              variant="primary"
+              onPress={onCreateBook}
+              innerStyle={styles.createBookButtonInner}
+            >
               <Feather name="book-open" size={14} color="#FFFFFF" />
               <Text style={styles.createBookButtonText}>Créer</Text>
-            </Pressable>
+            </PhysicalButtonAnimated>
           </View>
           {bookError ? <Text style={styles.bookErrorText}>{bookError}</Text> : null}
           {error ? <Text style={styles.errorText}>{error}</Text> : null}

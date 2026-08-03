@@ -87,14 +87,7 @@ export const styles = StyleSheet.create({
     color: "#6B705C",
     marginTop: 4,
   },
-  webContentAdd: {
-    minHeight: 38,
-    borderRadius: 999,
-    backgroundColor: "#BC6C25",
-    borderWidth: 1,
-    borderColor: "#BC6C25",
-    alignItems: "center",
-    justifyContent: "center",
+  webContentAddInner: {
     paddingHorizontal: 14,
     flexDirection: "row",
     gap: 6,
@@ -193,16 +186,6 @@ export const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
-  addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: "#F5EFE4",
-    borderWidth: 1,
-    borderColor: "#E4D9C8",
-    alignItems: "center",
-    justifyContent: "center",
-  },
   bookCreatorRow: {
     flexDirection: "row",
     gap: 8,
@@ -220,14 +203,7 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
-  createBookButton: {
-    minHeight: 48,
-    borderRadius: 999,
-    backgroundColor: "#BC6C25",
-    borderWidth: 1,
-    borderColor: "#BC6C25",
-    alignItems: "center",
-    justifyContent: "center",
+  createBookButtonInner: {
     paddingHorizontal: 14,
     flexDirection: "row",
     gap: 6,
@@ -455,24 +431,12 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
-  actionButton: {
+  actionButtonWrapper: {
     flex: 1,
-    minHeight: 48,
-    borderRadius: 999,
-    alignItems: "center",
-    justifyContent: "center",
+  },
+  actionButtonInner: {
     flexDirection: "row",
     gap: 6,
-  },
-  actionButtonSoft: {
-    borderWidth: 1,
-    borderColor: "#E4D9C8",
-    backgroundColor: "#F5EFE4",
-  },
-  actionButtonAccent: {
-    borderWidth: 1,
-    borderColor: "#BC6C25",
-    backgroundColor: "#BC6C25",
   },
   actionButtonSoftText: {
     color: "#6B705C",

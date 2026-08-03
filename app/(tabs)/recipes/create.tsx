@@ -18,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../contexts/AuthContext";
 import PhysicalButton from "../../../components/PhysicalButton";
+import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
 import WebFooter from "../../../components/WebFooter";
 import {
   AddRecipeDraft,
@@ -785,13 +786,15 @@ export default function CreateRecipeScreen() {
             ) : null}
 
             <View style={styles.actionsRow}>
-              <Pressable
-                style={[styles.primaryButton, !canGoToReview && styles.buttonDisabled]}
-                onPress={handleContinueFromSource}
-                disabled={!canGoToReview}
-              >
-                <Text style={styles.primaryButtonText}>Continuer</Text>
-              </Pressable>
+              <View style={styles.primaryButtonWrapper}>
+                <PhysicalButtonAnimated
+                  variant="primary"
+                  onPress={handleContinueFromSource}
+                  disabled={!canGoToReview}
+                >
+                  <Text style={styles.primaryButtonText}>Continuer</Text>
+                </PhysicalButtonAnimated>
+              </View>
             </View>
           </View>
         ) : null}
@@ -801,15 +804,17 @@ export default function CreateRecipeScreen() {
             <View style={styles.stepHeaderRow}>
               <Text style={styles.sectionLabel}>Révision et validation</Text>
               {(draft.sourceType === "url" || draft.sourceType === "paste") && (
-                <Pressable
-                  style={styles.secondaryInlineButton}
+                <PhysicalButtonAnimated
+                  variant="secondary"
                   onPress={() => {
                     void runExtraction();
                   }}
+                  borderRadius={14}
+                  innerStyle={styles.secondaryInlineButtonInner}
                 >
-                  <Feather name="refresh-cw" size={13} color={colors.accent} />
+                  <Feather name="refresh-cw" size={13} color={colors.muted} />
                   <Text style={styles.secondaryInlineButtonText}>Relancer l’analyse</Text>
-                </Pressable>
+                </PhysicalButtonAnimated>
               )}
             </View>
 
@@ -848,19 +853,18 @@ export default function CreateRecipeScreen() {
             <View style={styles.photosWrap}>
               <View style={styles.stepHeaderRow}>
                 <Text style={styles.sectionLabel}>Photos</Text>
-                <Pressable
-                  style={[
-                    styles.secondaryInlineButton,
-                    uploadingImage && styles.buttonDisabled,
-                  ]}
+                <PhysicalButtonAnimated
+                  variant="secondary"
                   onPress={handleAddRecipeImage}
                   disabled={uploadingImage}
+                  borderRadius={14}
+                  innerStyle={styles.secondaryInlineButtonInner}
                 >
-                  <Feather name="image" size={13} color={colors.accent} />
+                  <Feather name="image" size={13} color={colors.muted} />
                   <Text style={styles.secondaryInlineButtonText}>
                     {uploadingImage ? "Upload..." : "Ajouter"}
                   </Text>
-                </Pressable>
+                </PhysicalButtonAnimated>
               </View>
               {draft.imageUrls.length ? (
                 <View style={styles.photoGrid}>
@@ -1014,9 +1018,9 @@ export default function CreateRecipeScreen() {
                 </View>
               ))}
 
-              <Pressable style={styles.addIngredientButton} onPress={handleAddIngredient}>
+              <PhysicalButtonAnimated variant="secondary" onPress={handleAddIngredient}>
                 <Text style={styles.addIngredientText}>+ Ajouter un ingrédient</Text>
-              </Pressable>
+              </PhysicalButtonAnimated>
             </View>
 
             <View style={styles.stepsWrap}>
@@ -1043,9 +1047,9 @@ export default function CreateRecipeScreen() {
                 </View>
               ))}
 
-              <Pressable style={styles.addIngredientButton} onPress={handleAddStep}>
+              <PhysicalButtonAnimated variant="secondary" onPress={handleAddStep}>
                 <Text style={styles.addIngredientText}>+ Ajouter une étape</Text>
-              </Pressable>
+              </PhysicalButtonAnimated>
             </View>
 
             <TextInput
@@ -1064,13 +1068,15 @@ export default function CreateRecipeScreen() {
               <PhysicalButton variant="secondary" onPress={() => setStep(1)}>
                 <Text style={styles.secondaryButtonText}>Retour</Text>
               </PhysicalButton>
-              <Pressable
-                style={[styles.primaryButton, !canGoToFinalize && styles.buttonDisabled]}
-                onPress={handleContinueFromReview}
-                disabled={!canGoToFinalize}
-              >
-                <Text style={styles.primaryButtonText}>Suivant</Text>
-              </Pressable>
+              <View style={styles.primaryButtonWrapper}>
+                <PhysicalButtonAnimated
+                  variant="primary"
+                  onPress={handleContinueFromReview}
+                  disabled={!canGoToFinalize}
+                >
+                  <Text style={styles.primaryButtonText}>Suivant</Text>
+                </PhysicalButtonAnimated>
+              </View>
             </View>
           </View>
         ) : null}
@@ -1153,17 +1159,19 @@ export default function CreateRecipeScreen() {
               <PhysicalButton variant="secondary" onPress={() => setStep(2)}>
                 <Text style={styles.secondaryButtonText}>Retour</Text>
               </PhysicalButton>
-              <Pressable
-                style={[styles.primaryButton, saving && styles.buttonDisabled]}
-                onPress={() => {
-                  void handleSaveRecipe();
-                }}
-                disabled={saving}
-              >
-                <Text style={styles.primaryButtonText}>
-                  {saving ? "Enregistrement..." : saveLabel}
-                </Text>
-              </Pressable>
+              <View style={styles.primaryButtonWrapper}>
+                <PhysicalButtonAnimated
+                  variant="primary"
+                  onPress={() => {
+                    void handleSaveRecipe();
+                  }}
+                  disabled={saving}
+                >
+                  <Text style={styles.primaryButtonText}>
+                    {saving ? "Enregistrement..." : saveLabel}
+                  </Text>
+                </PhysicalButtonAnimated>
+              </View>
             </View>
           </View>
         ) : null}
@@ -1353,16 +1361,8 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 4,
   },
-  primaryButton: {
+  primaryButtonWrapper: {
     flex: 1,
-    minHeight: 48,
-    borderRadius: 999,
-    backgroundColor: colors.accent,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: colors.accent,
-    paddingHorizontal: 14,
   },
   primaryButtonText: {
     color: "#FFFFFF",
@@ -1374,29 +1374,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
   },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
   stepHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     gap: 8,
   },
-  secondaryInlineButton: {
-    borderWidth: 1,
-    borderColor: "rgba(188, 108, 37, 0.3)",
-    backgroundColor: "rgba(188, 108, 37, 0.08)",
-    borderRadius: 999,
-    minHeight: 48,
+  secondaryInlineButtonInner: {
     paddingHorizontal: 10,
-    alignItems: "center",
-    justifyContent: "center",
     flexDirection: "row",
     gap: 6,
   },
   secondaryInlineButtonText: {
-    color: colors.accent,
+    color: colors.muted,
     fontSize: 12,
     fontWeight: "700",
   },
@@ -1537,17 +1527,8 @@ const styles = StyleSheet.create({
   unitChipTextActive: {
     color: "#FFFFFF",
   },
-  addIngredientButton: {
-    borderWidth: 1.5,
-    borderStyle: "dashed",
-    borderColor: colors.cardBorder,
-    borderRadius: radii.lg,
-    minHeight: 48,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   addIngredientText: {
-    color: colors.accentTertiary,
+    color: colors.muted,
     fontWeight: "700",
     fontSize: 13,
   },
