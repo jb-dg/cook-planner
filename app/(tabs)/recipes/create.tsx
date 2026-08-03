@@ -120,6 +120,14 @@ export default function CreateRecipeScreen() {
   const { bookId } = useLocalSearchParams<{ bookId?: string | string[] }>();
   const routeBookId = toRouteParam(bookId);
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace("/(tabs)/recipes");
+  };
+
   const [scope, setScope] = useState<HouseholdScope | null>(null);
   const [customBooks, setCustomBooks] = useState<
     { id: string; name: string; recipeIds: string[] }[]
@@ -662,6 +670,15 @@ export default function CreateRecipeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerBlock}>
+          {!isWeb ? (
+            <Pressable
+              style={({ pressed }) => [styles.backButton, pressed && styles.cardPressed]}
+              onPress={handleBack}
+            >
+              <Feather name="chevron-left" size={16} color="#6B705C" />
+              <Text style={styles.backButtonText}>Retour</Text>
+            </Pressable>
+          ) : null}
           <Text style={styles.heading}>Ajouter une recette</Text>
           <Text style={styles.subheading}>{stepTitle(step)}</Text>
 
@@ -1216,6 +1233,24 @@ const styles = StyleSheet.create({
   },
   headerBlock: {
     gap: 8,
+  },
+  backButton: {
+    alignSelf: "flex-start",
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    paddingHorizontal: 4,
+    marginLeft: -4,
+  },
+  backButtonText: {
+    color: "#6B705C",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  cardPressed: {
+    transform: [{ scale: 0.995 }],
+    opacity: 0.95,
   },
   heading: {
     fontSize: 28,

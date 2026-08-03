@@ -9,6 +9,7 @@ export default function RecipesLayout() {
         name="create"
         options={{
           title: "Ajouter une recette",
+          headerShown: Platform.OS === "web",
         }}
       />
       <Stack.Screen
