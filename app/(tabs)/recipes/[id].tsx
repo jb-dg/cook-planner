@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
@@ -228,12 +229,17 @@ export default function RecipeScreen() {
           <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : initialValues ? (
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
         <ScrollView
           contentContainerStyle={[
             styles.container,
             isWeb && styles.containerWeb,
           ]}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           <Text style={styles.heading}>
             {screenMode === "view"
@@ -407,6 +413,7 @@ export default function RecipeScreen() {
 
           {isWeb && <WebFooter />}
         </ScrollView>
+        </KeyboardAvoidingView>
       ) : null}
     </SafeAreaView>
   );
