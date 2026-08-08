@@ -22,7 +22,6 @@ import { useShoppingListScreenState } from "../hooks/useShoppingListScreenState"
 import { styles } from "./shoppingListStyles";
 
 export default function ShoppingListScreen() {
-  const isWeb = Platform.OS === "web";
   const state = useShoppingListScreenState();
 
   return (
@@ -32,7 +31,7 @@ export default function ShoppingListScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
-          contentContainerStyle={[styles.container, isWeb && styles.containerWeb]}
+          contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           refreshControl={

@@ -16,7 +16,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import PhysicalButton from "../../../components/PhysicalButton";
 import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
-import WebFooter from "../../../components/WebFooter";
 import { useAuth } from "../../../contexts/AuthContext";
 import {
   mapRecipe,
@@ -26,7 +25,7 @@ import {
 } from "../../../features/recipes/types";
 import { fetchHouseholdScope } from "../../../lib/households";
 import { supabase } from "../../../lib/supabase";
-import { colors, layout, spacing } from "../../../theme/design";
+import { colors, spacing } from "../../../theme/design";
 import RecipeForm from "./RecipeForm";
 
 type ScreenMode = "view" | "edit";
@@ -47,7 +46,6 @@ export default function RecipeScreen() {
   const { id, mode } = useLocalSearchParams<{ id: string; mode?: string }>();
   const router = useRouter();
   const { session } = useAuth();
-  const isWeb = Platform.OS === "web";
   const [initialValues, setInitialValues] = useState<RecipeFormState | null>(
     null,
   );
@@ -234,10 +232,7 @@ export default function RecipeScreen() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
         <ScrollView
-          contentContainerStyle={[
-            styles.container,
-            isWeb && styles.containerWeb,
-          ]}
+          contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -411,7 +406,6 @@ export default function RecipeScreen() {
             </>
           )}
 
-          {isWeb && <WebFooter />}
         </ScrollView>
         </KeyboardAvoidingView>
       ) : null}
@@ -433,10 +427,6 @@ const styles = StyleSheet.create({
     padding: spacing.screen,
     gap: 16,
     paddingBottom: 160,
-  },
-  containerWeb: {
-    paddingTop: layout.webNavOffset + spacing.screen,
-    paddingBottom: 40,
   },
   heading: {
     fontSize: 28,

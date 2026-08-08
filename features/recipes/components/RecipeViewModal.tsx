@@ -3,7 +3,6 @@ import {
   Image,
   Linking,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -52,7 +51,7 @@ export default function RecipeViewModal({
       <Pressable style={styles.backdrop} onPress={onClose} />
       <View style={styles.sheetPositioner} pointerEvents="box-none">
         <View style={styles.sheet}>
-            {Platform.OS !== "web" && <View style={styles.sheetHandle} />}
+            <View style={styles.sheetHandle} />
             <View style={styles.header}>
               <View style={styles.titleBlock}>
                 <Text style={styles.kicker}>Recette</Text>
@@ -187,9 +186,9 @@ const styles = StyleSheet.create({
   },
   sheetPositioner: {
     flex: 1,
-    justifyContent: Platform.OS === "web" ? "center" : "flex-end",
+    justifyContent: "flex-end",
     alignItems: "center",
-    padding: Platform.OS === "web" ? spacing.screen : 0,
+    padding: 0,
   },
   sheetHandle: {
     alignSelf: "center",
@@ -202,11 +201,11 @@ const styles = StyleSheet.create({
   sheet: {
     width: "100%",
     maxWidth: 720,
-    maxHeight: Platform.OS === "web" ? "86%" : "94%",
+    maxHeight: "94%",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    borderBottomLeftRadius: Platform.OS === "web" ? 24 : 0,
-    borderBottomRightRadius: Platform.OS === "web" ? 24 : 0,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.9)",
@@ -218,7 +217,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 14,
     paddingHorizontal: spacing.card,
-    paddingTop: Platform.OS === "web" ? spacing.card : spacing.card + 4,
+    paddingTop: spacing.card + 4,
     paddingBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(228, 217, 200, 0.7)",

@@ -48,21 +48,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 const NATIVE_AUTH_REDIRECT_URL = "cookplanner://auth/callback";
 
-const resolveSupabaseRedirectUrl = () => {
-  if (Platform.OS === "web") {
-    const baseUrl =
-      process.env.EXPO_PUBLIC_WEB_URL ?? Linking.createURL("/");
-    try {
-      return new URL("/auth", baseUrl).toString();
-    } catch {
-      return `${baseUrl.replace(/\/+$/, "")}/auth`;
-    }
-  }
-
-  return NATIVE_AUTH_REDIRECT_URL;
-};
-
-const SUPABASE_REDIRECT_URL = resolveSupabaseRedirectUrl();
+const SUPABASE_REDIRECT_URL = NATIVE_AUTH_REDIRECT_URL;
 const EMAIL_OTP_TYPES: EmailOtpType[] = [
   "signup",
   "invite",
@@ -357,16 +343,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           provider,
           options: {
             redirectTo: SUPABASE_REDIRECT_URL,
-            skipBrowserRedirect: Platform.OS !== "web",
+            skipBrowserRedirect: true,
           },
         });
 
         if (error) {
           return createResult(error);
-        }
-
-        if (Platform.OS === "web") {
-          return { success: true };
         }
 
         if (!data.url) {

@@ -7,18 +7,14 @@ import { StyleSheet } from "react-native";
 import { radii } from "@/theme/design";
 
 type AppTabsProps = {
-  mode: "web" | "native";
   tabBarBottom?: number;
 };
 
-export default function AppTabs({ mode, tabBarBottom = 16 }: AppTabsProps) {
-  const isWeb = mode === "web";
-
+export default function AppTabs({ tabBarBottom = 16 }: AppTabsProps) {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        sceneStyle: isWeb ? styles.sceneWeb : undefined,
         tabBarPosition: "bottom",
         tabBarActiveTintColor: "#BC6C25",
         tabBarInactiveTintColor: "#6B705C",
@@ -43,9 +39,7 @@ export default function AppTabs({ mode, tabBarBottom = 16 }: AppTabsProps) {
             />
           </BlurView>
         ),
-        tabBarStyle: isWeb
-          ? styles.tabBarHiddenWeb
-          : [styles.tabBarMobile, { bottom: tabBarBottom }],
+        tabBarStyle: [styles.tabBarMobile, { bottom: tabBarBottom }],
       }}
     >
       <Tabs.Screen
@@ -98,12 +92,6 @@ export default function AppTabs({ mode, tabBarBottom = 16 }: AppTabsProps) {
 }
 
 const styles = StyleSheet.create({
-  sceneWeb: {
-    width: "100%",
-    maxWidth: 1240,
-    alignSelf: "center",
-    backgroundColor: "transparent",
-  },
   tabBarBackground: {
     flex: 1,
     borderRadius: radii.xl,
@@ -125,8 +113,5 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,
-  },
-  tabBarHiddenWeb: {
-    display: "none",
   },
 });

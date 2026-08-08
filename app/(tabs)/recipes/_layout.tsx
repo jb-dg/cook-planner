@@ -1,5 +1,4 @@
 import { Stack } from "expo-router";
-import { Platform } from "react-native";
 
 export default function RecipesLayout() {
   return (
@@ -9,7 +8,7 @@ export default function RecipesLayout() {
         name="create"
         options={{
           title: "Ajouter une recette",
-          headerShown: Platform.OS === "web",
+          headerShown: false,
         }}
       />
       <Stack.Screen
@@ -22,7 +21,7 @@ export default function RecipesLayout() {
         name="books/[bookId]"
         options={{
           title: "Livre de recettes",
-          headerShown: Platform.OS === "web",
+          headerShown: false,
         }}
       />
     </Stack>

@@ -14,7 +14,6 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
 import PhysicalButton from "@/components/PhysicalButton";
-import WebFooter from "@/components/WebFooter";
 import HouseholdSummaryCard from "@/components/profile/HouseholdSummaryCard";
 import ProfileActionRow from "@/components/profile/ProfileActionRow";
 import ProfileSlideModal from "@/components/profile/ProfileSlideModal";
@@ -23,14 +22,9 @@ import { spacing } from "@/theme/design";
 import { useProfileScreenState } from "../hooks/useProfileScreenState";
 import { styles } from "./profileScreenStyles";
 
-type Props = {
-  variant: "web" | "native";
-};
-
-export default function ProfileScreenView({ variant }: Props) {
+export default function ProfileScreenView() {
   const state = useProfileScreenState();
   const insets = useSafeAreaInsets();
-  const isWeb = variant === "web";
 
   const profileModalContentStyle = useMemo(
     () => [
@@ -71,7 +65,7 @@ export default function ProfileScreenView({ variant }: Props) {
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
       <ScrollView
-        contentContainerStyle={[styles.container, isWeb && styles.containerWeb]}
+        contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
         <LinearGradient
@@ -118,8 +112,6 @@ export default function ProfileScreenView({ variant }: Props) {
             </View>
           </PhysicalButtonAnimated>
         </View>
-
-        {isWeb && <WebFooter />}
       </ScrollView>
 
       <ProfileSlideModal

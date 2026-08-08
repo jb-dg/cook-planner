@@ -15,7 +15,6 @@ import { supabase } from "@/lib/supabase";
 
 import { mapRecipe, type Recipe } from "../types";
 
-type Mode = "web" | "native";
 type RecipeRow = Parameters<typeof mapRecipe>[0];
 
 const RECIPE_SELECT_WITH_IMAGES =
@@ -23,10 +22,9 @@ const RECIPE_SELECT_WITH_IMAGES =
 const RECIPE_SELECT_BASIC =
   "id,title,duration,difficulty,servings,description,ingredients,steps,source_url";
 
-export const useRecipeBooksScreenState = (mode: Mode) => {
+export const useRecipeBooksScreenState = () => {
   const { session } = useAuth();
   const router = useRouter();
-  const isWeb = mode === "web";
 
   const [scope, setScope] = useState<HouseholdScope | null>(null);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -172,14 +170,6 @@ export const useRecipeBooksScreenState = (mode: Mode) => {
     return `${count} livres`;
   }, [books.length]);
 
-  useEffect(() => {
-    if (!isWeb || !books.length) return;
-    if (selectedBookId && books.some((book) => book.id === selectedBookId)) {
-      return;
-    }
-    setSelectedBookId(books[0].id);
-  }, [isWeb, books, selectedBookId]);
-
   const selectedBook = useMemo(() => {
     if (!books.length) return null;
     return books.find((book) => book.id === selectedBookId) ?? books[0];
@@ -245,16 +235,12 @@ export const useRecipeBooksScreenState = (mode: Mode) => {
 
   const handleOpenBook = useCallback(
     (book: RecipeBook) => {
-      if (isWeb) {
-        setSelectedBookId(book.id);
-        return;
-      }
       router.push({
         pathname: "/(tabs)/recipes/books/[bookId]",
         params: { bookId: book.id },
       });
     },
-    [isWeb, router],
+    [router],
   );
 
   const handleOpenRecipe = useCallback(

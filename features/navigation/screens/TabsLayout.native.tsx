@@ -18,5 +18,5 @@ export default function TabsLayoutNative() {
     return <Redirect href="/auth" />;
   }
 
-  return <AppTabs mode="native" tabBarBottom={tabBarBottom} />;
+  return <AppTabs tabBarBottom={tabBarBottom} />;
 }

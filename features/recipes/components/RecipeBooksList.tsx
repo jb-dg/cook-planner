@@ -16,7 +16,6 @@ import PhysicalIconButton from "@/components/PhysicalIconButton";
 import { styles } from "../screens/recipeBooksStyles";
 
 type Props = {
-  variant: "web" | "native";
   books: RecipeBook[];
   loading: boolean;
   booksLoading: boolean;
@@ -26,7 +25,6 @@ type Props = {
   bookName: string;
   bookError: string | null;
   error: string | null;
-  selectedBookId: string | null;
   onOpenBook: (book: RecipeBook) => void;
   onRefresh: () => Promise<void>;
   onBookNameChange: (value: string) => void;
@@ -35,7 +33,6 @@ type Props = {
 };
 
 export default function RecipeBooksList({
-  variant,
   books,
   loading,
   booksLoading,
@@ -45,15 +42,12 @@ export default function RecipeBooksList({
   bookName,
   bookError,
   error,
-  selectedBookId,
   onOpenBook,
   onRefresh,
   onBookNameChange,
   onCreateBook,
   onCreateRecipe,
 }: Props) {
-  const isWeb = variant === "web";
-
   const renderBook = ({ item }: { item: RecipeBook }) => (
     <Pressable
       onPress={() => onOpenBook(item)}
@@ -62,12 +56,7 @@ export default function RecipeBooksList({
       {Platform.OS === "android" && (
         <View pointerEvents="none" style={styles.bookAndroidShadow} />
       )}
-      <View
-        style={[
-          styles.bookCardSurface,
-          isWeb && selectedBookId === item.id && styles.bookCardSurfaceActive,
-        ]}
-      >
+      <View style={styles.bookCardSurface}>
         <View style={styles.bookCardHeader}>
           <View style={styles.bookTitleBlock}>
             <Text style={styles.bookEyebrow}>
@@ -86,9 +75,7 @@ export default function RecipeBooksList({
             </Text>
           </View>
           <Text style={styles.bookFooterText}>
-            {isWeb
-              ? "Voir les recettes à droite"
-              : "Appuie pour voir les recettes de ce livre"}
+            Appuie pour voir les recettes de ce livre
           </Text>
         </View>
       </View>
@@ -169,11 +156,7 @@ export default function RecipeBooksList({
       onRefresh={onRefresh}
       ListHeaderComponent={listHeader}
       ListEmptyComponent={listEmpty}
-      contentContainerStyle={[
-        styles.listContent,
-        isWeb ? styles.listContentWeb : null,
-        isWeb ? styles.sidebarContent : null,
-      ]}
+      contentContainerStyle={styles.listContent}
       showsVerticalScrollIndicator={false}
     />
   );

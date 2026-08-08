@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native";
 
-import { colors, layout, radii, shadows, spacing } from "@/theme/design";
+import { colors, radii, shadows, spacing } from "@/theme/design";
 
 export const styles = StyleSheet.create({
   screen: {
@@ -11,10 +11,6 @@ export const styles = StyleSheet.create({
     padding: spacing.screen,
     gap: 20,
     paddingBottom: 160,
-  },
-  containerWeb: {
-    paddingTop: layout.webNavOffset + spacing.screen,
-    paddingBottom: 40,
   },
 
   heroCard: {

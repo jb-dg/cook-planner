@@ -6,12 +6,11 @@ import { useRecipeBooksScreenState } from "../hooks/useRecipeBooksScreenState";
 import { styles } from "./recipeBooksStyles";
 
 export default function RecipeBooksScreen() {
-  const state = useRecipeBooksScreenState("native");
+  const state = useRecipeBooksScreenState();
 
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
       <RecipeBooksList
-        variant="native"
         books={state.books}
         loading={state.loading}
         booksLoading={state.booksLoading}
@@ -21,7 +20,6 @@ export default function RecipeBooksScreen() {
         bookName={state.bookName}
         bookError={state.bookError}
         error={state.error}
-        selectedBookId={state.selectedBookId}
         onOpenBook={state.handleOpenBook}
         onRefresh={state.handleRefresh}
         onBookNameChange={state.onBookNameChange}

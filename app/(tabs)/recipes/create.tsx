@@ -20,7 +20,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../../contexts/AuthContext";
 import PhysicalButton from "../../../components/PhysicalButton";
 import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
-import WebFooter from "../../../components/WebFooter";
 import {
   AddRecipeDraft,
   canContinueFromReview,
@@ -46,7 +45,7 @@ import {
 import { fetchHouseholdScope, HouseholdScope } from "../../../lib/households";
 import { pickAndUploadImage } from "../../../lib/mediaUpload";
 import { supabase } from "../../../lib/supabase";
-import { colors, layout, radii, spacing } from "../../../theme/design";
+import { colors, radii, spacing } from "../../../theme/design";
 
 type Step = 1 | 2 | 3;
 
@@ -117,7 +116,6 @@ const stepTitle = (step: Step) => {
 export default function CreateRecipeScreen() {
   const { session } = useAuth();
   const router = useRouter();
-  const isWeb = Platform.OS === "web";
   const { bookId } = useLocalSearchParams<{ bookId?: string | string[] }>();
   const routeBookId = toRouteParam(bookId);
 
@@ -671,20 +669,18 @@ export default function CreateRecipeScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
       <ScrollView
-        contentContainerStyle={[styles.container, isWeb && styles.containerWeb]}
+        contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.headerBlock}>
-          {!isWeb ? (
-            <Pressable
-              style={({ pressed }) => [styles.backButton, pressed && styles.cardPressed]}
-              onPress={handleBack}
-            >
-              <Feather name="chevron-left" size={16} color="#6B705C" />
-              <Text style={styles.backButtonText}>Retour</Text>
-            </Pressable>
-          ) : null}
+          <Pressable
+            style={({ pressed }) => [styles.backButton, pressed && styles.cardPressed]}
+            onPress={handleBack}
+          >
+            <Feather name="chevron-left" size={16} color="#6B705C" />
+            <Text style={styles.backButtonText}>Retour</Text>
+          </Pressable>
           <Text style={styles.heading}>Ajouter une recette</Text>
           <Text style={styles.subheading}>{stepTitle(step)}</Text>
 
@@ -1199,7 +1195,6 @@ export default function CreateRecipeScreen() {
           </View>
         ) : null}
 
-        {isWeb && <WebFooter />}
       </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -1215,10 +1210,6 @@ const styles = StyleSheet.create({
     padding: spacing.screen,
     gap: 18,
     paddingBottom: 180,
-  },
-  containerWeb: {
-    paddingTop: layout.webNavOffset + spacing.screen,
-    paddingBottom: 40,
   },
   centerState: {
     flex: 1,

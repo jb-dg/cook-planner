@@ -1,14 +1,8 @@
 import { Session } from "@supabase/supabase-js";
 import { addDays, isSameDay } from "date-fns";
 import { useMemo } from "react";
-import {
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from "react-native";
-import { breakpoints, spacing } from "../../../theme/design";
+import { Platform, StyleSheet, Text, View } from "react-native";
+import { spacing } from "../../../theme/design";
 import { MEAL_SLOTS } from "../utils/constants";
 import { DayPlan, MealKey } from "../utils/types";
 import { DayMealCard } from "./DayMealCard";
@@ -95,8 +89,6 @@ export const FocusView = ({
   onOpenRecipePicker,
   onBlur,
 }: Props) => {
-  const { width } = useWindowDimensions();
-  const isWideWeb = Platform.OS === "web" && width >= breakpoints.webPlannerWide;
   const dayColumns = useMemo(
     () =>
       days.map((item, index) => ({
@@ -124,17 +116,14 @@ export const FocusView = ({
         )}
         <View style={styles.shellCardSurface}>
           {/* Meal slots */}
-          <View style={[styles.mealGrid, isWideWeb && styles.mealGridWebWide]}>
+          <View style={styles.mealGrid}>
             {MEAL_SLOTS.map((slot) => {
               const mealData = (
                 dayData as Record<MealKey, { recipe?: string }>
               )[slot.key];
               const meal = { recipe: mealData?.recipe ?? "" };
               return (
-                <View
-                  key={slot.key}
-                  style={isWideWeb ? styles.mealGridItemWebWide : undefined}
-                >
+                <View key={slot.key}>
                   <DayMealCard
                     slot={slot}
                     meal={meal}
@@ -198,13 +187,6 @@ const styles = StyleSheet.create({
   },
   mealGrid: {
     gap: 14,
-  },
-  mealGridWebWide: {
-    flexDirection: "row",
-    alignItems: "stretch",
-  },
-  mealGridItemWebWide: {
-    flex: 1,
   },
   noteBox: {
     padding: 14,

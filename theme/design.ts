@@ -43,17 +43,6 @@ export const spacing = {
   card: 18,
 };
 
-export const layout = {
-  webNavOffset: 126,
-  webFooterOffset: 140,
-};
-
-export const breakpoints = {
-  webNavWide: 900,
-  webAuthWide: 980,
-  webPlannerWide: 1100,
-};
-
 export const shadows = {
   // Lightweight elevation for small inline cards/rows (profile rows, chips-as-buttons).
   // Kept distinct from `card`/`soft` below, which are for larger surfaces.

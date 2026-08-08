@@ -2,7 +2,7 @@
 
 Weatly est une application de planification des repas pour organiser les recettes, préparer les menus de la semaine et générer une liste de courses partagée.
 
-L'app fonctionne avec Expo et React Native pour iOS, Android et le web. Les données sont synchronisées avec Supabase afin de conserver les recettes, les plannings, les listes de courses et les foyers utilisateurs.
+L'app fonctionne avec Expo et React Native pour iOS et Android. Les données sont synchronisées avec Supabase afin de conserver les recettes, les plannings, les listes de courses et les foyers utilisateurs.
 
 ## Fonctionnalités
 
@@ -59,10 +59,9 @@ Créer un fichier `.env` à la racine avec les variables publiques utilisées pa
 ```bash
 EXPO_PUBLIC_SUPABASE_URL=https://votre-projet.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=votre-clé-anon
-EXPO_PUBLIC_WEB_URL=http://localhost:8081
 ```
 
-`EXPO_PUBLIC_WEB_URL` sert aux redirections d'authentification sur le web. Sur mobile, le schéma d'URL configuré est `cookplanner://auth/callback`.
+Les redirections d'authentification utilisent le schéma d'URL `cookplanner://auth/callback`.
 
 Pour l'import depuis une URL, déployer aussi l'Edge Function Supabase `recipe-html` présente dans `supabase/functions/recipe-html`.
 
@@ -84,7 +83,6 @@ Commandes utiles :
 npm run start:lan
 npm run start:tunnel
 npm run start:dev-client
-npm run web
 npm run ios
 npm run android
 ```
@@ -117,4 +115,3 @@ Weatly cible :
 
 - iOS avec le bundle `com.jbdg.weatly`
 - Android avec le package `com.jbdg.weatly`
-- Web avec Expo Router et Metro

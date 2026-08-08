@@ -16,7 +16,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../../contexts/AuthContext";
 import PhysicalButtonAnimated from "../../../../components/PhysicalButtonAnimated";
-import WebFooter from "../../../../components/WebFooter";
 import RecipeViewModal from "../../../../features/recipes/components/RecipeViewModal";
 import {
   buildBooksStorageKey,
@@ -28,7 +27,7 @@ import {
 import { mapRecipe, Recipe } from "../../../../features/recipes/types";
 import { fetchHouseholdScope, HouseholdScope } from "../../../../lib/households";
 import { supabase } from "../../../../lib/supabase";
-import { colors, layout, spacing } from "../../../../theme/design";
+import { colors, spacing } from "../../../../theme/design";
 
 type RecipeRow = Parameters<typeof mapRecipe>[0];
 
@@ -55,7 +54,6 @@ export default function RecipeBookScreen() {
   const { session } = useAuth();
   const router = useRouter();
   const { bookId } = useLocalSearchParams<{ bookId: string }>();
-  const isWeb = Platform.OS === "web";
   const currentBookId = Array.isArray(bookId) ? bookId[0] : bookId;
 
   const [scope, setScope] = useState<HouseholdScope | null>(null);
@@ -354,20 +352,18 @@ export default function RecipeBookScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
-      {!isWeb ? (
-        <View style={styles.stickyHeader}>
-          <Pressable
-            style={({ pressed }) => [styles.backButton, pressed && styles.cardPressed]}
-            onPress={handleBackToRecipes}
-          >
-            <Feather name="chevron-left" size={16} color="#6B705C" />
-            <Text style={styles.backButtonText}>Tous les livres</Text>
-          </Pressable>
-          <Text numberOfLines={1} style={styles.stickyHeaderTitle}>
-            {selectedBook?.name ?? "Livre"}
-          </Text>
-        </View>
-      ) : null}
+      <View style={styles.stickyHeader}>
+        <Pressable
+          style={({ pressed }) => [styles.backButton, pressed && styles.cardPressed]}
+          onPress={handleBackToRecipes}
+        >
+          <Feather name="chevron-left" size={16} color="#6B705C" />
+          <Text style={styles.backButtonText}>Tous les livres</Text>
+        </Pressable>
+        <Text numberOfLines={1} style={styles.stickyHeaderTitle}>
+          {selectedBook?.name ?? "Livre"}
+        </Text>
+      </View>
       <FlatList
         data={displayedRecipes}
         keyExtractor={(item) => item.id}
@@ -400,34 +396,31 @@ export default function RecipeBookScreen() {
           </View>
         }
         ListFooterComponent={
-          <>
-            {activeCustomBook ? (
-              <View style={styles.footerSection}>
-                <Text style={styles.footerTitle}>Ajouter des recettes au livre</Text>
-                {availableRecipes.length ? (
-                  availableRecipes.map((recipe) => (
-                    <View key={recipe.id} style={styles.availableRow}>
-                      <Text style={styles.availableName}>{recipe.title}</Text>
-                      <PhysicalButtonAnimated
-                        variant="secondary"
-                        onPress={() => handleAddRecipeToBook(recipe.id)}
-                        borderRadius={14}
-                        innerStyle={styles.availableAddButtonInner}
-                      >
-                        <Feather name="plus" size={14} color="#6B705C" />
-                        <Text style={styles.availableAddText}>Ajouter</Text>
-                      </PhysicalButtonAnimated>
-                    </View>
-                  ))
-                ) : (
-                  <Text style={styles.availableEmpty}>
-                    Toutes les recettes sont déjà dans ce livre.
-                  </Text>
-                )}
-              </View>
-            ) : null}
-            {isWeb && <WebFooter />}
-          </>
+          activeCustomBook ? (
+            <View style={styles.footerSection}>
+              <Text style={styles.footerTitle}>Ajouter des recettes au livre</Text>
+              {availableRecipes.length ? (
+                availableRecipes.map((recipe) => (
+                  <View key={recipe.id} style={styles.availableRow}>
+                    <Text style={styles.availableName}>{recipe.title}</Text>
+                    <PhysicalButtonAnimated
+                      variant="secondary"
+                      onPress={() => handleAddRecipeToBook(recipe.id)}
+                      borderRadius={14}
+                      innerStyle={styles.availableAddButtonInner}
+                    >
+                      <Feather name="plus" size={14} color="#6B705C" />
+                      <Text style={styles.availableAddText}>Ajouter</Text>
+                    </PhysicalButtonAnimated>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.availableEmpty}>
+                  Toutes les recettes sont déjà dans ce livre.
+                </Text>
+              )}
+            </View>
+          ) : null
         }
         ListEmptyComponent={
           loading || booksLoading ? (
@@ -449,7 +442,7 @@ export default function RecipeBookScreen() {
             </View>
           )
         }
-        contentContainerStyle={[styles.listContent, isWeb && styles.listContentWeb]}
+        contentContainerStyle={styles.listContent}
       />
       <RecipeViewModal
         visible={!!selectedRecipe}
@@ -488,10 +481,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "800",
     letterSpacing: -0.2,
-  },
-  listContentWeb: {
-    paddingTop: layout.webNavOffset + spacing.screen,
-    paddingBottom: 40,
   },
   header: {
     gap: 6,

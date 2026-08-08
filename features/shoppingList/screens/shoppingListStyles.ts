@@ -1,6 +1,6 @@
 import { Platform, StyleSheet } from "react-native";
 
-import { colors, layout, spacing } from "@/theme/design";
+import { colors, spacing } from "@/theme/design";
 
 const shadowCard = Platform.select({
   ios: {
@@ -25,13 +25,6 @@ export const styles = StyleSheet.create({
     padding: spacing.screen,
     gap: spacing.base * 1.5,
     paddingBottom: spacing.screen + 140,
-  },
-  containerWeb: {
-    paddingTop: layout.webNavOffset + spacing.screen,
-    paddingBottom: spacing.screen * 2,
-    maxWidth: 720,
-    width: "100%",
-    alignSelf: "center",
   },
   headerCard: {
     borderRadius: 24,

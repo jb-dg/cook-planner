@@ -1,6 +1,6 @@
 import { Platform, StyleSheet } from "react-native";
 
-import { colors, layout, spacing } from "@/theme/design";
+import { colors, spacing } from "@/theme/design";
 
 const shadowHero = Platform.select({
   ios: {
@@ -39,66 +39,6 @@ export const styles = StyleSheet.create({
     padding: spacing.screen,
     paddingBottom: 140,
     gap: 14,
-  },
-  listContentWeb: {
-    paddingTop: layout.webNavOffset + spacing.screen,
-    paddingBottom: 40,
-  },
-  webLayout: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "stretch",
-    gap: spacing.base * 2,
-    width: "100%",
-    maxWidth: 1240,
-    alignSelf: "center",
-  },
-  webSidebar: {
-    flexBasis: 360,
-    flexGrow: 0,
-    flexShrink: 0,
-  },
-  webContent: {
-    flex: 1,
-    paddingTop: layout.webNavOffset + spacing.screen,
-    paddingBottom: spacing.screen * 2,
-    paddingHorizontal: spacing.screen,
-  },
-  webContentSurface: {
-    flex: 1,
-    gap: spacing.base * 1.5,
-  },
-  webContentHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 16,
-  },
-  webContentTitle: {
-    fontSize: 26,
-    lineHeight: 30,
-    fontWeight: "900",
-    color: "#2D2D2A",
-    letterSpacing: -0.6,
-  },
-  webContentSubtitle: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#6B705C",
-    marginTop: 4,
-  },
-  webContentAddInner: {
-    paddingHorizontal: 14,
-    flexDirection: "row",
-    gap: 6,
-  },
-  webContentAddText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "800",
-  },
-  sidebarContent: {
-    paddingBottom: spacing.screen * 2,
   },
   header: {
     marginBottom: 2,
@@ -246,10 +186,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     gap: 12,
-  },
-  bookCardSurfaceActive: {
-    borderColor: "rgba(188, 108, 37, 0.45)",
-    backgroundColor: "#FFF7ED",
   },
   bookCardHeader: {
     flexDirection: "row",

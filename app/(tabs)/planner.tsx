@@ -8,7 +8,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  View,
 } from "react-native";
 import {
   SafeAreaView,
@@ -36,14 +35,12 @@ import {
   ViewMode,
 } from "../../features/planner/utils/types";
 import { Recipe } from "../../features/recipes/types";
-import { colors, layout, spacing } from "../../theme/design";
+import { colors, spacing } from "../../theme/design";
 import PhysicalButtonAnimated from "../../components/PhysicalButtonAnimated";
-import WebFooter from "../../components/WebFooter";
 
 export default function PlannerScreen() {
   const { session } = useAuth();
   const insets = useSafeAreaInsets();
-  const isWeb = Platform.OS === "web";
   const tabBarHeight = useBottomTabBarHeight();
 
   // Navigation
@@ -203,104 +200,59 @@ export default function PlannerScreen() {
         <ScrollView
           contentContainerStyle={[
             sharedStyles.container,
-            isWeb && styles.containerWeb,
             {
               // The tab bar floats (position: absolute) above the screen edge by an
               // extra safe-area-driven offset that useBottomTabBarHeight() doesn't
               // report — Math.max guards against that value coming back smaller
               // than the tab bar's own height on some devices.
-              paddingBottom: isWeb
-                ? spacing.screen * 2
-                : Math.max(tabBarHeight, 68) + insets.bottom + 24,
+              paddingBottom: Math.max(tabBarHeight, 68) + insets.bottom + 24,
             },
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {viewMode === "focus" && isWeb ? (
-            <View style={styles.focusWebLayout}>
-              <View style={styles.focusWebLeft}>
-                <PlannerHeader
-                  weekNumber={weekNumber}
-                  weekRangeLabel={weekRangeLabel}
-                  viewMode={viewMode}
-                  saveStatus={saveStatus}
-                  lastSaved={lastSaved}
-                  saveError={saveError}
-                  onWeekPickerOpen={openWeekPicker}
-                  onNavigateWeek={handleNavigate}
-                  onSetViewMode={setViewMode}
-                  dayNav={dayNavProps}
-                />
-              </View>
-              <View style={styles.focusWebRight}>
-                <DayGridSelector
-                  referenceDate={referenceDate}
-                  selectedDate={selectedDate}
-                  onSelectDate={setSelectedDate}
-                  days={days}
-                />
-                <FocusView
-                  days={days}
-                  referenceDate={referenceDate}
-                  selectedDate={selectedDate}
-                  session={session}
-                  recipesLength={recipes.length}
-                  syncing={syncing}
-                  saving={isSaving}
-                  recipesLoading={recipesLoading}
-                  onDayChange={handleDayChange}
-                  onOpenRecipePicker={openRecipePicker}
-                  onBlur={save}
-                />
-              </View>
-            </View>
-          ) : (
-            <>
-              <PlannerHeader
-                weekNumber={weekNumber}
-                weekRangeLabel={weekRangeLabel}
-                viewMode={viewMode}
-                saveStatus={saveStatus}
-                lastSaved={lastSaved}
-                saveError={saveError}
-                onWeekPickerOpen={openWeekPicker}
-                onNavigateWeek={handleNavigate}
-                onSetViewMode={setViewMode}
-                dayNav={dayNavProps}
-              />
+          <PlannerHeader
+            weekNumber={weekNumber}
+            weekRangeLabel={weekRangeLabel}
+            viewMode={viewMode}
+            saveStatus={saveStatus}
+            lastSaved={lastSaved}
+            saveError={saveError}
+            onWeekPickerOpen={openWeekPicker}
+            onNavigateWeek={handleNavigate}
+            onSetViewMode={setViewMode}
+            dayNav={dayNavProps}
+          />
 
-              {viewMode === "focus" ? (
-                <>
-                  <DayGridSelector
-                    referenceDate={referenceDate}
-                    selectedDate={selectedDate}
-                    onSelectDate={setSelectedDate}
-                    days={days}
-                  />
-                  <FocusView
-                    days={days}
-                    referenceDate={referenceDate}
-                    selectedDate={selectedDate}
-                    session={session}
-                    recipesLength={recipes.length}
-                    syncing={syncing}
-                    saving={isSaving}
-                    recipesLoading={recipesLoading}
-                    onDayChange={handleDayChange}
-                    onOpenRecipePicker={openRecipePicker}
-                    onBlur={save}
-                  />
-                </>
-              ) : (
-                <ListView
-                  days={days}
-                  referenceDate={referenceDate}
-                  selectedDate={selectedDate}
-                  onSelectDay={handleSelectDay}
-                />
-              )}
+          {viewMode === "focus" ? (
+            <>
+              <DayGridSelector
+                referenceDate={referenceDate}
+                selectedDate={selectedDate}
+                onSelectDate={setSelectedDate}
+                days={days}
+              />
+              <FocusView
+                days={days}
+                referenceDate={referenceDate}
+                selectedDate={selectedDate}
+                session={session}
+                recipesLength={recipes.length}
+                syncing={syncing}
+                saving={isSaving}
+                recipesLoading={recipesLoading}
+                onDayChange={handleDayChange}
+                onOpenRecipePicker={openRecipePicker}
+                onBlur={save}
+              />
             </>
+          ) : (
+            <ListView
+              days={days}
+              referenceDate={referenceDate}
+              selectedDate={selectedDate}
+              onSelectDay={handleSelectDay}
+            />
           )}
 
           <PhysicalButtonAnimated
@@ -324,8 +276,6 @@ export default function PlannerScreen() {
                 : "Revenir à la vue du jour"}
             </Text>
           </PhysicalButtonAnimated>
-
-          {isWeb && <WebFooter />}
         </ScrollView>
 
         <WeekPickerModal
@@ -376,24 +326,5 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "800",
     fontSize: 17,
-  },
-  containerWeb: {
-    paddingTop: layout.webNavOffset + spacing.screen,
-  },
-  focusWebLayout: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: spacing.base * 2,
-    flexWrap: "wrap",
-  },
-  focusWebLeft: {
-    flex: 1,
-    minWidth: 320,
-    gap: spacing.base * 2,
-  },
-  focusWebRight: {
-    flex: 1,
-    minWidth: 360,
-    gap: spacing.base * 2,
   },
 });
