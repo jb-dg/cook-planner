@@ -1,6 +1,5 @@
 import { Session } from "@supabase/supabase-js";
-import { addDays, format, isSameDay } from "date-fns";
-import { fr } from "date-fns/locale";
+import { addDays, isSameDay } from "date-fns";
 import { useMemo } from "react";
 import {
   Platform,
@@ -103,13 +102,6 @@ export const FocusView = ({
       days.map((item, index) => ({
         ...item,
         dayDate: addDays(referenceDate, index),
-        abbrev: format(addDays(referenceDate, index), "EEE", { locale: fr })
-          .replace(".", "")
-          .toUpperCase()
-          .slice(0, 3),
-        dateNum: format(addDays(referenceDate, index), "d MMM", {
-          locale: fr,
-        }).toUpperCase(),
       })),
     [referenceDate, days],
   );
@@ -121,50 +113,16 @@ export const FocusView = ({
     return index >= 0 ? index : 0;
   }, [dayColumns, selectedDate]);
 
-  const day = dayColumns[selectedDayIndex];
   const dayData = days[selectedDayIndex] || {};
-  const filledCount = MEAL_SLOTS.filter(
-    (slot) =>
-      !!(
-        (dayData as Record<MealKey, { recipe?: string }>)[slot.key]?.recipe ??
-        ""
-      ).trim(),
-  ).length;
-  const isComplete = filledCount === MEAL_SLOTS.length;
 
   return (
     <View style={styles.container}>
-      {/* Day header: abbrev + date — mirrors dayHeader in HearthWeeklyPlanner */}
-      {/* <View style={styles.dayHeader}>
-        <Text style={[styles.dayShort, isComplete && styles.dayShortComplete]}>
-          {day.abbrev}
-        </Text>
-        <Text style={styles.dayDate}>{day.dateNum}</Text>
-        {isComplete && <View style={styles.completeDot} />}
-      </View> */}
-
       {/* Shell card — mirrors shellCard in HearthWeeklyPlanner */}
       <View style={styles.shellCardShadow}>
         {Platform.OS === "android" && (
           <View pointerEvents="none" style={styles.shellCardAndroidShadow} />
         )}
         <View style={styles.shellCardSurface}>
-          {/* Status chip */}
-          <View
-            style={[styles.statusChip, isComplete && styles.statusChipComplete]}
-          >
-            <Text
-              style={[
-                styles.statusText,
-                isComplete && styles.statusTextComplete,
-              ]}
-            >
-              {isComplete
-                ? "Complet ✓"
-                : `${filledCount}/${MEAL_SLOTS.length} repas`}
-            </Text>
-          </View>
-
           {/* Meal slots */}
           <View style={[styles.mealGrid, isWideWeb && styles.mealGridWebWide]}>
             {MEAL_SLOTS.map((slot) => {
@@ -212,41 +170,10 @@ export const FocusView = ({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 12,
-  },
-  // dayHeader mirrors HearthWeeklyPlanner's dayHeader
-  dayHeader: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: 12,
-  },
-  dayShort: {
-    fontSize: 34,
-    lineHeight: 38,
-    fontWeight: "900",
-    letterSpacing: -1.4,
-    color: "#2F2F2C",
-  },
-  dayShortComplete: {
-    color: "#BF6B1F",
-  },
-  dayDate: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: "800",
-    letterSpacing: 2.3,
-    color: "#A8A38F",
-  },
-  completeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: "#BC6C25",
-    marginLeft: 4,
-    marginBottom: 2,
+    gap: 8,
   },
   shellCardShadow: {
-    borderRadius: 24,
+    borderRadius: 26,
     position: "relative",
     ...shadowShell.sm,
   },
@@ -256,46 +183,21 @@ const styles = StyleSheet.create({
     left: -1,
     right: -1,
     bottom: -2,
-    borderRadius: 24,
+    borderRadius: 26,
     backgroundColor: "#000000",
     opacity: 0.12,
   },
   // shellCardSurface mirrors HearthWeeklyPlanner's shellCard
   shellCardSurface: {
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 14,
+    borderRadius: 26,
+    padding: 18,
     backgroundColor: "#ffffff",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.74)",
-    gap: spacing.base * 0.9,
-  },
-  statusChip: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: "#F5EFE4",
-    borderWidth: 1,
-    borderColor: "#E4D9C8",
-  },
-  statusChipComplete: {
-    backgroundColor: "rgba(188, 108, 37, 0.1)",
-    borderColor: "rgba(188, 108, 37, 0.22)",
-  },
-  statusText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#6B705C",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  statusTextComplete: {
-    color: "#BC6C25",
+    gap: spacing.base * 0.6,
   },
   mealGrid: {
-    gap: spacing.base,
+    gap: 14,
   },
   mealGridWebWide: {
     flexDirection: "row",

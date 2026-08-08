@@ -1,9 +1,16 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { spacing } from "../../../theme/design";
+import { colors, spacing } from "../../../theme/design";
 import { ViewMode } from "../utils/types";
 import { SaveStatusIndicator } from "./SaveStatusIndicator";
 import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
+import PhysicalIconButton from "../../../components/PhysicalIconButton";
+
+type DayNav = {
+  selectedDayLabel: string;
+  progress: { filled: number; total: number; percent: number };
+  onGoToToday: () => void;
+};
 
 type Props = {
   weekNumber: number;
@@ -13,7 +20,10 @@ type Props = {
   lastSaved?: Date | null;
   saveError?: string | null;
   onWeekPickerOpen: () => void;
-  onViewModeToggle: () => void;
+  onNavigateWeek: (direction: "prev" | "next") => void;
+  onSetViewMode: (mode: ViewMode) => void;
+  // Day card + week progress — shown inline in the header, only in day view.
+  dayNav?: DayNav;
 };
 
 export const PlannerHeader = ({
@@ -24,47 +34,110 @@ export const PlannerHeader = ({
   lastSaved = null,
   saveError = null,
   onWeekPickerOpen,
-  onViewModeToggle,
+  onNavigateWeek,
+  onSetViewMode,
+  dayNav,
 }: Props) => {
+  const summaryText = dayNav
+    ? `${dayNav.progress.filled}/${dayNav.progress.total} · ${dayNav.progress.percent}%`
+    : "";
+
   return (
     <View style={styles.container}>
-      {/* Top row: badge + actions */}
+      {/* Row 1: week nav (arrows + pill) + view toggle */}
       <View style={styles.topRow}>
-        <View style={styles.weekBadge}>
-          <Text style={styles.weekBadgeText}>Semaine {weekNumber}</Text>
-        </View>
-        <View style={styles.actions}>
-          {/* View toggle — same component/effect as "Aujourd'hui" */}
-          <PhysicalButtonAnimated
-            onPress={onViewModeToggle}
-            variant="primary"
-            innerStyle={styles.calendarBtnInner}
-            accessibilityLabel="Basculer en vue liste"
+        <View style={styles.weekNavGroup}>
+          <PhysicalIconButton
+            variant="badge"
+            borderRadius={12}
+            onPress={() => onNavigateWeek("prev")}
+            accessibilityLabel="Semaine précédente"
           >
-            <Feather
-              name={viewMode === "list" ? "grid" : "list"}
-              size={18}
-              color="#FFFFFF"
-            />
-          </PhysicalButtonAnimated>
-          {/* Calendar trigger — same style as the nav arrows */}
+            <Feather name="chevron-left" size={16} color="#B15E17" />
+          </PhysicalIconButton>
+
           <PhysicalButtonAnimated
-            variant="secondary"
+            variant="badge"
+            borderRadius={16}
             onPress={onWeekPickerOpen}
-            borderRadius={14}
-            innerStyle={styles.calendarBtnInner}
+            innerStyle={styles.weekBadgeInner}
             accessibilityRole="button"
             accessibilityLabel="Changer de semaine"
           >
-            <Feather name="calendar" size={16} color="#6B705C" />
+            <Feather name="calendar" size={14} color="#B15E17" />
+            <Text style={styles.weekBadgeText}>Semaine {weekNumber}</Text>
           </PhysicalButtonAnimated>
+
+          <PhysicalIconButton
+            variant="badge"
+            borderRadius={12}
+            onPress={() => onNavigateWeek("next")}
+            accessibilityLabel="Semaine suivante"
+          >
+            <Feather name="chevron-right" size={16} color="#B15E17" />
+          </PhysicalIconButton>
+        </View>
+
+        {/* List icon = day view, calendar icon = full-week view — matches
+            the reference mock's mapping, not the "obvious" one. */}
+        <View style={styles.viewToggleGroup}>
+          <PhysicalIconButton
+            variant="secondary"
+            borderRadius={16}
+            onPress={() =>
+              onSetViewMode(viewMode === "focus" ? "list" : "focus")
+            }
+            accessibilityLabel={
+              viewMode === "focus" ? "Vue semaine complète" : "Vue jour"
+            }
+          >
+            <Feather
+              name={viewMode === "focus" ? "grid" : "list"}
+              size={18}
+              color={colors.muted}
+            />
+          </PhysicalIconButton>
         </View>
       </View>
 
-      {/* Week range heading */}
-      <Pressable onPress={onWeekPickerOpen}>
-        <Text style={styles.heading}>{weekRangeLabel}</Text>
-      </Pressable>
+      {/* Row 2: big week range title */}
+      <Text style={styles.heading}>{weekRangeLabel}</Text>
+
+      {dayNav ? (
+        <>
+          {/* Row 3: selected-day card + today button */}
+          <View style={styles.dayCardRow}>
+            <View style={styles.dayCard}>
+              <Text style={styles.dayCardText} numberOfLines={1}>
+                {dayNav.selectedDayLabel}
+              </Text>
+            </View>
+            <PhysicalButtonAnimated
+              variant="secondary"
+              onPress={dayNav.onGoToToday}
+              borderRadius={16}
+              innerStyle={styles.todayButtonInner}
+              accessibilityRole="button"
+              accessibilityLabel="Revenir à aujourd'hui"
+            >
+              <Text style={styles.todayButtonText}>Aujourd&apos;hui</Text>
+            </PhysicalButtonAnimated>
+          </View>
+
+          {/* Row 4: compact one-line progress bar */}
+          <View style={styles.progressRow}>
+            <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressFill,
+                  { width: `${dayNav.progress.percent}%` as any },
+                ]}
+              />
+            </View>
+            <Text style={styles.progressText}>{summaryText}</Text>
+          </View>
+        </>
+      ) : null}
 
       {/* Save status */}
       <SaveStatusIndicator
@@ -78,40 +151,93 @@ export const PlannerHeader = ({
 
 const styles = StyleSheet.create({
   container: {
-    gap: spacing.base * 0.6,
+    gap: spacing.base * 1.1,
   },
   topRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  weekBadge: {
-    backgroundColor: "rgba(188, 108, 37, 0.1)",
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+  weekNavGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  weekBadgeInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 16,
+    minHeight: 40,
   },
   weekBadgeText: {
-    color: "#BC6C25",
-    fontWeight: "700",
+    color: "#B15E17",
+    fontWeight: "800",
     fontSize: 12,
     textTransform: "uppercase",
     letterSpacing: 1,
   },
-  actions: {
+  viewToggleGroup: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.base * 0.6,
-  },
-  calendarBtnInner: {
-    flexDirection: "row",
-    gap: 6,
+    gap: 10,
   },
   heading: {
-    fontSize: 23,
-    fontWeight: "900",
-    color: "#2D2D2A",
-    letterSpacing: -0.5,
-    lineHeight: 27,
+    fontSize: 30,
+    fontWeight: "800",
+    color: colors.text,
+    letterSpacing: -0.7,
+    lineHeight: 33,
+  },
+  dayCardRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  dayCard: {
+    flex: 1,
+    minWidth: 0,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+  },
+  dayCardText: {
+    textAlign: "center",
+    fontSize: 17,
+    fontWeight: "800",
+    color: colors.text,
+  },
+  todayButtonInner: {
+    minHeight: 44,
+    paddingHorizontal: 18,
+    paddingVertical: 0,
+  },
+  todayButtonText: {
+    color: "#B15E17",
+    fontWeight: "800",
+    fontSize: 16,
+  },
+  progressRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 6,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: colors.accent,
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.muted,
   },
 });

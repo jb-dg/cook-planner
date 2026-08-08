@@ -5,7 +5,6 @@ import { useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,7 +23,6 @@ import { PlannerHeader } from "../../features/planner/components/PlannerHeader";
 import { RecipePickerModal } from "../../features/planner/components/RecipePickerModal";
 import { Toast } from "../../features/planner/components/Toast";
 import { WeekPickerModal } from "../../features/planner/components/WeekPickerModal";
-import { WeekProgressCard } from "../../features/planner/components/WeekProgressCard";
 import { useAutoSave } from "../../features/planner/hooks/useAutoSave";
 import { usePlannerData } from "../../features/planner/hooks/usePlannerData";
 import { usePlannerRealtime } from "../../features/planner/hooks/usePlannerRealtime";
@@ -185,6 +183,16 @@ export default function PlannerScreen() {
     );
   };
 
+  const handleSelectDay = (date: Date) => {
+    setSelectedDate(date);
+    setViewMode("focus");
+  };
+
+  const dayNavProps =
+    viewMode === "focus"
+      ? { selectedDayLabel, progress, onGoToToday: handleGoToToday }
+      : undefined;
+
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
@@ -220,16 +228,9 @@ export default function PlannerScreen() {
                   lastSaved={lastSaved}
                   saveError={saveError}
                   onWeekPickerOpen={openWeekPicker}
-                  onViewModeToggle={() =>
-                    setViewMode((prev) => (prev === "list" ? "focus" : "list"))
-                  }
-                />
-                <WeekProgressCard
-                  weekNumber={weekNumber}
-                  selectedDayLabel={selectedDayLabel}
-                  progress={progress}
-                  onNavigate={handleNavigate}
-                  onGoToToday={handleGoToToday}
+                  onNavigateWeek={handleNavigate}
+                  onSetViewMode={setViewMode}
+                  dayNav={dayNavProps}
                 />
               </View>
               <View style={styles.focusWebRight}>
@@ -252,18 +253,6 @@ export default function PlannerScreen() {
                   onOpenRecipePicker={openRecipePicker}
                   onBlur={save}
                 />
-                <PhysicalButtonAnimated
-                  variant="primary"
-                  onPress={() => setViewMode("list")}
-                  innerStyle={styles.listButtonInner}
-                  accessibilityRole="button"
-                  accessibilityLabel="Voir la semaine en liste"
-                >
-                  <Feather name="list" size={16} color="#FFFFFF" />
-                  <Text style={styles.listButtonText}>
-                    Voir la semaine en liste
-                  </Text>
-                </PhysicalButtonAnimated>
               </View>
             </View>
           ) : (
@@ -276,20 +265,13 @@ export default function PlannerScreen() {
                 lastSaved={lastSaved}
                 saveError={saveError}
                 onWeekPickerOpen={openWeekPicker}
-                onViewModeToggle={() =>
-                  setViewMode((prev) => (prev === "list" ? "focus" : "list"))
-                }
+                onNavigateWeek={handleNavigate}
+                onSetViewMode={setViewMode}
+                dayNav={dayNavProps}
               />
 
-              {viewMode === "focus" && (
+              {viewMode === "focus" ? (
                 <>
-                  <WeekProgressCard
-                    weekNumber={weekNumber}
-                    selectedDayLabel={selectedDayLabel}
-                    progress={progress}
-                    onNavigate={handleNavigate}
-                    onGoToToday={handleGoToToday}
-                  />
                   <DayGridSelector
                     referenceDate={referenceDate}
                     selectedDate={selectedDate}
@@ -309,39 +291,39 @@ export default function PlannerScreen() {
                     onOpenRecipePicker={openRecipePicker}
                     onBlur={save}
                   />
-                  <PhysicalButtonAnimated
-                    variant="primary"
-                    onPress={() => setViewMode("list")}
-                    innerStyle={styles.listButtonInner}
-                    accessibilityRole="button"
-                    accessibilityLabel="Voir la semaine en liste"
-                  >
-                    <Feather name="list" size={16} color="#FFFFFF" />
-                    <Text style={styles.listButtonText}>
-                      Voir la semaine en liste
-                    </Text>
-                  </PhysicalButtonAnimated>
                 </>
+              ) : (
+                <ListView
+                  days={days}
+                  referenceDate={referenceDate}
+                  selectedDate={selectedDate}
+                  onSelectDay={handleSelectDay}
+                />
               )}
             </>
           )}
 
-          {viewMode === "list" && (
-            <ListView
-              days={days}
-              referenceDate={referenceDate}
-              selectedDate={selectedDate}
-              session={session}
-              recipesLength={recipes.length}
-              recipesLoading={recipesLoading}
-              syncing={syncing}
-              saving={isSaving}
-              onDayChange={handleDayChange}
-              onOpenRecipePicker={openRecipePicker}
-              onSelectDate={setSelectedDate}
-              onBlur={save}
-            />
-          )}
+          <PhysicalButtonAnimated
+            variant="primary"
+            borderRadius={20}
+            onPress={() =>
+              setViewMode((prev) => (prev === "focus" ? "list" : "focus"))
+            }
+            innerStyle={styles.listButtonInner}
+            accessibilityRole="button"
+            accessibilityLabel={
+              viewMode === "focus"
+                ? "Voir la semaine en liste"
+                : "Revenir à la vue du jour"
+            }
+          >
+            <Feather name="list" size={18} color="#FFFFFF" />
+            <Text style={styles.listButtonText}>
+              {viewMode === "focus"
+                ? "Voir la semaine en liste"
+                : "Revenir à la vue du jour"}
+            </Text>
+          </PhysicalButtonAnimated>
 
           {isWeb && <WebFooter />}
         </ScrollView>
@@ -353,11 +335,10 @@ export default function PlannerScreen() {
           calendarMonth={calendarMonth}
           timeframe={timeframe}
           days={days}
-          sheetPaddingBottom={sheetPaddingBottom}
           onClose={closeWeekPicker}
           onSelectTimeframe={handleSelectTimeframe}
           onMonthNavigate={handleMonthNavigate}
-          onSelectDate={setSelectedDate}
+          onSelectDate={handleSelectDay}
           setCalendarMonth={setCalendarMonth}
         />
 
@@ -393,8 +374,8 @@ const styles = StyleSheet.create({
   },
   listButtonText: {
     color: "#FFFFFF",
-    fontWeight: "900",
-    fontSize: 14,
+    fontWeight: "800",
+    fontSize: 17,
   },
   containerWeb: {
     paddingTop: layout.webNavOffset + spacing.screen,

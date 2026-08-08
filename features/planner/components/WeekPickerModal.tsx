@@ -1,4 +1,11 @@
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { Feather } from "@expo/vector-icons";
 import {
   addDays,
@@ -16,7 +23,7 @@ import {
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useMemo } from "react";
-import { colors, radii, spacing } from "../../../theme/design";
+import { colors, spacing } from "../../../theme/design";
 import { DayPlan, MealKey } from "../utils/types";
 
 type Props = {
@@ -26,7 +33,6 @@ type Props = {
   calendarMonth: Date;
   timeframe: "current" | "next";
   days: DayPlan[];
-  sheetPaddingBottom: number;
   onClose: () => void;
   onSelectTimeframe: (frame: "current" | "next") => void;
   onMonthNavigate: (direction: "prev" | "next") => void;
@@ -41,7 +47,6 @@ export const WeekPickerModal = ({
   calendarMonth,
   timeframe,
   days,
-  sheetPaddingBottom,
   onClose,
   onSelectTimeframe,
   onMonthNavigate,
@@ -54,10 +59,12 @@ export const WeekPickerModal = ({
     return raw.charAt(0).toUpperCase() + raw.slice(1);
   }, [calendarMonth]);
 
+  // Single-letter weekday headers (L M M J V S D), per the compact
+  // calendar-picker design — de-duped visually by column position.
   const weekDayLabels = useMemo(() => {
     const base = startOfWeek(new Date(), { weekStartsOn: 1 });
     return Array.from({ length: 7 }).map((_, index) =>
-      format(addDays(base, index), "EEE", { locale: fr }).replace(".", "")
+      format(addDays(base, index), "EEEEE", { locale: fr }).toUpperCase()
     );
   }, []);
 
@@ -91,7 +98,9 @@ export const WeekPickerModal = ({
   }, [days, referenceDate]);
 
   const handleSelectFromCalendar = (date: Date) => {
-    onSelectDate(startOfWeek(date, { weekStartsOn: 1 }));
+    // Select the tapped day itself, not its Monday — "go to this week/this
+    // day" per the picker's spec, not just this week.
+    onSelectDate(date);
     onClose();
   };
 
@@ -99,12 +108,12 @@ export const WeekPickerModal = ({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={styles.sheetBackdrop} onPress={onClose} />
-      <View style={[styles.sheetContainer, { paddingBottom: sheetPaddingBottom }]}>
-        <View style={styles.sheetHandle} />
+      <View style={styles.overlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View style={styles.sheetContainer}>
         <View style={styles.sheetHeaderRow}>
           <View>
             <Text style={styles.sheetTitle}>Choisir une semaine</Text>
@@ -172,61 +181,64 @@ export const WeekPickerModal = ({
           </Pressable>
         </View>
 
-        <View style={styles.sheetWeekDays}>
-          {weekDayLabels.map((label) => (
-            <Text key={label} style={styles.sheetWeekDayText}>
-              {label}
-            </Text>
-          ))}
-        </View>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={styles.sheetWeekDays}>
+            {weekDayLabels.map((label, index) => (
+              <Text key={index} style={styles.sheetWeekDayText}>
+                {label}
+              </Text>
+            ))}
+          </View>
 
-        <View style={styles.sheetGrid}>
-          {calendarWeeks.map((week, weekIndex) => (
-            <View key={weekIndex} style={styles.sheetWeekRow}>
-              {week.map((date) => {
-                const inMonth = isSameMonth(date, calendarMonth);
-                const inActiveWeek = isSameWeek(date, referenceDate, {
-                  weekStartsOn: 1,
-                });
-                const selected = isSameDay(date, selectedDate);
-                const today = isToday(date);
-                const marker = plannedMarkers[format(date, "yyyy-MM-dd")];
-                const hasMeals = marker?.filled;
-                const complete = marker && marker.filled >= marker.total;
-                return (
-                  <Pressable
-                    key={format(date, "yyyy-MM-dd")}
-                    style={[
-                      styles.sheetDay,
-                      !inMonth && styles.sheetDayOutside,
-                      inActiveWeek && styles.sheetDayActiveWeek,
-                      selected && styles.sheetDaySelected,
-                      today && styles.sheetDayToday,
-                    ]}
-                    onPress={() => handleSelectFromCalendar(date)}
-                  >
-                    <Text
+          <View style={styles.sheetGrid}>
+            {calendarWeeks.map((week, weekIndex) => (
+              <View key={weekIndex} style={styles.sheetWeekRow}>
+                {week.map((date) => {
+                  const inMonth = isSameMonth(date, calendarMonth);
+                  const inActiveWeek = isSameWeek(date, referenceDate, {
+                    weekStartsOn: 1,
+                  });
+                  const selected = isSameDay(date, selectedDate);
+                  const today = isToday(date);
+                  const marker = plannedMarkers[format(date, "yyyy-MM-dd")];
+                  const hasMeals = marker?.filled;
+                  const complete = marker && marker.filled >= marker.total;
+                  return (
+                    <Pressable
+                      key={format(date, "yyyy-MM-dd")}
                       style={[
-                        styles.sheetDayText,
-                        !inMonth && styles.sheetDayTextMuted,
-                        selected && styles.sheetDayTextSelected,
+                        styles.sheetDay,
+                        !inMonth && styles.sheetDayOutside,
+                        inActiveWeek && styles.sheetDayActiveWeek,
+                        today && !selected && styles.sheetDayToday,
+                        selected && styles.sheetDaySelected,
                       ]}
+                      onPress={() => handleSelectFromCalendar(date)}
                     >
-                      {format(date, "d")}
-                    </Text>
-                    {hasMeals ? (
-                      <View
+                      <Text
                         style={[
-                          styles.sheetDot,
-                          complete && styles.sheetDotFull,
+                          styles.sheetDayText,
+                          !inMonth && styles.sheetDayTextMuted,
+                          selected && styles.sheetDayTextSelected,
                         ]}
-                      />
-                    ) : null}
-                  </Pressable>
-                );
-              })}
-            </View>
-          ))}
+                      >
+                        {format(date, "d")}
+                      </Text>
+                      {hasMeals ? (
+                        <View
+                          style={[
+                            styles.sheetDot,
+                            complete && styles.sheetDotFull,
+                          ]}
+                        />
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ))}
+          </View>
+        </ScrollView>
         </View>
       </View>
     </Modal>
@@ -234,32 +246,26 @@ export const WeekPickerModal = ({
 };
 
 const styles = StyleSheet.create({
-  sheetBackdrop: {
+  overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: "rgba(45, 45, 42, 0.45)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.screen,
   },
   sheetContainer: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
+    width: "100%",
+    maxWidth: 360,
+    maxHeight: "85%",
     backgroundColor: colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: spacing.card,
+    borderRadius: 24,
+    padding: 20,
     gap: spacing.base,
-    shadowColor: "rgba(66, 58, 50, 0.25)",
-    shadowOpacity: 0.14,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: -6 },
-    elevation: 8,
-  },
-  sheetHandle: {
-    alignSelf: "center",
-    width: 42,
-    height: 4,
-    borderRadius: 999,
-    backgroundColor: colors.cardBorder,
+    shadowColor: "rgba(66, 58, 50, 0.35)",
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 10,
   },
   sheetHeaderRow: {
     flexDirection: "row",
@@ -317,14 +323,12 @@ const styles = StyleSheet.create({
     gap: spacing.base,
   },
   sheetIconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceWarm,
   },
   sheetMonthLabel: {
     flex: 1,
@@ -356,26 +360,19 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 10,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.surface,
+    paddingVertical: 9,
+    borderRadius: 10,
+    backgroundColor: "transparent",
   },
-  sheetDayOutside: {
-    backgroundColor: colors.background,
-    borderColor: colors.cardBorder,
-  },
+  sheetDayOutside: {},
   sheetDayActiveWeek: {
-    borderColor: colors.accent,
     backgroundColor: colors.surfaceAlt,
   },
   sheetDaySelected: {
     backgroundColor: colors.accent,
-    borderColor: colors.accent,
   },
   sheetDayToday: {
-    borderColor: colors.accentSecondary,
+    backgroundColor: colors.surfaceWarm,
   },
   sheetDayText: {
     color: colors.text,

@@ -16,6 +16,9 @@ export const physicalVariants = {
     textColor: "#6B705C", // hearth-sage — matches weatly-web's .secondary-button
   },
   danger:       { bgColor: "#C75252", shadowColor: "#8B2020" },
+  // Light tan chip — planner week badge / nav arrows. Same physical
+  // technique as the others, just a softer tint + low-opacity shadow.
+  badge:        { bgColor: "#F4DFC8", shadowColor: "rgba(177, 94, 23, 0.18)", textColor: "#B15E17" },
   neutralLight: { bgColor: "#F5EFE4", shadowColor: "#8B4513" },
   neutralDark:  { bgColor: "#2D2D2A", shadowColor: "#000000" },
 } as const;

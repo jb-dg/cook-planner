@@ -1,7 +1,9 @@
 import { addDays, format, isSameDay, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, radius, shadows, spacing } from "../../../theme/design";
+import { useEffect, useRef } from "react";
+import { Animated, Easing, StyleSheet, Text, View } from "react-native";
+import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
+import { colors, radius, spacing } from "../../../theme/design";
 import { DayPlan, MealKey } from "../utils/types";
 
 type Props = {
@@ -25,8 +27,43 @@ export const DayGridSelector = ({
   onSelectDate,
   days,
 }: Props) => {
+  // Fade + slide the pills when the week changes — direction follows
+  // whichever way the reference date moved (later → slide in from the
+  // right, earlier → from the left). Plain pixel/opacity Animated.Values
+  // (rather than a 0..1 value fed through interpolate) so a new direction
+  // doesn't need a React re-render to take effect.
+  const opacity = useRef(new Animated.Value(1)).current;
+  const translateX = useRef(new Animated.Value(0)).current;
+  const prevRefDate = useRef(referenceDate);
+
+  useEffect(() => {
+    const prev = prevRefDate.current;
+    prevRefDate.current = referenceDate;
+    if (prev.getTime() === referenceDate.getTime()) return;
+
+    const direction = referenceDate.getTime() > prev.getTime() ? 1 : -1;
+    opacity.setValue(0);
+    translateX.setValue(direction * 28);
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 280,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateX, {
+        toValue: 0,
+        duration: 280,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [referenceDate, opacity, translateX]);
+
   return (
-    <View style={styles.dayGrid}>
+    <Animated.View
+      style={[styles.dayGrid, { opacity, transform: [{ translateX }] }]}
+    >
       {Array.from({ length: 7 }).map((_, dayIndex) => {
         const dayDate = addDays(referenceDate, dayIndex);
         const isActiveDay = isSameDay(dayDate, selectedDate);
@@ -38,43 +75,45 @@ export const DayGridSelector = ({
           .toUpperCase();
 
         return (
-          <Pressable
-            key={dayIndex}
-            style={[
-              styles.dayGridItem,
-              isCurrentDay && !isActiveDay && styles.dayGridItemToday,
-              isActiveDay && styles.dayGridItemActive,
-            ]}
-            onPress={() => onSelectDate(dayDate)}
-          >
-            <Text
-              style={[
-                styles.dayGridTitle,
-                isActiveDay && styles.dayGridTitleActive,
-              ]}
+          <View key={dayIndex} style={styles.dayGridItemWrap}>
+            <PhysicalButtonAnimated
+              variant={isActiveDay ? "primary" : "secondary"}
+              borderRadius={radius.medium}
+              onPress={() => onSelectDate(dayDate)}
+              innerStyle={{
+                ...styles.dayGridItemInner,
+                ...(isCurrentDay && !isActiveDay ? styles.dayGridItemToday : null),
+              }}
             >
-              {dayAbbrev}
-            </Text>
-            <Text
-              style={[
-                styles.dayGridNumber,
-                isActiveDay && styles.dayGridNumberActive,
-              ]}
-            >
-              {dayNumber}
-            </Text>
-            {/* Dot presence means one thing only: a meal is planned that day.
-                Selection only changes its color for contrast on the orange fill. */}
-            <View
-              style={[
-                styles.dayGridDot,
-                isPlanned && (isActiveDay ? styles.dayGridDotActive : styles.dayGridDotPlanned),
-              ]}
-            />
-          </Pressable>
+              <Text
+                style={[
+                  styles.dayGridTitle,
+                  isActiveDay && styles.dayGridTitleActive,
+                ]}
+              >
+                {dayAbbrev}
+              </Text>
+              <Text
+                style={[
+                  styles.dayGridNumber,
+                  isActiveDay && styles.dayGridNumberActive,
+                ]}
+              >
+                {dayNumber}
+              </Text>
+              {/* Dot presence means one thing only: a meal is planned that day.
+                  Selection only changes its color for contrast on the orange fill. */}
+              <View
+                style={[
+                  styles.dayGridDot,
+                  isPlanned && (isActiveDay ? styles.dayGridDotActive : styles.dayGridDotPlanned),
+                ]}
+              />
+            </PhysicalButtonAnimated>
+          </View>
         );
       })}
-    </View>
+    </Animated.View>
   );
 };
 
@@ -82,44 +121,30 @@ const styles = StyleSheet.create({
   dayGrid: {
     flexDirection: "row",
     flexWrap: "nowrap",
-    gap: spacing.base * 0.15,
-    columnGap: spacing.base * 0.15,
-    marginTop: spacing.base * 0.3,
+    gap: 6,
+    columnGap: 6,
+    marginTop: spacing.base * 0.2,
     justifyContent: "space-between",
     alignContent: "center",
     alignSelf: "center",
     width: "100%",
   },
-  dayGridItem: {
+  dayGridItemWrap: {
     flex: 1,
-    minHeight: 54,
     maxWidth: "14%",
-    borderRadius: radius.medium,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.surface,
-    paddingVertical: 9,
-    paddingHorizontal: spacing.base * 0.15,
-    gap: spacing.base * 0.15,
-    justifyContent: "center",
-    alignItems: "center",
-    ...shadows.subtle,
+  },
+  dayGridItemInner: {
+    minHeight: 46,
+    paddingVertical: 6,
+    paddingHorizontal: 2,
+    gap: 4,
   },
   // Today, when not the selected day: a subtle outline — distinct from the
-  // filled "selected" state and from the "has a meal" dot below.
+  // filled "selected" state and from the "has a meal" dot below. Overrides
+  // the "secondary" variant's own border, since it's merged in last.
   dayGridItemToday: {
     borderWidth: 1.5,
     borderColor: colors.accent,
-  },
-  dayGridItemActive: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accent,
-    transform: [{ scale: 1.05 }],
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.22,
-    shadowRadius: 8,
-    elevation: 4,
   },
   dayGridTitle: {
     fontWeight: "700",
@@ -133,8 +158,8 @@ const styles = StyleSheet.create({
     color: "#FFF",
   },
   dayGridNumber: {
-    fontSize: 15,
-    fontWeight: "700",
+    fontSize: 20,
+    fontWeight: "800",
     color: colors.text,
     textAlign: "center",
   },

@@ -2,6 +2,7 @@ export const colors = {
   background: "#FDF8F1", // Hearth Cream
   surface: "#FFFFFF",
   surfaceAlt: "#F5EFE4", // warm tinted alt surface
+  surfaceWarm: "#F7EFE2", // cream card fill — meal-slot cards on the planner
   text: "#2D2D2A", // Hearth Warm Black
   muted: "#6B705C", // Hearth Sage
   accent: "#BC6C25", // Hearth Accent

@@ -7,9 +7,9 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   container: {
-    padding: spacing.screen,
-    gap: spacing.base * 1.2,
-    paddingBottom: spacing.screen * 2,
+    padding: spacing.screen * 0.8,
+    gap: spacing.base * 1.8,
+    paddingBottom: spacing.screen * 1.6,
   },
   topBar: {
     flexDirection: "row",
