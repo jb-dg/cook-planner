@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
 } from "react-native";
 import {
   SafeAreaView,
@@ -21,6 +22,7 @@ import { ListView } from "../../features/planner/components/ListView";
 import { PlannerHeader } from "../../features/planner/components/PlannerHeader";
 import { RecipePickerModal } from "../../features/planner/components/RecipePickerModal";
 import { Toast } from "../../features/planner/components/Toast";
+import { WeekFocusList } from "../../features/planner/components/WeekFocusList";
 import { WeekPickerModal } from "../../features/planner/components/WeekPickerModal";
 import { useAutoSave } from "../../features/planner/hooks/useAutoSave";
 import { usePlannerData } from "../../features/planner/hooks/usePlannerData";
@@ -42,6 +44,11 @@ export default function PlannerScreen() {
   const { session } = useAuth();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+  const { width, height } = useWindowDimensions();
+  // iPad landscape only: wide enough to lay the day's meals side by side
+  // and center the content in a comfortable reading width.
+  const isIpadLandscape =
+    Platform.OS === "ios" && Platform.isPad && width > height;
 
   // Navigation
   const {
@@ -200,6 +207,7 @@ export default function PlannerScreen() {
         <ScrollView
           contentContainerStyle={[
             sharedStyles.container,
+            isIpadLandscape && styles.ipadContainer,
             {
               // The tab bar floats (position: absolute) above the screen edge by an
               // extra safe-area-driven offset that useBottomTabBarHeight() doesn't
@@ -221,10 +229,27 @@ export default function PlannerScreen() {
             onWeekPickerOpen={openWeekPicker}
             onNavigateWeek={handleNavigate}
             onSetViewMode={setViewMode}
-            dayNav={dayNavProps}
+            // No single "selected day" on iPad — the whole week is on
+            // screen at once, so there's nothing for the day card to show,
+            // and nothing to toggle between.
+            dayNav={isIpadLandscape ? undefined : dayNavProps}
+            showViewToggle={!isIpadLandscape}
           />
 
-          {viewMode === "focus" ? (
+          {isIpadLandscape ? (
+            <WeekFocusList
+              days={days}
+              referenceDate={referenceDate}
+              session={session}
+              recipesLength={recipes.length}
+              syncing={syncing}
+              saving={isSaving}
+              recipesLoading={recipesLoading}
+              onDayChange={handleDayChange}
+              onOpenRecipePicker={openRecipePicker}
+              onBlur={save}
+            />
+          ) : viewMode === "focus" ? (
             <>
               <DayGridSelector
                 referenceDate={referenceDate}
@@ -255,27 +280,29 @@ export default function PlannerScreen() {
             />
           )}
 
-          <PhysicalButtonAnimated
-            variant="primary"
-            borderRadius={20}
-            onPress={() =>
-              setViewMode((prev) => (prev === "focus" ? "list" : "focus"))
-            }
-            innerStyle={styles.listButtonInner}
-            accessibilityRole="button"
-            accessibilityLabel={
-              viewMode === "focus"
-                ? "Voir la semaine en liste"
-                : "Revenir à la vue du jour"
-            }
-          >
-            <Feather name="list" size={18} color="#FFFFFF" />
-            <Text style={styles.listButtonText}>
-              {viewMode === "focus"
-                ? "Voir la semaine en liste"
-                : "Revenir à la vue du jour"}
-            </Text>
-          </PhysicalButtonAnimated>
+          {!isIpadLandscape && (
+            <PhysicalButtonAnimated
+              variant="primary"
+              borderRadius={20}
+              onPress={() =>
+                setViewMode((prev) => (prev === "focus" ? "list" : "focus"))
+              }
+              innerStyle={styles.listButtonInner}
+              accessibilityRole="button"
+              accessibilityLabel={
+                viewMode === "focus"
+                  ? "Voir la semaine en liste"
+                  : "Revenir à la vue du jour"
+              }
+            >
+              <Feather name="list" size={18} color="#FFFFFF" />
+              <Text style={styles.listButtonText}>
+                {viewMode === "focus"
+                  ? "Voir la semaine en liste"
+                  : "Revenir à la vue du jour"}
+              </Text>
+            </PhysicalButtonAnimated>
+          )}
         </ScrollView>
 
         <WeekPickerModal
@@ -326,5 +353,12 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "800",
     fontSize: 17,
+  },
+  // Mirrors weatly-web's wide `container` (maxWidth, centered) — keeps the
+  // single content column from stretching edge-to-edge on large iPads.
+  ipadContainer: {
+    maxWidth: 880,
+    width: "100%",
+    alignSelf: "center",
   },
 });

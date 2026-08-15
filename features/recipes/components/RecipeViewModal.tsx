@@ -3,6 +3,7 @@ import {
   Image,
   Linking,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,6 +17,8 @@ import PhysicalIconButton from "@/components/PhysicalIconButton";
 import { colors, spacing } from "@/theme/design";
 
 import type { Recipe } from "../types";
+
+const isIpad = Platform.OS === "ios" && Platform.isPad;
 
 type RecipeViewModalProps = {
   recipe: Recipe | null;
@@ -59,13 +62,27 @@ export default function RecipeViewModal({
                   {recipe?.title ?? "Recette"}
                 </Text>
               </View>
-              <PhysicalIconButton
-                variant="secondary"
-                onPress={onClose}
-                accessibilityLabel="Fermer"
-              >
-                <Feather name="x" size={18} color={colors.muted} />
-              </PhysicalIconButton>
+              <View style={styles.headerActions}>
+                {/* iPad: "Modifier" moves up here, left of the close
+                    button, instead of sitting alone in the footer. */}
+                {isIpad && recipe && onEdit ? (
+                  <PhysicalButton
+                    variant="secondary"
+                    onPress={() => onEdit(recipe.id)}
+                    innerStyle={styles.secondaryButtonInner}
+                  >
+                    <Feather name="edit-2" size={14} color={colors.muted} />
+                    <Text style={styles.secondaryButtonText}>Modifier</Text>
+                  </PhysicalButton>
+                ) : null}
+                <PhysicalIconButton
+                  variant="secondary"
+                  onPress={onClose}
+                  accessibilityLabel="Fermer"
+                >
+                  <Feather name="x" size={18} color={colors.muted} />
+                </PhysicalIconButton>
+              </View>
             </View>
 
             {recipe ? (
@@ -89,20 +106,63 @@ export default function RecipeViewModal({
                   ) : null}
                 </View>
 
-                {recipe.coverImageUrl || recipe.imageUrls[0] ? (
-                  <Image
-                    source={{ uri: recipe.coverImageUrl || recipe.imageUrls[0] }}
-                    style={styles.coverImage}
-                  />
-                ) : null}
-
-                {recipe.imageUrls.length > 1 ? (
-                  <View style={styles.photoStrip}>
-                    {recipe.imageUrls.map((url) => (
-                      <Image key={url} source={{ uri: url }} style={styles.photoThumb} />
-                    ))}
+                {isIpad ? (
+                  // Horizontal layout: photo on the left, ingredients on the
+                  // right — everything else follows below, full width.
+                  <View style={styles.splitRow}>
+                    <View style={styles.splitPhoto}>
+                      {recipe.coverImageUrl || recipe.imageUrls[0] ? (
+                        <Image
+                          source={{ uri: recipe.coverImageUrl || recipe.imageUrls[0] }}
+                          style={styles.splitCoverImage}
+                        />
+                      ) : (
+                        <View style={[styles.splitCoverImage, styles.splitCoverPlaceholder]}>
+                          <Feather name="image" size={32} color={colors.accentTertiary} />
+                        </View>
+                      )}
+                      {recipe.imageUrls.length > 1 ? (
+                        <View style={styles.photoStrip}>
+                          {recipe.imageUrls.map((url) => (
+                            <Image key={url} source={{ uri: url }} style={styles.photoThumb} />
+                          ))}
+                        </View>
+                      ) : null}
+                    </View>
+                    <View style={styles.splitIngredients}>
+                      <Text style={styles.sectionLabel}>Ingrédients</Text>
+                      {ingredients.length ? (
+                        ingredients.map((ingredient) => (
+                          <View key={ingredient.id} style={styles.ingredientRow}>
+                            <Text style={styles.ingredientName}>{ingredient.name}</Text>
+                            <Text style={styles.ingredientValue}>
+                              {[ingredient.quantity, ingredient.unit].filter(Boolean).join(" ")}
+                            </Text>
+                          </View>
+                        ))
+                      ) : (
+                        <Text style={styles.bodyText}>Aucun ingrédient renseigné.</Text>
+                      )}
+                    </View>
                   </View>
-                ) : null}
+                ) : (
+                  <>
+                    {recipe.coverImageUrl || recipe.imageUrls[0] ? (
+                      <Image
+                        source={{ uri: recipe.coverImageUrl || recipe.imageUrls[0] }}
+                        style={styles.coverImage}
+                      />
+                    ) : null}
+
+                    {recipe.imageUrls.length > 1 ? (
+                      <View style={styles.photoStrip}>
+                        {recipe.imageUrls.map((url) => (
+                          <Image key={url} source={{ uri: url }} style={styles.photoThumb} />
+                        ))}
+                      </View>
+                    ) : null}
+                  </>
+                )}
 
                 {recipe.description.trim() ? (
                   <View style={styles.section}>
@@ -111,21 +171,23 @@ export default function RecipeViewModal({
                   </View>
                 ) : null}
 
-                <View style={styles.section}>
-                  <Text style={styles.sectionLabel}>Ingrédients</Text>
-                  {ingredients.length ? (
-                    ingredients.map((ingredient) => (
-                      <View key={ingredient.id} style={styles.ingredientRow}>
-                        <Text style={styles.ingredientName}>{ingredient.name}</Text>
-                        <Text style={styles.ingredientValue}>
-                          {[ingredient.quantity, ingredient.unit].filter(Boolean).join(" ")}
-                        </Text>
-                      </View>
-                    ))
-                  ) : (
-                    <Text style={styles.bodyText}>Aucun ingrédient renseigné.</Text>
-                  )}
-                </View>
+                {!isIpad ? (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionLabel}>Ingrédients</Text>
+                    {ingredients.length ? (
+                      ingredients.map((ingredient) => (
+                        <View key={ingredient.id} style={styles.ingredientRow}>
+                          <Text style={styles.ingredientName}>{ingredient.name}</Text>
+                          <Text style={styles.ingredientValue}>
+                            {[ingredient.quantity, ingredient.unit].filter(Boolean).join(" ")}
+                          </Text>
+                        </View>
+                      ))
+                    ) : (
+                      <Text style={styles.bodyText}>Aucun ingrédient renseigné.</Text>
+                    )}
+                  </View>
+                ) : null}
 
                 <View style={styles.section}>
                   <Text style={styles.sectionLabel}>Étapes</Text>
@@ -161,7 +223,7 @@ export default function RecipeViewModal({
               </ScrollView>
             ) : null}
 
-            {recipe && onEdit ? (
+            {!isIpad && recipe && onEdit ? (
               <View style={styles.footer}>
                 <PhysicalButton
                   variant="secondary"
@@ -200,8 +262,8 @@ const styles = StyleSheet.create({
   },
   sheet: {
     width: "100%",
-    maxWidth: 720,
-    maxHeight: "94%",
+    maxWidth: isIpad ? 1100 : 720,
+    maxHeight: isIpad ? "82%" : "94%",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderBottomLeftRadius: 0,
@@ -225,6 +287,11 @@ const styles = StyleSheet.create({
   titleBlock: {
     flex: 1,
     gap: 4,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   kicker: {
     color: colors.accentTertiary,
@@ -250,6 +317,31 @@ const styles = StyleSheet.create({
     aspectRatio: 4 / 3,
     borderRadius: 18,
     backgroundColor: colors.surfaceAlt,
+  },
+  // iPad only: photo (left) and ingredients (right) side by side above the
+  // rest of the recipe, which stays full width below.
+  splitRow: {
+    flexDirection: "row",
+    gap: 24,
+    alignItems: "flex-start",
+  },
+  splitPhoto: {
+    width: 340,
+    gap: 10,
+  },
+  splitCoverImage: {
+    width: "100%",
+    aspectRatio: 4 / 3,
+    borderRadius: 18,
+    backgroundColor: colors.surfaceAlt,
+  },
+  splitCoverPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  splitIngredients: {
+    flex: 1,
+    gap: 10,
   },
   photoStrip: {
     flexDirection: "row",

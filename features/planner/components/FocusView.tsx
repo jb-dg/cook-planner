@@ -74,6 +74,10 @@ type Props = {
   onDayChange: (dayIndex: number, meal: MealKey, value: string) => void;
   onOpenRecipePicker: (dayIndex: number, meal: MealKey) => void;
   onBlur: () => void;
+  // "row" places the meal cards side by side — used in the iPad split
+  // detail pane, where there's width to spare. Defaults to the phone's
+  // stacked layout.
+  layout?: "column" | "row";
 };
 
 export const FocusView = ({
@@ -88,6 +92,7 @@ export const FocusView = ({
   onDayChange,
   onOpenRecipePicker,
   onBlur,
+  layout = "column",
 }: Props) => {
   const dayColumns = useMemo(
     () =>
@@ -116,14 +121,16 @@ export const FocusView = ({
         )}
         <View style={styles.shellCardSurface}>
           {/* Meal slots */}
-          <View style={styles.mealGrid}>
+          <View
+            style={[styles.mealGrid, layout === "row" && styles.mealGridRow]}
+          >
             {MEAL_SLOTS.map((slot) => {
               const mealData = (
                 dayData as Record<MealKey, { recipe?: string }>
               )[slot.key];
               const meal = { recipe: mealData?.recipe ?? "" };
               return (
-                <View key={slot.key}>
+                <View key={slot.key} style={layout === "row" && styles.mealGridItemRow}>
                   <DayMealCard
                     slot={slot}
                     meal={meal}
@@ -187,6 +194,13 @@ const styles = StyleSheet.create({
   },
   mealGrid: {
     gap: 14,
+  },
+  mealGridRow: {
+    flexDirection: "row",
+    alignItems: "stretch",
+  },
+  mealGridItemRow: {
+    flex: 1,
   },
   noteBox: {
     padding: 14,

@@ -24,6 +24,9 @@ type Props = {
   onSetViewMode: (mode: ViewMode) => void;
   // Day card + week progress — shown inline in the header, only in day view.
   dayNav?: DayNav;
+  // Hidden on iPad, where the whole week is always on screen — there's no
+  // other mode to switch to.
+  showViewToggle?: boolean;
 };
 
 export const PlannerHeader = ({
@@ -37,6 +40,7 @@ export const PlannerHeader = ({
   onNavigateWeek,
   onSetViewMode,
   dayNav,
+  showViewToggle = true,
 }: Props) => {
   const summaryText = dayNav
     ? `${dayNav.progress.filled}/${dayNav.progress.total} · ${dayNav.progress.percent}%`
@@ -80,24 +84,26 @@ export const PlannerHeader = ({
 
         {/* List icon = day view, calendar icon = full-week view — matches
             the reference mock's mapping, not the "obvious" one. */}
-        <View style={styles.viewToggleGroup}>
-          <PhysicalIconButton
-            variant="secondary"
-            borderRadius={16}
-            onPress={() =>
-              onSetViewMode(viewMode === "focus" ? "list" : "focus")
-            }
-            accessibilityLabel={
-              viewMode === "focus" ? "Vue semaine complète" : "Vue jour"
-            }
-          >
-            <Feather
-              name={viewMode === "focus" ? "grid" : "list"}
-              size={18}
-              color={colors.muted}
-            />
-          </PhysicalIconButton>
-        </View>
+        {showViewToggle ? (
+          <View style={styles.viewToggleGroup}>
+            <PhysicalIconButton
+              variant="secondary"
+              borderRadius={16}
+              onPress={() =>
+                onSetViewMode(viewMode === "focus" ? "list" : "focus")
+              }
+              accessibilityLabel={
+                viewMode === "focus" ? "Vue semaine complète" : "Vue jour"
+              }
+            >
+              <Feather
+                name={viewMode === "focus" ? "grid" : "list"}
+                size={18}
+                color={colors.muted}
+              />
+            </PhysicalIconButton>
+          </View>
+        ) : null}
       </View>
 
       {/* Row 2: big week range title */}

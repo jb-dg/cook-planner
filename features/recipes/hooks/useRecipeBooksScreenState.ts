@@ -35,6 +35,7 @@ export const useRecipeBooksScreenState = () => {
   const [error, setError] = useState<string | null>(null);
   const [bookName, setBookName] = useState("");
   const [bookError, setBookError] = useState<string | null>(null);
+  const [renameError, setRenameError] = useState<string | null>(null);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
 
@@ -223,6 +224,44 @@ export const useRecipeBooksScreenState = () => {
     setBookError(null);
   }, [bookName, books]);
 
+  const handleRenameBook = useCallback(
+    (book: RecipeBook, name: string) => {
+      if (book.isSystem) return;
+
+      const trimmed = name.trim();
+      if (!trimmed) {
+        setRenameError("Donne un nom au livre.");
+        return;
+      }
+
+      const duplicate = books.some(
+        (other) =>
+          other.id !== book.id && other.name.toLowerCase() === trimmed.toLowerCase(),
+      );
+      if (duplicate) {
+        setRenameError("Ce nom de livre existe déjà.");
+        return;
+      }
+
+      setCustomBooks((prev) =>
+        prev.map((entry) => (entry.id === book.id ? { ...entry, name: trimmed } : entry)),
+      );
+      setRenameError(null);
+    },
+    [books],
+  );
+
+  const handleDeleteBook = useCallback(
+    (book: RecipeBook) => {
+      if (book.isSystem) return;
+      setCustomBooks((prev) => prev.filter((entry) => entry.id !== book.id));
+      // Falls back to the system book: selectedBook re-derives from
+      // `books[0]` once the deleted id no longer matches anything.
+      setSelectedBookId((current) => (current === book.id ? null : current));
+    },
+    [],
+  );
+
   const onBookNameChange = useCallback(
     (value: string) => {
       setBookName(value);
@@ -242,6 +281,12 @@ export const useRecipeBooksScreenState = () => {
     },
     [router],
   );
+
+  // iPad split view: select a book in place instead of navigating to the
+  // phone's dedicated book-detail screen.
+  const handleSelectBook = useCallback((book: RecipeBook) => {
+    setSelectedBookId(book.id);
+  }, []);
 
   const handleOpenRecipe = useCallback(
     (recipeId: string, actionMode: "view" | "edit") => {
@@ -284,13 +329,17 @@ export const useRecipeBooksScreenState = () => {
     booksCountLabel,
     bookName,
     bookError,
+    renameError,
     selectedBook,
     selectedBookId,
     selectedRecipe,
     displayedRecipes,
     onBookNameChange,
     handleCreateBook,
+    handleRenameBook,
+    handleDeleteBook,
     handleOpenBook,
+    handleSelectBook,
     handleOpenRecipe,
     handleCloseRecipeModal,
     handleOpenCreateRecipe,

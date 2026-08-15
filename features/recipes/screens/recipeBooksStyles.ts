@@ -294,8 +294,8 @@ export const styles = StyleSheet.create({
   },
   recipeCardSurface: {
     borderRadius: 24,
-    paddingHorizontal: 18,
-    paddingTop: 18,
+    paddingHorizontal: 5,
+    paddingTop: 5,
     paddingBottom: 16,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,

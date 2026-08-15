@@ -56,3 +56,9 @@ design-system-refonte.md
 #.html
 weekly_planner_dashboard.html
 authentication_portal.html
+
+# screenshots / local assets
+screen-store/
+
+# EAS submit credentials
+weatly-eas-submit-1fe1b05f374b.json

@@ -5,8 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Image,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -16,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../../contexts/AuthContext";
 import PhysicalButtonAnimated from "../../../../components/PhysicalButtonAnimated";
+import RecipeCard from "../../../../features/recipes/components/RecipeCard";
 import RecipeViewModal from "../../../../features/recipes/components/RecipeViewModal";
 import {
   buildBooksStorageKey,
@@ -30,20 +29,6 @@ import { supabase } from "../../../../lib/supabase";
 import { colors, spacing } from "../../../../theme/design";
 
 type RecipeRow = Parameters<typeof mapRecipe>[0];
-
-const shadowCard = Platform.select({
-  ios: {
-    shadowColor: "#6B705C",
-    shadowOpacity: 0.14,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-  },
-  android: {
-    elevation: 4,
-    shadowColor: "#000",
-  },
-  default: {},
-});
 
 const RECIPE_SELECT_WITH_IMAGES =
   "id,title,duration,difficulty,servings,description,ingredients,steps,source_url,image_urls,cover_image_url";
@@ -279,75 +264,13 @@ export default function RecipeBookScreen() {
   };
 
   const renderRecipe = ({ item }: { item: Recipe }) => (
-    <View style={styles.recipeCardShadow}>
-      {Platform.OS === "android" && (
-        <View pointerEvents="none" style={styles.recipeAndroidShadow} />
-      )}
-      <View style={styles.recipeCardSurface}>
-        {item.coverImageUrl || item.imageUrls[0] ? (
-          <Image
-            source={{ uri: item.coverImageUrl || item.imageUrls[0] }}
-            style={styles.recipeThumb}
-          />
-        ) : null}
-        <View style={styles.recipeHeader}>
-          <View style={styles.recipeHeadingBlock}>
-            <Text style={styles.recipeEyebrow}>Recette</Text>
-            <Text style={styles.recipeTitle}>{item.title}</Text>
-          </View>
-        </View>
-
-        <View style={styles.recipeMeta}>
-          <View style={[styles.metaChip, styles.metaChipAccent]}>
-            <Text style={[styles.metaChipText, styles.metaChipTextAccent]}>
-              {item.difficulty}
-            </Text>
-          </View>
-          <View style={styles.metaChip}>
-            <Text style={styles.metaChipText}>{item.servings} pers.</Text>
-          </View>
-          {item.duration ? (
-            <View style={styles.metaChip}>
-              <Text style={styles.metaChipText}>{item.duration}</Text>
-            </View>
-          ) : null}
-        </View>
-
-        <View style={styles.actionsRow}>
-          <View style={styles.actionButtonWrapper}>
-            <PhysicalButtonAnimated
-              variant="secondary"
-              onPress={() => handleOpenRecipe(item.id, "view")}
-              innerStyle={styles.actionButtonInner}
-            >
-              <Feather name="eye" size={14} color="#6B705C" />
-              <Text style={styles.actionButtonSoftText}>Afficher</Text>
-            </PhysicalButtonAnimated>
-          </View>
-          <View style={styles.actionButtonWrapper}>
-            <PhysicalButtonAnimated
-              variant="primary"
-              onPress={() => handleOpenRecipe(item.id, "edit")}
-              innerStyle={styles.actionButtonInner}
-            >
-              <Feather name="edit-2" size={14} color="#FFFFFF" />
-              <Text style={styles.actionButtonAccentText}>Modifier</Text>
-            </PhysicalButtonAnimated>
-          </View>
-        </View>
-
-        {activeCustomBook ? (
-          <PhysicalButtonAnimated
-            variant="secondary"
-            onPress={() => handleRemoveRecipeFromBook(item.id)}
-            innerStyle={styles.membershipButtonInner}
-          >
-            <Feather name="minus-circle" size={14} color="#6B705C" />
-            <Text style={styles.membershipButtonText}>Retirer du livre</Text>
-          </PhysicalButtonAnimated>
-        ) : null}
-      </View>
-    </View>
+    <RecipeCard
+      recipe={item}
+      onView={() => handleOpenRecipe(item.id, "view")}
+      onEdit={() => handleOpenRecipe(item.id, "edit")}
+      removable={!!activeCustomBook}
+      onRemove={() => handleRemoveRecipeFromBook(item.id)}
+    />
   );
 
   return (
@@ -528,123 +451,6 @@ const styles = StyleSheet.create({
   },
   createRecipeButtonText: {
     color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  recipeCardShadow: {
-    borderRadius: 24,
-    position: "relative",
-    ...shadowCard,
-  },
-  recipeAndroidShadow: {
-    ...StyleSheet.absoluteFillObject,
-    top: 1,
-    left: -1,
-    right: -1,
-    bottom: -2,
-    borderRadius: 24,
-    backgroundColor: "#000000",
-    opacity: 0.11,
-  },
-  recipeCardSurface: {
-    borderRadius: 24,
-    paddingHorizontal: 18,
-    paddingTop: 18,
-    paddingBottom: 16,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.8)",
-    gap: 12,
-  },
-  recipeThumb: {
-    width: "100%",
-    aspectRatio: 16 / 9,
-    borderRadius: 22,
-    backgroundColor: "#F5EFE4",
-  },
-  recipeHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: 10,
-  },
-  recipeHeadingBlock: {
-    flex: 1,
-    gap: 3,
-  },
-  recipeEyebrow: {
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
-    color: "#A5A58D",
-  },
-  recipeTitle: {
-    fontSize: 21,
-    fontWeight: "800",
-    color: "#2D2D2A",
-    letterSpacing: -0.6,
-    lineHeight: 25,
-  },
-  recipeMeta: {
-    flexDirection: "row",
-    gap: 6,
-    flexWrap: "wrap",
-  },
-  metaChip: {
-    backgroundColor: "#F5EFE4",
-    borderWidth: 1,
-    borderColor: "#E4D9C8",
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  metaChipAccent: {
-    backgroundColor: "rgba(188, 108, 37, 0.1)",
-    borderColor: "rgba(188, 108, 37, 0.2)",
-  },
-  metaChipText: {
-    color: "#6B705C",
-    fontSize: 11,
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  metaChipTextAccent: {
-    color: "#BC6C25",
-  },
-  actionsRow: {
-    paddingTop: 10,
-    marginTop: 2,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(228, 217, 200, 0.7)",
-    flexDirection: "row",
-    gap: 8,
-  },
-  actionButtonWrapper: {
-    flex: 1,
-  },
-  actionButtonInner: {
-    flexDirection: "row",
-    gap: 6,
-  },
-  actionButtonSoftText: {
-    color: "#6B705C",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  actionButtonAccentText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  membershipButtonInner: {
-    flexDirection: "row",
-    gap: 6,
-    paddingHorizontal: 12,
-  },
-  membershipButtonText: {
-    color: "#6B705C",
     fontSize: 13,
     fontWeight: "700",
   },
