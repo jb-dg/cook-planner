@@ -5,24 +5,41 @@ import { colors, radii, shadows } from "@/theme/design";
 
 import type { QuickActionItem } from "./types";
 
-type ProfileActionRowProps = Omit<QuickActionItem, "id">;
+type ProfileActionRowProps = Omit<QuickActionItem, "id"> & {
+  // iPad split view only: highlights whichever action's content is
+  // currently shown in the detail pane. Unused (and always falsy) on
+  // phone, where these rows just open a modal instead of selecting.
+  active?: boolean;
+};
 
 export default function ProfileActionRow({
   icon,
   label,
   helper,
   onPress,
+  active,
 }: ProfileActionRowProps) {
   return (
-    <Pressable style={styles.actionItem} onPress={onPress}>
-      <View style={styles.actionIcon}>
-        <Feather name={icon} size={16} color="#BC6C25" />
+    <Pressable
+      style={[styles.actionItem, active && styles.actionItemActive]}
+      onPress={onPress}
+    >
+      <View style={[styles.actionIcon, active && styles.actionIconActive]}>
+        <Feather name={icon} size={16} color={active ? "#FFFFFF" : "#BC6C25"} />
       </View>
       <View style={styles.actionContent}>
-        <Text style={styles.actionLabel}>{label}</Text>
-        <Text style={styles.actionHelper}>{helper}</Text>
+        <Text style={[styles.actionLabel, active && styles.actionLabelActive]}>
+          {label}
+        </Text>
+        <Text style={[styles.actionHelper, active && styles.actionHelperActive]}>
+          {helper}
+        </Text>
       </View>
-      <Feather name="chevron-right" size={18} color="#A5A58D" />
+      <Feather
+        name="chevron-right"
+        size={18}
+        color={active ? "rgba(255,255,255,0.85)" : "#A5A58D"}
+      />
     </Pressable>
   );
 }
@@ -39,6 +56,10 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     ...shadows.subtle,
   },
+  actionItemActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
   actionIcon: {
     width: 40,
     height: 40,
@@ -49,6 +70,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  actionIconActive: {
+    borderColor: "rgba(255,255,255,0.4)",
+    backgroundColor: "rgba(255,255,255,0.15)",
+  },
   actionContent: {
     flex: 1,
     gap: 3,
@@ -58,8 +83,14 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 15,
   },
+  actionLabelActive: {
+    color: "#FFFFFF",
+  },
   actionHelper: {
     fontSize: 12,
     color: colors.accentTertiary,
+  },
+  actionHelperActive: {
+    color: "rgba(255,255,255,0.85)",
   },
 });
