@@ -21,8 +21,13 @@ import { colors, spacing } from "@/theme/design";
 
 import RecipeCard from "./RecipeCard";
 
-const GRID_COLUMNS = 4;
 const GRID_GAP = 16;
+// Portrait iPad has noticeably less room for the grid than landscape (the
+// menu column eats a bigger share of it) — clamp column count by width
+// instead of hardcoding 4, so cards don't get squeezed too narrow.
+const GRID_MIN_CARD_WIDTH = 150;
+const GRID_MAX_COLUMNS = 4;
+const GRID_MIN_COLUMNS = 2;
 
 type Props = {
   books: RecipeBook[];
@@ -44,9 +49,9 @@ type Props = {
   onOpenRecipe: (recipeId: string, mode: "view" | "edit") => void;
 };
 
-// iPad landscape only: books stay in a permanent left menu instead of their
-// own screen — picking one just swaps the recipe grid on the right, no
-// navigation involved.
+// iPad only (portrait and landscape): books stay in a permanent left menu
+// instead of their own screen — picking one just swaps the recipe grid on
+// the right, no navigation involved.
 export default function RecipeBooksSplitView({
   books,
   loading,
@@ -67,8 +72,17 @@ export default function RecipeBooksSplitView({
   onOpenRecipe,
 }: Props) {
   const [gridWidth, setGridWidth] = useState(0);
+  const gridColumns = gridWidth
+    ? Math.max(
+        GRID_MIN_COLUMNS,
+        Math.min(
+          GRID_MAX_COLUMNS,
+          Math.floor((gridWidth + GRID_GAP) / (GRID_MIN_CARD_WIDTH + GRID_GAP)),
+        ),
+      )
+    : GRID_MAX_COLUMNS;
   const cardWidth = gridWidth
-    ? (gridWidth - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS
+    ? (gridWidth - GRID_GAP * (gridColumns - 1)) / gridColumns
     : undefined;
 
   const onGridLayout = (event: LayoutChangeEvent) => {

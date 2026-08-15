@@ -1,4 +1,4 @@
-import { Platform, useWindowDimensions } from "react-native";
+import { Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import RecipeBooksList from "@/features/recipes/components/RecipeBooksList";
@@ -10,13 +10,13 @@ import { styles } from "./recipeBooksStyles";
 
 export default function RecipeBooksScreen() {
   const state = useRecipeBooksScreenState();
-  const { width, height } = useWindowDimensions();
-  const isIpadLandscape =
-    Platform.OS === "ios" && Platform.isPad && width > height;
+  // Unlike the planner, the books split view isn't landscape-only — the
+  // 300px menu plus a recipe grid still reads fine in iPad portrait.
+  const isIpad = Platform.OS === "ios" && Platform.isPad;
 
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
-      {isIpadLandscape ? (
+      {isIpad ? (
         <RecipeBooksSplitView
           books={state.books}
           loading={state.loading}
