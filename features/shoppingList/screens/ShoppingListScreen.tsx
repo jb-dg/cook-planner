@@ -17,12 +17,49 @@ import { colors } from "@/theme/design";
 import { AddItemBar } from "../components/AddItemBar";
 import { GenerateFromWeekButton } from "../components/GenerateFromWeekButton";
 import { RecipeSelectModal } from "../components/RecipeSelectModal";
+import ShoppingListSplitView from "../components/ShoppingListSplitView";
 import { ShoppingListItemRow } from "../components/ShoppingListItemRow";
 import { useShoppingListScreenState } from "../hooks/useShoppingListScreenState";
 import { styles } from "./shoppingListStyles";
 
+const isIpad = Platform.OS === "ios" && Platform.isPad;
+
 export default function ShoppingListScreen() {
   const state = useShoppingListScreenState();
+
+  if (isIpad) {
+    return (
+      <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
+          <ShoppingListSplitView
+            loading={state.loading}
+            refreshing={state.refreshing}
+            generating={state.generating}
+            error={state.error}
+            items={state.items}
+            checkedCount={state.checkedCount}
+            onRefresh={state.handleRefresh}
+            onAddManualItem={state.handleAddManualItem}
+            onToggleChecked={state.handleToggleChecked}
+            onDeleteItem={state.handleDeleteItem}
+            onClearChecked={state.handleClearChecked}
+            onOpenAddFromRecipe={state.handleOpenAddFromRecipe}
+            onGenerateFromWeek={state.handleGenerateFromWeek}
+          />
+
+          <RecipeSelectModal
+            visible={state.recipePickerVisible}
+            recipes={state.recipes}
+            loading={state.recipesLoading}
+            onClose={state.handleCloseAddFromRecipe}
+            onSelectRecipe={state.handleAddIngredientsFromRecipe}
+          />
+
+          {state.toast && <Toast toast={state.toast} />}
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
