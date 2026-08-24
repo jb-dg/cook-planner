@@ -146,6 +146,10 @@ export const FocusView = ({
                     onOpenRecipePicker={() =>
                       onOpenRecipePicker(selectedDayIndex, slot.key)
                     }
+                    onRemove={() => {
+                      onDayChange(selectedDayIndex, slot.key, "");
+                      onBlur();
+                    }}
                   />
                 </View>
               );

@@ -1,5 +1,6 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -18,12 +19,20 @@ import PhysicalButton from "../../../components/PhysicalButton";
 import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
 import { useAuth } from "../../../contexts/AuthContext";
 import {
+  buildBooksStorageKey,
+  CustomBook,
+  moveRecipeToBook,
+  parseStoredBooks,
+  SYSTEM_BOOK_ID,
+} from "../../../features/recipes/books";
+import {
+  formatDurationLabel,
   mapRecipe,
   RecipeFormState,
   RecipeInput,
   recipeToFormState,
 } from "../../../features/recipes/types";
-import { fetchHouseholdScope } from "../../../lib/households";
+import { fetchHouseholdScope, HouseholdScope } from "../../../lib/households";
 import { supabase } from "../../../lib/supabase";
 import { colors, spacing } from "../../../theme/design";
 import RecipeForm from "./RecipeForm";
@@ -32,6 +41,11 @@ type ScreenMode = "view" | "edit";
 type RecipeRow = Parameters<typeof mapRecipe>[0] & {
   user_id?: string | null;
   household_id?: string | null;
+};
+type SelectableBook = {
+  id: string;
+  name: string;
+  isSystem: boolean;
 };
 
 const getScreenMode = (mode?: string): ScreenMode =>
@@ -54,9 +68,78 @@ export default function RecipeScreen() {
   const [deleting, setDeleting] = useState(false);
   const [screenMode, setScreenMode] = useState<ScreenMode>(getScreenMode(mode));
 
+  const [scope, setScope] = useState<HouseholdScope | null>(null);
+  const [customBooks, setCustomBooks] = useState<CustomBook[]>([]);
+  const [booksLoaded, setBooksLoaded] = useState(false);
+  const [selectedBookId, setSelectedBookId] = useState<string>(SYSTEM_BOOK_ID);
+  const bookMembershipResolvedRef = useRef(false);
+
   useEffect(() => {
     setScreenMode(getScreenMode(mode));
   }, [mode]);
+
+  useEffect(() => {
+    if (!session) {
+      setScope(null);
+      return;
+    }
+    let cancelled = false;
+    fetchHouseholdScope(session.user.id)
+      .then((nextScope) => {
+        if (!cancelled) setScope(nextScope);
+      })
+      .catch((err) => console.error("fetch household scope", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
+
+  const booksStorageKey = useMemo(() => {
+    if (!session || !scope) return null;
+    return buildBooksStorageKey(session.user.id, scope.householdId);
+  }, [session, scope]);
+
+  useEffect(() => {
+    if (!booksStorageKey) {
+      setCustomBooks([]);
+      setBooksLoaded(true);
+      return;
+    }
+    let cancelled = false;
+    AsyncStorage.getItem(booksStorageKey)
+      .then((value) => {
+        if (!cancelled) setCustomBooks(parseStoredBooks(value));
+      })
+      .catch((err) => console.error("load recipe books", err))
+      .finally(() => {
+        if (!cancelled) setBooksLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [booksStorageKey]);
+
+  // Resolve which book this recipe currently belongs to, once books have
+  // loaded — after that the picker below is the source of truth, not
+  // AsyncStorage.
+  useEffect(() => {
+    if (bookMembershipResolvedRef.current || !booksLoaded || !id) return;
+    bookMembershipResolvedRef.current = true;
+    const currentBook = customBooks.find((book) => book.recipeIds.includes(id));
+    setSelectedBookId(currentBook?.id ?? SYSTEM_BOOK_ID);
+  }, [customBooks, id, booksLoaded]);
+
+  const books = useMemo<SelectableBook[]>(() => {
+    const systemBook: SelectableBook = {
+      id: SYSTEM_BOOK_ID,
+      name: scope?.householdId ? "Recettes du foyer" : "Toutes les recettes",
+      isSystem: true,
+    };
+    return [
+      systemBook,
+      ...customBooks.map((book) => ({ id: book.id, name: book.name, isSystem: false })),
+    ];
+  }, [scope?.householdId, customBooks]);
 
   const displayIngredients = useMemo(() => {
     if (!initialValues) return [];
@@ -160,6 +243,14 @@ export default function RecipeScreen() {
 
       if (updateError) {
         throw updateError;
+      }
+
+      if (booksStorageKey) {
+        const currentBooks = parseStoredBooks(
+          await AsyncStorage.getItem(booksStorageKey),
+        );
+        const nextBooks = moveRecipeToBook(currentBooks, id, selectedBookId);
+        await AsyncStorage.setItem(booksStorageKey, JSON.stringify(nextBooks));
       }
 
       router.back();
@@ -303,7 +394,7 @@ export default function RecipeScreen() {
                 {initialValues.duration ? (
                   <View style={styles.recipeMetaChip}>
                     <Text style={styles.recipeMetaChipText}>
-                      {initialValues.duration}
+                      {formatDurationLabel(initialValues.duration)}
                     </Text>
                   </View>
                 ) : null}
@@ -385,6 +476,31 @@ export default function RecipeScreen() {
             </View>
           ) : (
             <>
+              <View style={styles.bookPickerWrap}>
+                <Text style={styles.recipeSectionLabel}>Livre de destination</Text>
+                <View style={styles.bookPickerRow}>
+                  {books.map((book) => {
+                    const selected = selectedBookId === book.id;
+                    return (
+                      <Pressable
+                        key={book.id}
+                        style={[styles.bookChip, selected && styles.bookChipActive]}
+                        onPress={() => setSelectedBookId(book.id)}
+                      >
+                        <Text
+                          style={[
+                            styles.bookChipText,
+                            selected && styles.bookChipTextActive,
+                          ]}
+                        >
+                          {book.name}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+
               <RecipeForm
                 initialValues={initialValues}
                 submitLabel="Mettre à jour"
@@ -434,6 +550,34 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: colors.text,
     letterSpacing: -0.5,
+  },
+  bookPickerWrap: {
+    gap: 8,
+  },
+  bookPickerRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  bookChip: {
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: 999,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  bookChipActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  bookChipText: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  bookChipTextActive: {
+    color: "#FFFFFF",
   },
   modeSwitch: {
     flexDirection: "row",

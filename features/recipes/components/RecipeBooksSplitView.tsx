@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -28,6 +29,10 @@ const GRID_GAP = 16;
 const GRID_MIN_CARD_WIDTH = 150;
 const GRID_MAX_COLUMNS = 4;
 const GRID_MIN_COLUMNS = 2;
+// Portrait always gets 3 — at that width the dynamic width-based formula
+// below lands on either 2 (too few, wastes the row) or 4 (too cramped), so
+// portrait is pinned rather than left to the same clamp as landscape.
+const GRID_PORTRAIT_COLUMNS = 3;
 
 type Props = {
   books: RecipeBook[];
@@ -71,16 +76,21 @@ export default function RecipeBooksSplitView({
   onCreateRecipeInBook,
   onOpenRecipe,
 }: Props) {
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const isPortrait = windowHeight >= windowWidth;
+
   const [gridWidth, setGridWidth] = useState(0);
-  const gridColumns = gridWidth
-    ? Math.max(
-        GRID_MIN_COLUMNS,
-        Math.min(
-          GRID_MAX_COLUMNS,
-          Math.floor((gridWidth + GRID_GAP) / (GRID_MIN_CARD_WIDTH + GRID_GAP)),
-        ),
-      )
-    : GRID_MAX_COLUMNS;
+  const gridColumns = isPortrait
+    ? GRID_PORTRAIT_COLUMNS
+    : gridWidth
+      ? Math.max(
+          GRID_MIN_COLUMNS,
+          Math.min(
+            GRID_MAX_COLUMNS,
+            Math.floor((gridWidth + GRID_GAP) / (GRID_MIN_CARD_WIDTH + GRID_GAP)),
+          ),
+        )
+      : GRID_MAX_COLUMNS;
   const cardWidth = gridWidth
     ? (gridWidth - GRID_GAP * (gridColumns - 1)) / gridColumns
     : undefined;

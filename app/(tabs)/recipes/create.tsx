@@ -40,6 +40,7 @@ import {
   createIngredient,
   createRecipeStep,
   DIFFICULTIES,
+  formatDurationLabel,
   INGREDIENT_UNITS,
 } from "../../../features/recipes/types";
 import { fetchHouseholdScope, HouseholdScope } from "../../../lib/households";
@@ -96,6 +97,8 @@ const MISSING_LABELS: Record<string, string> = {
   ingredients: "Ingrédients",
   steps: "Étapes",
 };
+
+const isIpad = Platform.OS === "ios" && Platform.isPad;
 
 const SOURCE_STORAGE_PREFIX = "recipe-add-flow";
 
@@ -607,6 +610,19 @@ export default function CreateRecipeScreen() {
 
       if (draftStorageKey) {
         await AsyncStorage.removeItem(draftStorageKey);
+      }
+
+      if (isIpad) {
+        // The iPad Recipes tab shows books in a permanent split view, not
+        // the phone's dedicated `books/[bookId]` screen — going back lands
+        // the user back on that split view with the book they were
+        // already in still selected, new recipe visible in its grid.
+        if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace("/(tabs)/recipes");
+        }
+        return;
       }
 
       if (targetBookId !== SYSTEM_BOOK_ID) {
@@ -1124,7 +1140,9 @@ export default function CreateRecipeScreen() {
                 </View>
                 {draft.duration.trim() ? (
                   <View style={styles.previewChip}>
-                    <Text style={styles.previewChipText}>{draft.duration}</Text>
+                    <Text style={styles.previewChipText}>
+                      {formatDurationLabel(draft.duration)}
+                    </Text>
                   </View>
                 ) : null}
               </View>

@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 import { colors, radii, spacing } from "../../../theme/design";
-import { Recipe } from "../../recipes/types";
+import { formatDurationLabel, Recipe } from "../../recipes/types";
 import { MEAL_SLOTS } from "../utils/constants";
 import { DayPlan, MealKey, RecipePickerTarget } from "../utils/types";
 
@@ -173,7 +173,9 @@ export const RecipePickerModal = ({
                   <Text style={styles.recipeOptionTitle}>{recipe.title}</Text>
                   <View style={styles.recipeOptionBadges}>
                     {recipe.duration ? (
-                      <Text style={styles.recipeBadge}>{recipe.duration}</Text>
+                      <Text style={styles.recipeBadge}>
+                        {formatDurationLabel(recipe.duration)}
+                      </Text>
                     ) : null}
                     <Text style={styles.recipeBadge}>
                       {recipe.servings} pers.

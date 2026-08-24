@@ -17,6 +17,7 @@ type Props = {
   onChangeText: (value: string) => void;
   onBlur: () => void;
   onOpenRecipePicker: () => void;
+  onRemove: () => void;
 };
 
 export const DayMealCard = ({
@@ -30,6 +31,7 @@ export const DayMealCard = ({
   onChangeText,
   onBlur,
   onOpenRecipePicker,
+  onRemove,
 }: Props) => {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -128,15 +130,26 @@ export const DayMealCard = ({
           <Text style={[styles.slotLabel, styles.slotLabelMuted]}>
             {slotLabel.toUpperCase()}
           </Text>
-          <Pressable
-            hitSlop={10}
-            onPress={startEditing}
-            disabled={disabled}
-            style={[styles.recipeBtn, disabled && styles.recipeBtnDisabled]}
-            accessibilityLabel={`Modifier le ${isLunch ? "déjeuner" : "dîner"}`}
-          >
-            <Feather name="edit-2" size={15} color={colors.accent} />
-          </Pressable>
+          <View style={styles.slotHeaderActions}>
+            <Pressable
+              hitSlop={10}
+              onPress={startEditing}
+              disabled={disabled}
+              style={[styles.recipeBtn, disabled && styles.recipeBtnDisabled]}
+              accessibilityLabel={`Modifier le ${isLunch ? "déjeuner" : "dîner"}`}
+            >
+              <Feather name="edit-2" size={15} color={colors.accent} />
+            </Pressable>
+            <Pressable
+              hitSlop={10}
+              onPress={onRemove}
+              disabled={disabled}
+              style={[styles.recipeBtn, disabled && styles.recipeBtnDisabled]}
+              accessibilityLabel={`Retirer le ${isLunch ? "déjeuner" : "dîner"}`}
+            >
+              <Feather name="x" size={16} color={colors.muted} />
+            </Pressable>
+          </View>
         </View>
 
         <Text style={styles.dishName} numberOfLines={2}>
@@ -243,6 +256,11 @@ const styles = StyleSheet.create({
   slotLabelAccent: {
     color: colors.accent,
     marginBottom: 12,
+  },
+  slotHeaderActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   recipeBtn: {
     padding: 4,

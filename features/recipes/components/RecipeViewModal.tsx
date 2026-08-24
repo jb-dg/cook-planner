@@ -17,6 +17,7 @@ import PhysicalIconButton from "@/components/PhysicalIconButton";
 import { colors, spacing } from "@/theme/design";
 
 import type { Recipe } from "../types";
+import { formatDurationLabel } from "../types";
 
 const isIpad = Platform.OS === "ios" && Platform.isPad;
 
@@ -101,7 +102,9 @@ export default function RecipeViewModal({
                   </View>
                   {recipe.duration ? (
                     <View style={styles.metaChip}>
-                      <Text style={styles.metaChipText}>{recipe.duration}</Text>
+                      <Text style={styles.metaChipText}>
+                        {formatDurationLabel(recipe.duration)}
+                      </Text>
                     </View>
                   ) : null}
                 </View>

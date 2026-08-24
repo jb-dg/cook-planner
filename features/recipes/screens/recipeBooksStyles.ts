@@ -359,29 +359,4 @@ export const styles = StyleSheet.create({
   metaChipTextAccent: {
     color: "#BC6C25",
   },
-  actionsRow: {
-    paddingTop: 10,
-    marginTop: 2,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(228, 217, 200, 0.7)",
-    flexDirection: "row",
-    gap: 8,
-  },
-  actionButtonWrapper: {
-    flex: 1,
-  },
-  actionButtonInner: {
-    flexDirection: "row",
-    gap: 6,
-  },
-  actionButtonSoftText: {
-    color: "#6B705C",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  actionButtonAccentText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "700",
-  },
 });

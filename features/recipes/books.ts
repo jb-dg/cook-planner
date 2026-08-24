@@ -43,6 +43,28 @@ export const parseStoredBooks = (value: string | null): CustomBook[] => {
   }
 };
 
+// Moves a recipe to `targetBookId`, removing it from whichever custom book
+// (if any) currently holds it first — a recipe belongs to at most one
+// custom book at a time. Passing SYSTEM_BOOK_ID as the target just clears
+// membership, since the system book isn't tracked in customBooks.
+export const moveRecipeToBook = (
+  customBooks: CustomBook[],
+  recipeId: string,
+  targetBookId: string,
+): CustomBook[] =>
+  customBooks.map((book) => {
+    const withoutRecipe = book.recipeIds.filter((id) => id !== recipeId);
+    if (book.id !== targetBookId) {
+      return withoutRecipe.length === book.recipeIds.length
+        ? book
+        : { ...book, recipeIds: withoutRecipe };
+    }
+    return {
+      ...book,
+      recipeIds: [recipeId, ...withoutRecipe],
+    };
+  });
+
 type BuildRecipeBooksArgs = {
   recipes: Recipe[];
   customBooks: CustomBook[];

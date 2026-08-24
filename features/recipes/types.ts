@@ -70,6 +70,16 @@ export const createRecipeStep = (order = 1): RecipeStep => ({
   text: "",
 });
 
+// `duration` is free text: recipes imported from a URL get a normalized
+// "30 min"/"1 h 30" label, but manual entry (RecipeForm) has no unit
+// enforcement, so older/manually-typed values can be a bare number like
+// "30". Anything that already has a unit (a letter) is left untouched.
+export const formatDurationLabel = (duration: string): string => {
+  const trimmed = duration.trim();
+  if (!trimmed || /[a-zA-Z]/.test(trimmed)) return trimmed;
+  return `${trimmed} min`;
+};
+
 const cleanStepText = (value: string): string =>
   value
     .replace(/^\s*[-*•]\s+/, "")

@@ -115,36 +115,56 @@ export const useRecipeBooksScreenState = () => {
     }, [session, fetchRecipes]),
   );
 
-  useEffect(() => {
-    let cancelled = false;
-    if (!storageKey) {
-      setCustomBooks([]);
-      setBooksLoading(false);
-      return;
-    }
+  const loadBooks = useCallback(
+    async (cancelRef?: { cancelled: boolean }) => {
+      if (!storageKey) {
+        setCustomBooks([]);
+        setBooksLoading(false);
+        return;
+      }
 
-    setBooksLoading(true);
-    AsyncStorage.getItem(storageKey)
-      .then((value) => {
-        if (cancelled) return;
+      setBooksLoading(true);
+      try {
+        const value = await AsyncStorage.getItem(storageKey);
+        if (cancelRef?.cancelled) return;
         setCustomBooks(parseStoredBooks(value));
-      })
-      .catch((storageError) => {
+      } catch (storageError) {
         console.error("load recipe books", storageError);
-        if (!cancelled) {
+        if (!cancelRef?.cancelled) {
           setCustomBooks([]);
         }
-      })
-      .finally(() => {
-        if (!cancelled) {
+      } finally {
+        if (!cancelRef?.cancelled) {
           setBooksLoading(false);
         }
-      });
+      }
+    },
+    [storageKey],
+  );
 
+  useEffect(() => {
+    const cancelRef = { cancelled: false };
+    loadBooks(cancelRef);
     return () => {
-      cancelled = true;
+      cancelRef.cancelled = true;
     };
-  }, [storageKey]);
+  }, [loadBooks]);
+
+  // Custom book renames/deletes made from the phone's dedicated
+  // `books/[bookId]` screen live in that screen's own local state, not
+  // here — without this, coming back to this list after deleting a book
+  // there still showed the stale, since-deleted book until the app
+  // reloaded.
+  useFocusEffect(
+    useCallback(() => {
+      if (!storageKey) return;
+      const cancelRef = { cancelled: false };
+      loadBooks(cancelRef);
+      return () => {
+        cancelRef.cancelled = true;
+      };
+    }, [storageKey, loadBooks]),
+  );
 
   useEffect(() => {
     if (!storageKey || booksLoading) return;

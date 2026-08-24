@@ -4,16 +4,19 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../../contexts/AuthContext";
 import PhysicalButtonAnimated from "../../../../components/PhysicalButtonAnimated";
+import PhysicalIconButton from "../../../../components/PhysicalIconButton";
 import RecipeCard from "../../../../features/recipes/components/RecipeCard";
 import RecipeViewModal from "../../../../features/recipes/components/RecipeViewModal";
 import {
@@ -49,6 +52,15 @@ export default function RecipeBookScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
+
+  // null = not editing. Tied to the viewed book, so navigating to a
+  // different book discards an in-progress edit instead of leaving stale UI.
+  const [editingName, setEditingName] = useState<string | null>(null);
+  const [renameError, setRenameError] = useState<string | null>(null);
+  useEffect(() => {
+    setEditingName(null);
+    setRenameError(null);
+  }, [currentBookId]);
 
   const storageKey = useMemo(() => {
     if (!session || !scope) return null;
@@ -263,11 +275,68 @@ export default function RecipeBookScreen() {
     );
   };
 
+  const startRename = () => {
+    if (!selectedBook) return;
+    setEditingName(selectedBook.name);
+    setRenameError(null);
+  };
+
+  const cancelRename = () => {
+    setEditingName(null);
+    setRenameError(null);
+  };
+
+  const confirmRename = () => {
+    if (!selectedBook || editingName === null) return;
+    const trimmed = editingName.trim();
+    if (!trimmed) {
+      setRenameError("Donne un nom au livre.");
+      return;
+    }
+    const duplicate = books.some(
+      (other) =>
+        other.id !== selectedBook.id &&
+        other.name.toLowerCase() === trimmed.toLowerCase(),
+    );
+    if (duplicate) {
+      setRenameError("Ce nom de livre existe déjà.");
+      return;
+    }
+
+    setCustomBooks((prev) =>
+      prev.map((book) =>
+        book.id === selectedBook.id ? { ...book, name: trimmed } : book,
+      ),
+    );
+    setEditingName(null);
+    setRenameError(null);
+  };
+
+  const confirmDeleteBook = () => {
+    if (!selectedBook) return;
+    Alert.alert(
+      "Supprimer le livre",
+      `Supprimer "${selectedBook.name}" ? Les recettes elles-mêmes ne seront pas supprimées.`,
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Supprimer",
+          style: "destructive",
+          onPress: () => {
+            setCustomBooks((prev) =>
+              prev.filter((book) => book.id !== selectedBook.id),
+            );
+            handleBackToRecipes();
+          },
+        },
+      ],
+    );
+  };
+
   const renderRecipe = ({ item }: { item: Recipe }) => (
     <RecipeCard
       recipe={item}
       onView={() => handleOpenRecipe(item.id, "view")}
-      onEdit={() => handleOpenRecipe(item.id, "edit")}
       removable={!!activeCustomBook}
       onRemove={() => handleRemoveRecipeFromBook(item.id)}
     />
@@ -295,24 +364,83 @@ export default function RecipeBookScreen() {
         onRefresh={handleRefresh}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.heading}>{selectedBook?.name ?? "Livre"}</Text>
-            <Text style={styles.subtitle}>
-              {selectedBook
-                  ? `${displayedRecipes.length} recette${
-                    displayedRecipes.length > 1 ? "s" : ""
-                  } dans ce livre`
-                : "Livre introuvable"}
-            </Text>
+            {editingName !== null ? (
+              <TextInput
+                value={editingName}
+                onChangeText={setEditingName}
+                autoFocus
+                style={styles.renameInput}
+                onSubmitEditing={confirmRename}
+                returnKeyType="done"
+              />
+            ) : (
+              <Text style={styles.heading}>{selectedBook?.name ?? "Livre"}</Text>
+            )}
+            {renameError && editingName !== null ? (
+              <Text style={styles.errorText}>{renameError}</Text>
+            ) : (
+              <Text style={styles.subtitle}>
+                {selectedBook
+                    ? `${displayedRecipes.length} recette${
+                      displayedRecipes.length > 1 ? "s" : ""
+                    } dans ce livre`
+                  : "Livre introuvable"}
+              </Text>
+            )}
             {selectedBook ? (
-              <View style={styles.createRecipeButtonWrapper}>
-                <PhysicalButtonAnimated
-                  variant="primary"
-                  onPress={handleCreateRecipeInBook}
-                  innerStyle={styles.createRecipeButtonInner}
-                >
-                  <Feather name="plus" size={14} color="#FFFFFF" />
-                  <Text style={styles.createRecipeButtonText}>Nouvelle recette</Text>
-                </PhysicalButtonAnimated>
+              <View style={styles.headerActionsRow}>
+                {editingName !== null ? (
+                  <>
+                    <PhysicalIconButton
+                      variant="secondary"
+                      onPress={confirmRename}
+                      accessibilityLabel="Enregistrer le nom du livre"
+                    >
+                      <Feather name="check" size={16} color={colors.accent} />
+                    </PhysicalIconButton>
+                    <PhysicalIconButton
+                      variant="secondary"
+                      onPress={cancelRename}
+                      accessibilityLabel="Annuler"
+                    >
+                      <Feather name="x" size={16} color="#6B705C" />
+                    </PhysicalIconButton>
+                    {/* Deleting is only offered mid-edit — same as the iPad
+                        split view, so it doesn't sit next to the title the
+                        rest of the time. */}
+                    <PhysicalIconButton
+                      variant="secondary"
+                      onPress={confirmDeleteBook}
+                      accessibilityLabel="Supprimer le livre"
+                    >
+                      <Feather name="trash-2" size={16} color={colors.danger} />
+                    </PhysicalIconButton>
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.createRecipeButtonWrapper}>
+                      <PhysicalButtonAnimated
+                        variant="primary"
+                        onPress={handleCreateRecipeInBook}
+                        innerStyle={styles.createRecipeButtonInner}
+                      >
+                        <Feather name="plus" size={14} color="#FFFFFF" />
+                        <Text style={styles.createRecipeButtonText}>
+                          Nouvelle recette
+                        </Text>
+                      </PhysicalButtonAnimated>
+                    </View>
+                    {!selectedBook.isSystem ? (
+                      <PhysicalIconButton
+                        variant="secondary"
+                        onPress={startRename}
+                        accessibilityLabel="Modifier le nom du livre"
+                      >
+                        <Feather name="edit-2" size={14} color="#6B705C" />
+                      </PhysicalIconButton>
+                    ) : null}
+                  </>
+                )}
               </View>
             ) : null}
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -440,9 +568,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
+  renameInput: {
+    minHeight: 44,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E4D9C8",
+    backgroundColor: "#FCFAF7",
+    paddingHorizontal: 14,
+    color: "#2D2D2A",
+    fontSize: 22,
+    fontWeight: "800",
+  },
+  headerActionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 6,
+  },
   createRecipeButtonWrapper: {
     alignSelf: "flex-start",
-    marginTop: 6,
   },
   createRecipeButtonInner: {
     flexDirection: "row",

@@ -3,12 +3,14 @@
     "name": "Weatly",
     "slug": "weatly",
     "version": "1.5.1",
+    "description": "Planificateur de repas, recettes et liste de courses pour organiser la cuisine du foyer.",
     "scheme": "cookplanner",
     "orientation": "portrait",
     "icon": "./assets/images/book-icon.png",
     "userInterfaceStyle": "light",
     "assetBundlePatterns": ["**/*"],
     "ios": {
+      "icon": "./assets/images/book-icon.png",
       "supportsTablet": true,
       "bundleIdentifier": "com.jbdg.weatly",
       "usesAppleSignIn": true,
@@ -17,17 +19,43 @@
       }
     },
     "android": {
+      "icon": "./assets/images/book-icon.png",
       "package": "com.jbdg.weatly",
+      "versionCode": 151,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/book-icon.png",
         "backgroundColor": "#BB6F2B"
-      }
+      },
+      "blockedPermissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ],
+      "edgeToEdgeEnabled": true
     },
     "plugins": [
       "expo-router",
       "expo-font",
       "expo-web-browser",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Weatly utilise vos photos pour ajouter une image a votre profil ou a vos recettes.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFFFF"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
