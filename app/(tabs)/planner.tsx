@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
-import { addMonths, format, startOfMonth } from "date-fns";
+import { addMonths, format, isValid, parse, startOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
-import { useMemo, useState } from "react";
+import { useLocalSearchParams } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -64,6 +65,20 @@ export default function PlannerScreen() {
     handleSelectTimeframe,
     handleGoToToday,
   } = useWeekNavigation();
+
+  // Coming from the home screen's "X repas manquants" link: jump straight
+  // to that day instead of opening on today. The planner tab stays mounted
+  // across visits, so this re-runs on `targetDateParam` itself (a fresh
+  // push from home changes it) rather than on mount only — otherwise a
+  // second visit with a different date would silently do nothing.
+  const { date: targetDateParam } = useLocalSearchParams<{ date?: string }>();
+  useEffect(() => {
+    if (!targetDateParam) return;
+    const parsed = parse(targetDateParam, "yyyy-MM-dd", new Date());
+    if (isValid(parsed)) {
+      setSelectedDate(parsed);
+    }
+  }, [targetDateParam, setSelectedDate]);
 
   // Data
   const { days, setDays, syncing, weekNumber } = usePlannerData(

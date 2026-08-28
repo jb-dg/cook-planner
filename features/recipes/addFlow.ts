@@ -12,7 +12,7 @@ import {
 } from "./types";
 import { supabase } from "../../lib/supabase";
 
-export type RecipeSourceType = "photo" | "url" | "paste" | "manual";
+export type RecipeSourceType = "photo" | "url" | "paste" | "manual" | "search";
 export type ExtractionStatus = "idle" | "loading" | "done" | "error";
 export type DraftMissingField = "title" | "ingredients" | "steps";
 
@@ -44,7 +44,18 @@ export type SourceExtractionResult = {
   description: string;
   steps: RecipeStep[];
   sourceUrl: string;
+  imageUrls?: string[];
+  coverImageUrl?: string;
   message: string;
+};
+
+export type RecipeSearchResult = {
+  id: string;
+  title: string;
+  imageUrl: string;
+  readyInMinutes: number | null;
+  servings: number | null;
+  sourceName: string;
 };
 
 const MINUTE_PATTERN = /(\d{1,3})\s*(?:min|mn|minutes?)/i;
@@ -927,6 +938,96 @@ const parseUrlRecipe = async (source: string): Promise<SourceExtractionResult> =
   return merged;
 };
 
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const asNumber = (value: unknown): number | null =>
+  typeof value === "number" && Number.isFinite(value) ? value : null;
+
+const asString = (value: unknown): string =>
+  typeof value === "string" ? value.trim() : "";
+
+const extractFunctionErrorMessage = async (
+  error: unknown,
+  response: unknown
+): Promise<string> => {
+  const status =
+    response && typeof response === "object" && "status" in response
+      ? Number((response as { status?: unknown }).status)
+      : null;
+
+  let payload: unknown = null;
+  const responseWithJson = response as
+    | { clone?: () => { json?: () => Promise<unknown>; text?: () => Promise<string> } }
+    | undefined;
+
+  try {
+    payload = await responseWithJson?.clone?.().json?.();
+  } catch {
+    try {
+      payload = await responseWithJson?.clone?.().text?.();
+    } catch {
+      payload = null;
+    }
+  }
+
+  const detail =
+    payload && typeof payload === "object" && "detail" in payload
+      ? (payload as { detail?: unknown }).detail
+      : payload;
+  const apiMessage =
+    detail && typeof detail === "object" && "error" in detail
+      ? String((detail as { error?: unknown }).error)
+      : "";
+
+  if (apiMessage) return apiMessage;
+  if (status) return `Erreur de recherche (${status}).`;
+
+  return error instanceof Error ? error.message : "Erreur de recherche.";
+};
+
+export const searchRecipeCatalog = async (
+  query: string
+): Promise<RecipeSearchResult[]> => {
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) return [];
+
+  const { data, error, response } = await supabase.functions.invoke("recipe-search", {
+    body: {
+      action: "search",
+      query: trimmedQuery,
+      number: 10,
+    },
+  });
+
+  if (error) {
+    throw new Error(await extractFunctionErrorMessage(error, response));
+  }
+
+  const results: unknown[] = Array.isArray(data?.results) ? data.results : [];
+  return results
+    .map((entry: unknown) => {
+      const row = asRecord(entry);
+      if (!row) return null;
+
+      const id = asString(row.id) || String(asNumber(row.id) ?? "");
+      const title = asString(row.title);
+      if (!id || !title) return null;
+
+      return {
+        id,
+        title,
+        imageUrl: asString(row.imageUrl),
+        readyInMinutes: asNumber(row.readyInMinutes),
+        servings: asNumber(row.servings),
+        sourceName: asString(row.sourceName),
+      };
+    })
+    .filter((item): item is RecipeSearchResult => Boolean(item));
+};
+
 export const createEmptyAddRecipeDraft = (
   bookId: string | null = null
 ): AddRecipeDraft => {
@@ -991,7 +1092,8 @@ export const parseStoredAddRecipeDraft = (
       parsed.sourceType === "photo" ||
       parsed.sourceType === "url" ||
       parsed.sourceType === "paste" ||
-      parsed.sourceType === "manual"
+      parsed.sourceType === "manual" ||
+      parsed.sourceType === "search"
         ? parsed.sourceType
         : "manual";
 
@@ -1080,7 +1182,9 @@ export const getExtractionFromSource = async (
   sourceType: RecipeSourceType,
   sourceValue: string
 ): Promise<SourceExtractionResult> => {
-  if (sourceType === "url") {
+  // Search results are Marmiton recipe URLs, so they go through the same
+  // HTML fetch + JSON-LD extraction as a pasted link.
+  if (sourceType === "url" || sourceType === "search") {
     return parseUrlRecipe(sourceValue);
   }
 

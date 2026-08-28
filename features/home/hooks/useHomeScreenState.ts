@@ -16,7 +16,7 @@ import { fetchHouseholdScope } from "@/lib/households";
 import { ensureProfileRecord } from "@/lib/profile";
 import { supabase } from "@/lib/supabase";
 
-import type { PlanProgress, TodayMenu } from "../types";
+import type { MissingSlot, PlanProgress, TodayMenu } from "../types";
 
 const RECENT_RECIPES_LIMIT = 4;
 const RECIPE_SELECT =
@@ -57,6 +57,7 @@ export const useHomeScreenState = () => {
   const [progressError, setProgressError] = useState<string | null>(null);
 
   const [todayMenu, setTodayMenu] = useState<TodayMenu>({ lunch: "", dinner: "" });
+  const [nextMissingSlot, setNextMissingSlot] = useState<MissingSlot>(null);
 
   const [recentRecipes, setRecentRecipes] = useState<Recipe[]>([]);
   const [recentRecipesLoading, setRecentRecipesLoading] = useState(false);
@@ -79,6 +80,7 @@ export const useHomeScreenState = () => {
     async (cancelRef?: { cancelled: boolean }) => {
       if (!session) {
         setPlanProgress({ percent: 0, filled: 0, total: 14 });
+        setNextMissingSlot(null);
         return;
       }
 
@@ -121,18 +123,38 @@ export const useHomeScreenState = () => {
 
         const today = days[todayIndex];
 
+        // Search from today onward (wrapping) rather than from Monday, so
+        // this points at the next actionable gap instead of a day that's
+        // already past.
+        const dayCount = days.length || 7;
+        let missingSlot: MissingSlot = null;
+        for (let offset = 0; offset < dayCount; offset += 1) {
+          const dayIndex = (todayIndex + offset) % dayCount;
+          const day = days[dayIndex];
+          if (!day?.lunch?.recipe?.trim()) {
+            missingSlot = { date: addDays(weekStart, dayIndex), meal: "lunch" };
+            break;
+          }
+          if (!day?.dinner?.recipe?.trim()) {
+            missingSlot = { date: addDays(weekStart, dayIndex), meal: "dinner" };
+            break;
+          }
+        }
+
         if (!cancelRef?.cancelled) {
           setPlanProgress({ percent, filled, total });
           setTodayMenu({
             lunch: today?.lunch?.recipe?.trim() ?? "",
             dinner: today?.dinner?.recipe?.trim() ?? "",
           });
+          setNextMissingSlot(missingSlot);
         }
       } catch (error) {
         console.error("home fetch progress", error);
         if (!cancelRef?.cancelled) {
           setProgressError("Impossible de charger le planning.");
           setPlanProgress((prev) => ({ ...prev, percent: 0 }));
+          setNextMissingSlot(null);
         }
       } finally {
         if (!cancelRef?.cancelled) {
@@ -240,6 +262,7 @@ export const useHomeScreenState = () => {
     progressLoading,
     progressError,
     missingMeals,
+    nextMissingSlot,
     recentRecipes,
     recentRecipesLoading,
     selectedRecipe,

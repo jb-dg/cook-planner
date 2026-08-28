@@ -39,11 +39,7 @@ export default function HomeScreenView() {
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
-        <HomeHeader
-          weekNumber={state.weekNumber}
-          weekLabel={state.weekLabel}
-          displayName={state.displayName}
-        />
+        <HomeHeader weekNumber={state.weekNumber} weekLabel={state.weekLabel} />
 
         <HomeMobileContent state={state} />
       </ScrollView>

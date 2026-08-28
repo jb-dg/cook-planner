@@ -65,6 +65,13 @@ Les redirections d'authentification utilisent le schéma d'URL `cookplanner://au
 
 Pour l'import depuis une URL, déployer aussi l'Edge Function Supabase `recipe-html` présente dans `supabase/functions/recipe-html`.
 
+Pour la recherche de recettes RecipeAPI.io en français/anglais, ajouter le secret côté Supabase puis déployer la fonction :
+
+```bash
+supabase secrets set RECIPEAPI_API_KEY=votre-clé-recipeapi
+supabase functions deploy recipe-search
+```
+
 ## Installation
 
 ```bash

@@ -34,6 +34,7 @@ export default function RecipeBooksScreen() {
           onRenameBook={state.handleRenameBook}
           onDeleteBook={state.handleDeleteBook}
           onCreateRecipeInBook={state.handleCreateRecipeInBook}
+          onOpenExplore={state.handleOpenExplore}
           onOpenRecipe={state.handleOpenRecipe}
         />
       ) : (
@@ -52,6 +53,7 @@ export default function RecipeBooksScreen() {
           onBookNameChange={state.onBookNameChange}
           onCreateBook={state.handleCreateBook}
           onCreateRecipe={state.handleOpenCreateRecipe}
+          onOpenExplore={state.handleOpenExplore}
         />
       )}
 

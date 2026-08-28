@@ -52,22 +52,14 @@ export const styles = StyleSheet.create({
     letterSpacing: -0.5,
     lineHeight: 32,
   },
-  subHeading: {
-    fontSize: 15,
-    color: colors.muted,
-    fontWeight: "500",
-  },
-
-  softCard: {
+  weekPlanCard: {
     padding: 24,
     gap: spacing.base * 1.2,
     ...shadows.soft,
   },
-
-  todayCard: {
-    padding: 24,
-    gap: spacing.base * 1.4,
-    ...shadows.soft,
+  weekPlanDivider: {
+    height: 1,
+    backgroundColor: colors.cardBorder,
   },
   todayHeaderRow: {
     flexDirection: "row",
@@ -161,16 +153,6 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     borderRadius: radius.pill,
   },
-  progressFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  progressFooterText: {
-    color: colors.muted,
-    fontSize: 13,
-    fontWeight: "500",
-  },
   footerLinkText: {
     color: colors.accent,
     fontWeight: "700",
@@ -192,35 +174,6 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-
-  quickLinksRow: {
-    flexDirection: "row",
-    gap: spacing.base,
-  },
-  quickLinksColumn: {
-    flexDirection: "column",
-  },
-  quickLinkTile: {
-    flex: 1,
-    padding: 16,
-    alignItems: "center",
-    gap: 8,
-    ...shadows.floating,
-  },
-  quickLinkIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(188, 108, 37, 0.1)",
-  },
-  quickLinkLabel: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: colors.text,
-    textAlign: "center",
   },
 
   recentRecipesRow: {

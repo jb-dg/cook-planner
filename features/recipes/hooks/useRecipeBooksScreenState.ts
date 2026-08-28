@@ -331,6 +331,10 @@ export const useRecipeBooksScreenState = () => {
     router.push("/(tabs)/recipes/create");
   }, [router]);
 
+  const handleOpenExplore = useCallback(() => {
+    router.push("/(tabs)/recipes/explore");
+  }, [router]);
+
   const handleCreateRecipeInBook = useCallback(() => {
     if (!selectedBook) return;
     router.push({
@@ -363,6 +367,7 @@ export const useRecipeBooksScreenState = () => {
     handleOpenRecipe,
     handleCloseRecipeModal,
     handleOpenCreateRecipe,
+    handleOpenExplore,
     handleCreateRecipeInBook,
     handleRefresh,
   };

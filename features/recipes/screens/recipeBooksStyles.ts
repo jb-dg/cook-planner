@@ -153,6 +153,16 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "800",
   },
+  exploreButtonInner: {
+    flexDirection: "row",
+    gap: 6,
+    paddingHorizontal: 14,
+  },
+  exploreButtonText: {
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: "800",
+  },
   bookErrorText: {
     color: colors.danger,
     fontSize: 12,

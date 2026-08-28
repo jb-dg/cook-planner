@@ -51,6 +51,7 @@ type Props = {
   onRenameBook: (book: RecipeBook, name: string) => void;
   onDeleteBook: (book: RecipeBook) => void;
   onCreateRecipeInBook: () => void;
+  onOpenExplore: () => void;
   onOpenRecipe: (recipeId: string, mode: "view" | "edit") => void;
 };
 
@@ -74,6 +75,7 @@ export default function RecipeBooksSplitView({
   onRenameBook,
   onDeleteBook,
   onCreateRecipeInBook,
+  onOpenExplore,
   onOpenRecipe,
 }: Props) {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -289,6 +291,14 @@ export default function RecipeBooksSplitView({
                 </>
               ) : (
                 <>
+                  <PhysicalButtonAnimated
+                    variant="secondary"
+                    onPress={onOpenExplore}
+                    innerStyle={styles.createRecipeButtonInner}
+                  >
+                    <Feather name="search" size={14} color={colors.muted} />
+                    <Text style={styles.exploreButtonText}>Explorer</Text>
+                  </PhysicalButtonAnimated>
                   <PhysicalButtonAnimated
                     variant="primary"
                     onPress={onCreateRecipeInBook}
@@ -534,6 +544,11 @@ const styles = StyleSheet.create({
   },
   createRecipeButtonText: {
     color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  exploreButtonText: {
+    color: colors.muted,
     fontSize: 13,
     fontWeight: "700",
   },

@@ -2,13 +2,12 @@ import { useRouter } from "expo-router";
 import { ScrollView, View } from "react-native";
 
 import HomeHeader from "./HomeHeader";
-import QuickLinksRow from "./QuickLinksRow";
 import RecentRecipesSection from "./RecentRecipesSection";
 import ShoppingSummaryCard from "./ShoppingSummaryCard";
-import TodayMenuCard from "./TodayMenuCard";
-import WeekProgressCard from "./WeekProgressCard";
+import WeekPlanCard from "./WeekPlanCard";
 import type { useHomeScreenState } from "../hooks/useHomeScreenState";
 import { styles } from "../screens/homeScreenStyles";
+import { buildPlannerRoute } from "../utils/buildPlannerRoute";
 
 type HomeState = ReturnType<typeof useHomeScreenState>;
 
@@ -19,8 +18,9 @@ type Props = {
 // iPad (portrait and landscape): a fixed left panel + scrollable right
 // content — the same shell as Planning/Recipes/Courses/Profil's split
 // views, rather than the stacked-grid arrangement tried before. The panel
-// groups identity + status (greeting, week progress, shortcuts, shopping);
-// the content pane is "what to cook" (today's menu, then recent recipes).
+// groups identity + status (greeting, week plan card, shopping); the
+// content pane is browsing material (recent recipes) rather than
+// something actionable "right now" like the panel's own cards.
 export default function HomeSplitView({ state }: Props) {
   const router = useRouter();
 
@@ -31,21 +31,20 @@ export default function HomeSplitView({ state }: Props) {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.splitPanelContent}
         >
-          <HomeHeader
-            weekNumber={state.weekNumber}
-            weekLabel={state.weekLabel}
-            displayName={state.displayName}
-          />
+          <HomeHeader weekNumber={state.weekNumber} weekLabel={state.weekLabel} />
 
-          <WeekProgressCard
+          <WeekPlanCard
+            todayLabel={state.todayLabel}
+            todayMenu={state.todayMenu}
             progress={state.planProgress}
             loading={state.progressLoading}
             error={state.progressError}
             missingMeals={state.missingMeals}
-            onPress={() => router.push("/planner")}
+            onPressToday={() => router.push("/planner")}
+            onPressMissing={() =>
+              router.push(buildPlannerRoute(state.nextMissingSlot))
+            }
           />
-
-          <QuickLinksRow direction="column" />
 
           <ShoppingSummaryCard
             remaining={state.shoppingRemaining}
@@ -59,13 +58,6 @@ export default function HomeSplitView({ state }: Props) {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.splitDetailContent}
         >
-          <TodayMenuCard
-            label={state.todayLabel}
-            menu={state.todayMenu}
-            loading={state.progressLoading}
-            onPress={() => router.push("/planner")}
-          />
-
           <RecentRecipesSection
             recipes={state.recentRecipes}
             loading={state.recentRecipesLoading}

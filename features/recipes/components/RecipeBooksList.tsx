@@ -30,6 +30,7 @@ type Props = {
   onBookNameChange: (value: string) => void;
   onCreateBook: () => void;
   onCreateRecipe: () => void;
+  onOpenExplore: () => void;
 };
 
 export default function RecipeBooksList({
@@ -47,6 +48,7 @@ export default function RecipeBooksList({
   onBookNameChange,
   onCreateBook,
   onCreateRecipe,
+  onOpenExplore,
 }: Props) {
   const renderBook = ({ item }: { item: RecipeBook }) => (
     <Pressable
@@ -114,6 +116,14 @@ export default function RecipeBooksList({
               {recipesCount} recette{recipesCount > 1 ? "s" : ""} au total
             </Text>
           </View>
+          <PhysicalButtonAnimated
+            variant="secondary"
+            onPress={onOpenExplore}
+            innerStyle={styles.exploreButtonInner}
+          >
+            <Feather name="search" size={14} color={colors.muted} />
+            <Text style={styles.exploreButtonText}>Explorer des recettes</Text>
+          </PhysicalButtonAnimated>
           <View style={styles.bookCreatorRow}>
             <TextInput
               value={bookName}

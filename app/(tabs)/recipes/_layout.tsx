@@ -12,6 +12,13 @@ export default function RecipesLayout() {
         }}
       />
       <Stack.Screen
+        name="explore"
+        options={{
+          title: "Explorer",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
         name="[id]"
         options={{
           title: "Recette",

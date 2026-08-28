@@ -1,11 +1,10 @@
 import { useRouter } from "expo-router";
 
-import QuickLinksRow from "./QuickLinksRow";
 import RecentRecipesSection from "./RecentRecipesSection";
 import ShoppingSummaryCard from "./ShoppingSummaryCard";
-import TodayMenuCard from "./TodayMenuCard";
-import WeekProgressCard from "./WeekProgressCard";
+import WeekPlanCard from "./WeekPlanCard";
 import type { useHomeScreenState } from "../hooks/useHomeScreenState";
+import { buildPlannerRoute } from "../utils/buildPlannerRoute";
 
 type HomeState = ReturnType<typeof useHomeScreenState>;
 
@@ -13,32 +12,26 @@ type Props = {
   state: HomeState;
 };
 
-// Phone: single stacked column, led by "what am I eating today" rather
-// than a week-percent stat — that's the answer this screen exists to give.
+// Phone: single stacked column, led by the week's planning status (the
+// thing most likely to need action) with today's menu right underneath.
 // Recent recipes close the page rather than sitting mid-flow, since it's
 // browsing material rather than something actionable "right now" like the
-// cards above it.
+// card above it.
 export default function HomeMobileContent({ state }: Props) {
   const router = useRouter();
 
   return (
     <>
-      <TodayMenuCard
-        label={state.todayLabel}
-        menu={state.todayMenu}
-        loading={state.progressLoading}
-        onPress={() => router.push("/planner")}
-      />
-
-      <WeekProgressCard
+      <WeekPlanCard
+        todayLabel={state.todayLabel}
+        todayMenu={state.todayMenu}
         progress={state.planProgress}
         loading={state.progressLoading}
         error={state.progressError}
         missingMeals={state.missingMeals}
-        onPress={() => router.push("/planner")}
+        onPressToday={() => router.push("/planner")}
+        onPressMissing={() => router.push(buildPlannerRoute(state.nextMissingSlot))}
       />
-
-      <QuickLinksRow />
 
       <ShoppingSummaryCard
         remaining={state.shoppingRemaining}

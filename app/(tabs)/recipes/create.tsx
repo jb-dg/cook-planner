@@ -28,7 +28,9 @@ import {
   getExtractionFromSource,
   getMissingFields,
   parseStoredAddRecipeDraft,
+  RecipeSearchResult,
   RecipeSourceType,
+  searchRecipeCatalog,
   toRecipeInput,
 } from "../../../features/recipes/addFlow";
 import {
@@ -71,6 +73,12 @@ const SOURCE_OPTIONS: SourceOption[] = [
     description: "Analyse caméra bientôt disponible",
     icon: "camera",
     disabled: true,
+  },
+  {
+    type: "search",
+    label: "Recherche",
+    description: "Cherche en français ou anglais",
+    icon: "search",
   },
   {
     type: "url",
@@ -144,6 +152,12 @@ export default function CreateRecipeScreen() {
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [recipeSearchQuery, setRecipeSearchQuery] = useState("");
+  const [recipeSearchResults, setRecipeSearchResults] = useState<RecipeSearchResult[]>(
+    []
+  );
+  const [recipeSearchLoading, setRecipeSearchLoading] = useState(false);
+  const [recipeSearchError, setRecipeSearchError] = useState<string | null>(null);
 
   const extractionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -342,14 +356,62 @@ export default function CreateRecipeScreen() {
     updateDraft((prev) => ({
       ...prev,
       sourceType,
-      sourceValue: sourceType === "manual" ? "" : prev.sourceValue,
+      sourceValue: sourceType === prev.sourceType ? prev.sourceValue : "",
       extractionStatus: "idle",
       extractionMessage: null,
     }));
   };
 
+  const handleRecipeSearch = async () => {
+    const query = recipeSearchQuery.trim();
+    if (!query) {
+      setRecipeSearchError("Saisis une recherche.");
+      return;
+    }
+
+    setRecipeSearchLoading(true);
+    setRecipeSearchError(null);
+    try {
+      const results = await searchRecipeCatalog(query);
+      setRecipeSearchResults(results);
+      if (!results.length) {
+        setRecipeSearchError("Aucune recette trouvée.");
+      }
+    } catch (error) {
+      console.error("search recipe catalog", error);
+      setRecipeSearchError(
+        error instanceof Error
+          ? error.message
+          : "Recherche impossible. Vérifie la fonction Supabase recipe-search."
+      );
+    } finally {
+      setRecipeSearchLoading(false);
+    }
+  };
+
+  const handleSelectSearchResult = (result: RecipeSearchResult) => {
+    updateDraft((prev) => ({
+      ...prev,
+      sourceType: "search",
+      sourceValue: result.id,
+      title: result.title || prev.title,
+      duration: result.readyInMinutes ? `${result.readyInMinutes} min` : prev.duration,
+      servings: result.servings ? String(result.servings) : prev.servings,
+      coverImageUrl: result.imageUrl || prev.coverImageUrl,
+      imageUrls: result.imageUrl
+        ? Array.from(new Set([result.imageUrl, ...prev.imageUrls]))
+        : prev.imageUrls,
+      extractionStatus: "idle",
+      extractionMessage: `${result.title} sélectionnée.`,
+    }));
+  };
+
   const runExtraction = async () => {
-    if (draft.sourceType !== "url" && draft.sourceType !== "paste") {
+    if (
+      draft.sourceType !== "url" &&
+      draft.sourceType !== "paste" &&
+      draft.sourceType !== "search"
+    ) {
       updateDraft((prev) => ({
         ...prev,
         extractionStatus: "done",
@@ -391,6 +453,13 @@ export default function CreateRecipeScreen() {
             ? extracted.steps
             : prev.steps,
           sourceUrl: extracted.sourceUrl || prev.sourceUrl,
+          imageUrls: extracted.imageUrls?.length
+            ? extracted.imageUrls
+            : prev.imageUrls,
+          coverImageUrl:
+            extracted.coverImageUrl ||
+            extracted.imageUrls?.[0] ||
+            prev.coverImageUrl,
           extractionStatus: "done",
           extractionMessage: extracted.message,
         };
@@ -408,7 +477,12 @@ export default function CreateRecipeScreen() {
 
   const handleContinueFromSource = () => {
     if (!canGoToReview) {
-      Alert.alert("Source incomplète", "Ajoute un lien ou un texte avant de continuer.");
+      Alert.alert(
+        "Source incomplète",
+        draft.sourceType === "search"
+          ? "Choisis une recette dans les résultats avant de continuer."
+          : "Ajoute un lien ou un texte avant de continuer."
+      );
       return;
     }
 
@@ -797,6 +871,105 @@ export default function CreateRecipeScreen() {
               />
             ) : null}
 
+            {draft.sourceType === "search" ? (
+              <View style={styles.searchWrap}>
+                <View style={styles.searchRow}>
+                  <TextInput
+                    style={[styles.input, styles.searchInput]}
+                    placeholder="Poulet curry, lasagnes, salade..."
+                    placeholderTextColor={colors.muted}
+                    value={recipeSearchQuery}
+                    onChangeText={(value) => {
+                      setRecipeSearchQuery(value);
+                      if (recipeSearchError) setRecipeSearchError(null);
+                    }}
+                    returnKeyType="search"
+                    onSubmitEditing={() => {
+                      void handleRecipeSearch();
+                    }}
+                  />
+                  <PhysicalButtonAnimated
+                    variant="primary"
+                    onPress={() => {
+                      void handleRecipeSearch();
+                    }}
+                    disabled={recipeSearchLoading}
+                    innerStyle={styles.searchButtonInner}
+                  >
+                    {recipeSearchLoading ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <Feather name="search" size={16} color="#FFFFFF" />
+                    )}
+                  </PhysicalButtonAnimated>
+                </View>
+
+                {recipeSearchError ? (
+                  <Text style={styles.searchErrorText}>{recipeSearchError}</Text>
+                ) : null}
+
+                {recipeSearchResults.length ? (
+                  <View style={styles.searchResults}>
+                    {recipeSearchResults.map((result) => {
+                      const selected = draft.sourceValue === result.id;
+                      return (
+                        <Pressable
+                          key={result.id}
+                          onPress={() => handleSelectSearchResult(result)}
+                          style={[
+                            styles.searchResultCard,
+                            selected && styles.searchResultCardSelected,
+                          ]}
+                        >
+                          {result.imageUrl ? (
+                            <Image
+                              source={{ uri: result.imageUrl }}
+                              style={styles.searchResultImage}
+                            />
+                          ) : (
+                            <View style={styles.searchResultImagePlaceholder}>
+                              <Feather
+                                name="image"
+                                size={18}
+                                color={colors.accentTertiary}
+                              />
+                            </View>
+                          )}
+                          <View style={styles.searchResultBody}>
+                            <Text style={styles.searchResultTitle} numberOfLines={2}>
+                              {result.title}
+                            </Text>
+                            <View style={styles.searchResultMetaRow}>
+                              {result.readyInMinutes ? (
+                                <Text style={styles.searchResultMeta}>
+                                  {result.readyInMinutes} min
+                                </Text>
+                              ) : null}
+                              {result.servings ? (
+                                <Text style={styles.searchResultMeta}>
+                                  {result.servings} pers.
+                                </Text>
+                              ) : null}
+                              {result.sourceName ? (
+                                <Text style={styles.searchResultMeta} numberOfLines={1}>
+                                  {result.sourceName}
+                                </Text>
+                              ) : null}
+                            </View>
+                          </View>
+                          {selected ? (
+                            <View style={styles.searchSelectedIcon}>
+                              <Feather name="check" size={14} color="#FFFFFF" />
+                            </View>
+                          ) : null}
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
+
             {draft.sourceType === "paste" ? (
               <TextInput
                 style={[styles.input, styles.largeInput]}
@@ -838,7 +1011,9 @@ export default function CreateRecipeScreen() {
           <View style={styles.stepSection}>
             <View style={styles.stepHeaderRow}>
               <Text style={styles.sectionLabel}>Révision et validation</Text>
-              {(draft.sourceType === "url" || draft.sourceType === "paste") && (
+              {(draft.sourceType === "url" ||
+                draft.sourceType === "paste" ||
+                draft.sourceType === "search") && (
                 <PhysicalButtonAnimated
                   variant="secondary"
                   onPress={() => {
@@ -1388,6 +1563,87 @@ const styles = StyleSheet.create({
   largeInput: {
     minHeight: 130,
     textAlignVertical: "top",
+  },
+  searchWrap: {
+    gap: 10,
+  },
+  searchRow: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "stretch",
+  },
+  searchInput: {
+    flex: 1,
+  },
+  searchButtonInner: {
+    width: 52,
+    paddingHorizontal: 0,
+  },
+  searchErrorText: {
+    color: colors.danger,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  searchResults: {
+    gap: 8,
+  },
+  searchResultCard: {
+    minHeight: 94,
+    borderWidth: 1.5,
+    borderColor: colors.cardBorder,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+    padding: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  searchResultCardSelected: {
+    borderColor: colors.accent,
+    backgroundColor: "rgba(188, 108, 37, 0.08)",
+  },
+  searchResultImage: {
+    width: 76,
+    height: 76,
+    borderRadius: 14,
+    backgroundColor: colors.surfaceAlt,
+  },
+  searchResultImagePlaceholder: {
+    width: 76,
+    height: 76,
+    borderRadius: 14,
+    backgroundColor: colors.surfaceAlt,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  searchResultBody: {
+    flex: 1,
+    gap: 6,
+  },
+  searchResultTitle: {
+    color: colors.text,
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: "800",
+  },
+  searchResultMetaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  searchResultMeta: {
+    color: colors.muted,
+    fontSize: 11,
+    lineHeight: 15,
+    fontWeight: "700",
+  },
+  searchSelectedIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.accent,
+    alignItems: "center",
+    justifyContent: "center",
   },
   inlineHint: {
     borderWidth: 1,
