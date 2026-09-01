@@ -1,10 +1,9 @@
 import { Feather } from "@expo/vector-icons";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   LayoutChangeEvent,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,6 +19,8 @@ import type { RecipeBook } from "@/features/recipes/books";
 import type { Recipe } from "@/features/recipes/types";
 import { colors, spacing } from "@/theme/design";
 
+import AddRecipesToBookModal from "./AddRecipesToBookModal";
+import CreateBookModal from "./CreateBookModal";
 import RecipeCard from "./RecipeCard";
 
 const GRID_GAP = 16;
@@ -45,11 +46,13 @@ type Props = {
   error: string | null;
   selectedBook: RecipeBook | null;
   displayedRecipes: Recipe[];
+  availableRecipes: Recipe[];
   onSelectBook: (book: RecipeBook) => void;
   onBookNameChange: (value: string) => void;
   onCreateBook: () => void;
   onRenameBook: (book: RecipeBook, name: string) => void;
   onDeleteBook: (book: RecipeBook) => void;
+  onAddRecipeToBook: (recipeId: string) => void;
   onCreateRecipeInBook: () => void;
   onOpenExplore: () => void;
   onOpenRecipe: (recipeId: string, mode: "view" | "edit") => void;
@@ -69,11 +72,13 @@ export default function RecipeBooksSplitView({
   error,
   selectedBook,
   displayedRecipes,
+  availableRecipes,
   onSelectBook,
   onBookNameChange,
   onCreateBook,
   onRenameBook,
   onDeleteBook,
+  onAddRecipeToBook,
   onCreateRecipeInBook,
   onOpenExplore,
   onOpenRecipe,
@@ -108,6 +113,8 @@ export default function RecipeBooksSplitView({
     setEditingName(null);
   }, [selectedBook?.id]);
 
+  const [addRecipesModalVisible, setAddRecipesModalVisible] = useState(false);
+
   const startRename = () => {
     if (!selectedBook) return;
     setEditingName(selectedBook.name);
@@ -119,24 +126,8 @@ export default function RecipeBooksSplitView({
   };
   const cancelRename = () => setEditingName(null);
 
-  // "+" next to the menu title opens this instead of the old inline
-  // input row. Success is detected indirectly: onCreateBook clears
-  // bookName and bookError together on success, only sets bookError on
-  // failure — so once bookError settles we know which happened.
+  // "+" next to the menu title opens this.
   const [createModalVisible, setCreateModalVisible] = useState(false);
-  const justSubmittedRef = useRef(false);
-  useEffect(() => {
-    if (!justSubmittedRef.current) return;
-    justSubmittedRef.current = false;
-    if (!bookError) {
-      setCreateModalVisible(false);
-    }
-  }, [bookError, bookName]);
-
-  const submitCreateBook = () => {
-    justSubmittedRef.current = true;
-    onCreateBook();
-  };
 
   const confirmDeleteBook = () => {
     if (!selectedBook) return;
@@ -161,7 +152,7 @@ export default function RecipeBooksSplitView({
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.menuContent}
         >
-          <Text style={styles.menuKicker}>Carnet</Text>
+          <Text style={styles.menuKicker}>Recettes</Text>
           <View style={styles.menuHeadingRow}>
             <Text style={styles.menuHeading}>Livres de recettes</Text>
             <PhysicalIconButton
@@ -278,16 +269,6 @@ export default function RecipeBooksSplitView({
                   >
                     <Feather name="x" size={16} color={colors.muted} />
                   </PhysicalIconButton>
-                  {/* Deleting is only offered mid-edit — it's a book-level
-                      action, not something to leave sitting next to the
-                      title the rest of the time. */}
-                  <PhysicalIconButton
-                    variant="secondary"
-                    onPress={confirmDeleteBook}
-                    accessibilityLabel="Supprimer le livre"
-                  >
-                    <Feather name="trash-2" size={16} color={colors.danger} />
-                  </PhysicalIconButton>
                 </>
               ) : (
                 <>
@@ -310,11 +291,29 @@ export default function RecipeBooksSplitView({
                   {selectedBook && !selectedBook.isSystem ? (
                     <PhysicalIconButton
                       variant="secondary"
-                      onPress={startRename}
-                      accessibilityLabel="Modifier le nom du livre"
+                      onPress={() => setAddRecipesModalVisible(true)}
+                      accessibilityLabel="Ajouter des recettes au livre"
                     >
-                      <Feather name="edit-2" size={14} color={colors.muted} />
+                      <Feather name="bookmark" size={14} color={colors.muted} />
                     </PhysicalIconButton>
+                  ) : null}
+                  {selectedBook && !selectedBook.isSystem ? (
+                    <>
+                      <PhysicalIconButton
+                        variant="secondary"
+                        onPress={startRename}
+                        accessibilityLabel="Modifier le nom du livre"
+                      >
+                        <Feather name="edit-2" size={14} color={colors.muted} />
+                      </PhysicalIconButton>
+                      <PhysicalIconButton
+                        variant="secondary"
+                        onPress={confirmDeleteBook}
+                        accessibilityLabel="Supprimer le livre"
+                      >
+                        <Feather name="trash-2" size={14} color={colors.danger} />
+                      </PhysicalIconButton>
+                    </>
                   ) : null}
                 </>
               )}
@@ -350,50 +349,21 @@ export default function RecipeBooksSplitView({
         </ScrollView>
       </View>
 
-      <Modal
+      <CreateBookModal
         visible={createModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setCreateModalVisible(false)}
-      >
-        <Pressable
-          style={styles.createModalBackdrop}
-          onPress={() => setCreateModalVisible(false)}
-        />
-        <View style={styles.createModalPositioner} pointerEvents="box-none">
-          <View style={styles.createModalCard}>
-            <View style={styles.createModalHeader}>
-              <Text style={styles.createModalTitle}>Nouveau livre</Text>
-              <PhysicalIconButton
-                variant="secondary"
-                onPress={() => setCreateModalVisible(false)}
-                accessibilityLabel="Fermer"
-              >
-                <Feather name="x" size={16} color={colors.muted} />
-              </PhysicalIconButton>
-            </View>
-            <TextInput
-              value={bookName}
-              onChangeText={onBookNameChange}
-              placeholder="Nom du livre"
-              placeholderTextColor="#A5A58D"
-              style={styles.createModalInput}
-              autoFocus
-              returnKeyType="done"
-              onSubmitEditing={submitCreateBook}
-            />
-            {bookError ? <Text style={styles.bookErrorText}>{bookError}</Text> : null}
-            <PhysicalButtonAnimated
-              variant="primary"
-              onPress={submitCreateBook}
-              innerStyle={styles.createModalConfirmInner}
-            >
-              <Feather name="check" size={14} color="#FFFFFF" />
-              <Text style={styles.createModalConfirmText}>Créer le livre</Text>
-            </PhysicalButtonAnimated>
-          </View>
-        </View>
-      </Modal>
+        bookName={bookName}
+        bookError={bookError}
+        onBookNameChange={onBookNameChange}
+        onCreateBook={onCreateBook}
+        onClose={() => setCreateModalVisible(false)}
+      />
+      <AddRecipesToBookModal
+        visible={addRecipesModalVisible}
+        bookName={selectedBook?.name ?? "Livre"}
+        availableRecipes={availableRecipes}
+        onAdd={onAddRecipeToBook}
+        onClose={() => setAddRecipesModalVisible(false)}
+      />
     </View>
   );
 }
@@ -592,58 +562,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 14,
     lineHeight: 19,
-  },
-  createModalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.35)",
-  },
-  createModalPositioner: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: spacing.screen,
-  },
-  createModalCard: {
-    width: "100%",
-    maxWidth: 420,
-    borderRadius: 24,
-    padding: spacing.card,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.9)",
-    gap: 14,
-  },
-  createModalHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  createModalTitle: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: colors.text,
-    letterSpacing: -0.4,
-  },
-  createModalInput: {
-    minHeight: 46,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#E4D9C8",
-    backgroundColor: "#FCFAF7",
-    paddingHorizontal: 14,
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  createModalConfirmInner: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 8,
-  },
-  createModalConfirmText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "800",
   },
 });

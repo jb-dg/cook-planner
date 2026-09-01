@@ -74,6 +74,10 @@ export const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: 12,
   },
+  headerActionsGroup: {
+    flexDirection: "row",
+    gap: 8,
+  },
   headingBlock: {
     flex: 1,
     gap: 4,
@@ -126,33 +130,6 @@ export const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
-  bookCreatorRow: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-  },
-  bookInput: {
-    flex: 1,
-    minHeight: 42,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "#E4D9C8",
-    backgroundColor: "#FCFAF7",
-    paddingHorizontal: 14,
-    color: "#2D2D2A",
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  createBookButtonInner: {
-    paddingHorizontal: 14,
-    flexDirection: "row",
-    gap: 6,
-  },
-  createBookButtonText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "800",
-  },
   exploreButtonInner: {
     flexDirection: "row",
     gap: 6,
@@ -162,11 +139,6 @@ export const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 13,
     fontWeight: "800",
-  },
-  bookErrorText: {
-    color: colors.danger,
-    fontSize: 12,
-    fontWeight: "600",
   },
   errorText: {
     color: colors.danger,

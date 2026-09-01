@@ -22,6 +22,7 @@ export default function RecipesLayout() {
         name="[id]"
         options={{
           title: "Recette",
+          headerShown: false,
         }}
       />
       <Stack.Screen

@@ -208,6 +208,19 @@ export const useRecipeBooksScreenState = () => {
       .filter((recipe): recipe is Recipe => !!recipe);
   }, [recipesById, selectedBook]);
 
+  // Only meaningful for a custom (non-system) book — the system book
+  // already contains every recipe, so there's nothing to add to it.
+  const activeCustomBook = useMemo(() => {
+    if (!selectedBook || selectedBook.isSystem) return null;
+    return customBooks.find((book) => book.id === selectedBook.id) ?? null;
+  }, [selectedBook, customBooks]);
+
+  const availableRecipes = useMemo(() => {
+    if (!activeCustomBook) return [];
+    const ids = new Set(activeCustomBook.recipeIds);
+    return recipes.filter((recipe) => !ids.has(recipe.id));
+  }, [activeCustomBook, recipes]);
+
   const selectedRecipe = useMemo(() => {
     if (!selectedRecipeId) return null;
     return recipesById.get(selectedRecipeId) ?? null;
@@ -280,6 +293,20 @@ export const useRecipeBooksScreenState = () => {
       setSelectedBookId((current) => (current === book.id ? null : current));
     },
     [],
+  );
+
+  const handleAddRecipeToBook = useCallback(
+    (recipeId: string) => {
+      if (!activeCustomBook) return;
+      setCustomBooks((prev) =>
+        prev.map((book) => {
+          if (book.id !== activeCustomBook.id) return book;
+          if (book.recipeIds.includes(recipeId)) return book;
+          return { ...book, recipeIds: [recipeId, ...book.recipeIds] };
+        }),
+      );
+    },
+    [activeCustomBook],
   );
 
   const onBookNameChange = useCallback(
@@ -358,10 +385,12 @@ export const useRecipeBooksScreenState = () => {
     selectedBookId,
     selectedRecipe,
     displayedRecipes,
+    availableRecipes,
     onBookNameChange,
     handleCreateBook,
     handleRenameBook,
     handleDeleteBook,
+    handleAddRecipeToBook,
     handleOpenBook,
     handleSelectBook,
     handleOpenRecipe,

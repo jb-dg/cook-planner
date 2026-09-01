@@ -1,18 +1,19 @@
 import { Feather } from "@expo/vector-icons";
 import type { RecipeBook } from "@/features/recipes/books";
 import { colors } from "@/theme/design";
+import { useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Platform,
   Pressable,
   Text,
-  TextInput,
   View,
 } from "react-native";
 
 import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
 import PhysicalIconButton from "@/components/PhysicalIconButton";
+import CreateBookModal from "./CreateBookModal";
 import { styles } from "../screens/recipeBooksStyles";
 
 type Props = {
@@ -50,6 +51,11 @@ export default function RecipeBooksList({
   onCreateRecipe,
   onOpenExplore,
 }: Props) {
+  // "+" next to the heading opens this instead of the old always-visible
+  // input row — matches the iPad split view's pattern, and gets rare-use
+  // UI off a screen whose main job is picking a book.
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+
   const renderBook = ({ item }: { item: RecipeBook }) => (
     <Pressable
       onPress={() => onOpenBook(item)}
@@ -93,16 +99,25 @@ export default function RecipeBooksList({
         <View style={styles.heroSurface}>
           <View style={styles.headerRow}>
             <View style={styles.headingBlock}>
-              <Text style={styles.headingKicker}>Carnet</Text>
+              <Text style={styles.headingKicker}>Recettes</Text>
               <Text style={styles.heading}>Livres de recettes</Text>
             </View>
-            <PhysicalIconButton
-              variant="secondary"
-              onPress={onCreateRecipe}
-              accessibilityLabel="Nouvelle recette"
-            >
-              <Feather name="plus" size={20} color={colors.muted} />
-            </PhysicalIconButton>
+            <View style={styles.headerActionsGroup}>
+              <PhysicalIconButton
+                variant="secondary"
+                onPress={() => setCreateModalVisible(true)}
+                accessibilityLabel="Créer un livre"
+              >
+                <Feather name="book-open" size={18} color={colors.muted} />
+              </PhysicalIconButton>
+              <PhysicalIconButton
+                variant="secondary"
+                onPress={onCreateRecipe}
+                accessibilityLabel="Nouvelle recette"
+              >
+                <Feather name="plus" size={20} color={colors.muted} />
+              </PhysicalIconButton>
+            </View>
           </View>
           <Text style={styles.subtitle}>
             Choisis un livre pour ouvrir sa liste de recettes. Le livre
@@ -124,24 +139,6 @@ export default function RecipeBooksList({
             <Feather name="search" size={14} color={colors.muted} />
             <Text style={styles.exploreButtonText}>Explorer des recettes</Text>
           </PhysicalButtonAnimated>
-          <View style={styles.bookCreatorRow}>
-            <TextInput
-              value={bookName}
-              onChangeText={onBookNameChange}
-              placeholder="Nom du nouveau livre"
-              placeholderTextColor="#A5A58D"
-              style={styles.bookInput}
-            />
-            <PhysicalButtonAnimated
-              variant="primary"
-              onPress={onCreateBook}
-              innerStyle={styles.createBookButtonInner}
-            >
-              <Feather name="book-open" size={14} color="#FFFFFF" />
-              <Text style={styles.createBookButtonText}>Créer</Text>
-            </PhysicalButtonAnimated>
-          </View>
-          {bookError ? <Text style={styles.bookErrorText}>{bookError}</Text> : null}
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
         </View>
       </View>
@@ -158,16 +155,26 @@ export default function RecipeBooksList({
     ) : null;
 
   return (
-    <FlatList
-      data={loading || booksLoading ? [] : books}
-      keyExtractor={(item) => item.id}
-      renderItem={renderBook}
-      refreshing={refreshing}
-      onRefresh={onRefresh}
-      ListHeaderComponent={listHeader}
-      ListEmptyComponent={listEmpty}
-      contentContainerStyle={styles.listContent}
-      showsVerticalScrollIndicator={false}
-    />
+    <>
+      <FlatList
+        data={loading || booksLoading ? [] : books}
+        keyExtractor={(item) => item.id}
+        renderItem={renderBook}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      />
+      <CreateBookModal
+        visible={createModalVisible}
+        bookName={bookName}
+        bookError={bookError}
+        onBookNameChange={onBookNameChange}
+        onCreateBook={onCreateBook}
+        onClose={() => setCreateModalVisible(false)}
+      />
+    </>
   );
 }

@@ -14,7 +14,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import type { AlertButton } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
@@ -27,6 +26,8 @@ import {
   searchRecipeCatalog,
   toRecipeInput,
 } from "../../../features/recipes/addFlow";
+import RecipeViewModal from "../../../features/recipes/components/RecipeViewModal";
+import type { Recipe } from "../../../features/recipes/types";
 import { fetchHouseholdScope } from "../../../lib/households";
 import { supabase } from "../../../lib/supabase";
 import { colors, radii, spacing } from "../../../theme/design";
@@ -45,7 +46,14 @@ export default function ExploreRecipesScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savingRecipeId, setSavingRecipeId] = useState<string | null>(null);
-  const [savedRecipeIds, setSavedRecipeIds] = useState<Set<string>>(() => new Set());
+  // result.id -> saved recipe's own id (or null if the insert didn't return
+  // one). Lets a saved card's button turn into "open" instead of just
+  // going inert, without needing a blocking alert to offer that.
+  const [savedRecipes, setSavedRecipes] = useState<Map<string, string | null>>(
+    () => new Map()
+  );
+  const [previewingId, setPreviewingId] = useState<string | null>(null);
+  const [previewRecipe, setPreviewRecipe] = useState<Recipe | null>(null);
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -64,6 +72,7 @@ export default function ExploreRecipesScreen() {
 
     setLoading(true);
     setError(null);
+    setResults([]);
     try {
       const nextResults = await searchRecipeCatalog(trimmedQuery);
       setResults(nextResults);
@@ -92,7 +101,10 @@ export default function ExploreRecipesScreen() {
         ...createEmptyAddRecipeDraft(),
         sourceType: "search" as const,
         sourceValue: result.id,
-        title: extracted.title,
+        // The search result's own title came straight from Marmiton's
+        // listing JSON-LD and is always reliable, even on the rare page
+        // where the detail-page extraction below fails to find one.
+        title: extracted.title || result.title,
         duration: extracted.duration,
         servings: extracted.servings,
         difficulty: extracted.difficulty,
@@ -100,20 +112,19 @@ export default function ExploreRecipesScreen() {
         description: extracted.description,
         steps: extracted.steps,
         sourceUrl: extracted.sourceUrl,
-        imageUrls: extracted.imageUrls ?? [],
-        coverImageUrl: extracted.coverImageUrl ?? "",
+        imageUrls: extracted.imageUrls?.length
+          ? extracted.imageUrls
+          : result.imageUrl
+            ? [result.imageUrl]
+            : [],
+        coverImageUrl: extracted.coverImageUrl || result.imageUrl || "",
       };
 
+      // Ingredients/steps the scraper couldn't find no longer block the
+      // save — the recipe is inserted with whatever was extracted, then
+      // opened straight in edit mode so the gap can be filled in there
+      // instead of losing the whole import.
       const missingFields = getMissingFields(draft);
-      if (missingFields.length) {
-        Alert.alert(
-          "Import incomplet",
-          `Cette recette manque de ${missingFields
-            .map((field) => MISSING_LABELS[field])
-            .join(", ")}.`
-        );
-        return;
-      }
 
       const scope = await fetchHouseholdScope(session.user.id);
       const input = toRecipeInput(draft);
@@ -153,27 +164,73 @@ export default function ExploreRecipesScreen() {
 
       if (insertError) throw insertError;
 
-      setSavedRecipeIds((prev) => new Set(prev).add(result.id));
-
       const recipeId = data?.id ? String(data.id) : null;
-      const buttons: AlertButton[] = [{ text: "Continuer" }];
-      if (recipeId) {
-        buttons.push({
-          text: "Ouvrir",
-          onPress: () =>
-            router.push({
-              pathname: "/(tabs)/recipes/[id]",
-              params: { id: recipeId, mode: "view" },
-            }),
-        });
-      }
+      // No success alert — the card's own button switching to "Ouvrir"
+      // already confirms it worked, without blocking the flow of adding
+      // several recipes in a row from this list.
+      setSavedRecipes((prev) => new Map(prev).set(result.id, recipeId));
 
-      Alert.alert("Recette ajoutée", `"${input.title}" est dans ton carnet.`, buttons);
+      if (missingFields.length && recipeId) {
+        Alert.alert(
+          "Import partiel",
+          `Cette recette manque de ${missingFields
+            .map((field) => MISSING_LABELS[field])
+            .join(", ")}. Complète-la maintenant.`,
+          [
+            {
+              text: "Plus tard",
+              style: "cancel",
+            },
+            {
+              text: "Compléter",
+              onPress: () =>
+                router.push({
+                  pathname: "/(tabs)/recipes/[id]",
+                  params: { id: recipeId, mode: "edit" },
+                }),
+            },
+          ]
+        );
+      }
     } catch (saveError) {
       console.error("save explored recipe", saveError);
       Alert.alert("Erreur", "Impossible d'ajouter cette recette pour le moment.");
     } finally {
       setSavingRecipeId(null);
+    }
+  };
+
+  // Runs the same page extraction as saving does, but only to show it in
+  // RecipeViewModal — nothing is written to the database until the user
+  // actually taps "Ajouter" on the card underneath.
+  const handlePreviewRecipe = async (result: RecipeSearchResult) => {
+    if (previewingId) return;
+
+    setPreviewingId(result.id);
+    try {
+      const extracted = await getExtractionFromSource("search", result.id);
+      setPreviewRecipe({
+        id: result.id,
+        title: extracted.title || result.title,
+        duration: extracted.duration,
+        difficulty: extracted.difficulty,
+        servings: Number(extracted.servings) || 1,
+        description: extracted.description,
+        ingredients: extracted.ingredients,
+        steps: extracted.steps,
+        sourceUrl: extracted.sourceUrl,
+        imageUrls: extracted.imageUrls?.length
+          ? extracted.imageUrls
+          : result.imageUrl
+            ? [result.imageUrl]
+            : [],
+        coverImageUrl: extracted.coverImageUrl || result.imageUrl || "",
+      });
+    } catch (previewError) {
+      console.error("preview explored recipe", previewError);
+      Alert.alert("Erreur", "Impossible de charger l'aperçu de cette recette.");
+    } finally {
+      setPreviewingId(null);
     }
   };
 
@@ -244,7 +301,12 @@ export default function ExploreRecipesScreen() {
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
           </View>
 
-          {!results.length && !loading ? (
+          {loading ? (
+            <View style={styles.emptyState}>
+              <ActivityIndicator color={colors.accent} />
+              <Text style={styles.emptyTitle}>Recherche en cours…</Text>
+            </View>
+          ) : !results.length ? (
             <View style={styles.emptyState}>
               <Feather name="search" size={22} color={colors.accentTertiary} />
               <Text style={styles.emptyTitle}>Cherche une idée de repas</Text>
@@ -254,17 +316,32 @@ export default function ExploreRecipesScreen() {
           <View style={styles.results}>
             {results.map((result) => {
               const isSaving = savingRecipeId === result.id;
-              const isSaved = savedRecipeIds.has(result.id);
+              const isSaved = savedRecipes.has(result.id);
+              const savedRecipeId = savedRecipes.get(result.id) ?? null;
+              const isPreviewing = previewingId === result.id;
 
               return (
-                <View key={result.id} style={styles.resultCard}>
-                  {result.imageUrl ? (
-                    <Image source={{ uri: result.imageUrl }} style={styles.resultImage} />
-                  ) : (
-                    <View style={styles.resultImagePlaceholder}>
-                      <Feather name="image" size={24} color={colors.accentTertiary} />
-                    </View>
-                  )}
+                <Pressable
+                  key={result.id}
+                  style={styles.resultCard}
+                  onPress={() => {
+                    void handlePreviewRecipe(result);
+                  }}
+                >
+                  <View style={styles.resultImageWrap}>
+                    {result.imageUrl ? (
+                      <Image source={{ uri: result.imageUrl }} style={styles.resultImage} />
+                    ) : (
+                      <View style={styles.resultImagePlaceholder}>
+                        <Feather name="image" size={24} color={colors.accentTertiary} />
+                      </View>
+                    )}
+                    {isPreviewing ? (
+                      <View style={styles.resultImageLoading}>
+                        <ActivityIndicator color={colors.accent} />
+                      </View>
+                    ) : null}
+                  </View>
 
                   <View style={styles.resultBody}>
                     <Text style={styles.resultTitle}>{result.title}</Text>
@@ -275,17 +352,23 @@ export default function ExploreRecipesScreen() {
                       {result.servings ? (
                         <Text style={styles.metaText}>{result.servings} pers.</Text>
                       ) : null}
-                      {result.sourceName ? (
-                        <Text style={styles.metaText}>{result.sourceName}</Text>
-                      ) : null}
                     </View>
                     <View style={styles.cardActions}>
                       <PhysicalButtonAnimated
                         variant={isSaved ? "secondary" : "primary"}
                         onPress={() => {
+                          if (isSaved) {
+                            if (savedRecipeId) {
+                              router.push({
+                                pathname: "/(tabs)/recipes/[id]",
+                                params: { id: savedRecipeId, mode: "view" },
+                              });
+                            }
+                            return;
+                          }
                           void handleSaveRecipe(result);
                         }}
-                        disabled={isSaving || isSaved}
+                        disabled={isSaving || (isSaved && !savedRecipeId)}
                         innerStyle={styles.addButtonInner}
                       >
                         {isSaving ? (
@@ -293,7 +376,7 @@ export default function ExploreRecipesScreen() {
                         ) : (
                           <>
                             <Feather
-                              name={isSaved ? "check" : "plus"}
+                              name={isSaved ? "arrow-right" : "plus"}
                               size={14}
                               color={isSaved ? colors.muted : "#FFFFFF"}
                             />
@@ -304,19 +387,24 @@ export default function ExploreRecipesScreen() {
                                   : styles.addButtonText
                               }
                             >
-                              {isSaved ? "Ajoutée" : "Ajouter"}
+                              {isSaved ? "Ouvrir" : "Ajouter"}
                             </Text>
                           </>
                         )}
                       </PhysicalButtonAnimated>
                     </View>
                   </View>
-                </View>
+                </Pressable>
               );
             })}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <RecipeViewModal
+        visible={!!previewRecipe}
+        recipe={previewRecipe}
+        onClose={() => setPreviewRecipe(null)}
+      />
     </SafeAreaView>
   );
 }
@@ -432,6 +520,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     overflow: "hidden",
   },
+  resultImageWrap: {
+    position: "relative",
+  },
   resultImage: {
     width: "100%",
     aspectRatio: 16 / 9,
@@ -441,6 +532,12 @@ const styles = StyleSheet.create({
     width: "100%",
     aspectRatio: 16 / 9,
     backgroundColor: colors.surfaceAlt,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  resultImageLoading: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255,255,255,0.55)",
     alignItems: "center",
     justifyContent: "center",
   },

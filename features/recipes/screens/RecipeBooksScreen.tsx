@@ -28,11 +28,13 @@ export default function RecipeBooksScreen() {
           error={state.error}
           selectedBook={state.selectedBook}
           displayedRecipes={state.displayedRecipes}
+          availableRecipes={state.availableRecipes}
           onSelectBook={state.handleSelectBook}
           onBookNameChange={state.onBookNameChange}
           onCreateBook={state.handleCreateBook}
           onRenameBook={state.handleRenameBook}
           onDeleteBook={state.handleDeleteBook}
+          onAddRecipeToBook={state.handleAddRecipeToBook}
           onCreateRecipeInBook={state.handleCreateRecipeInBook}
           onOpenExplore={state.handleOpenExplore}
           onOpenRecipe={state.handleOpenRecipe}

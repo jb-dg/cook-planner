@@ -17,6 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../../../contexts/AuthContext";
 import PhysicalButtonAnimated from "../../../../components/PhysicalButtonAnimated";
 import PhysicalIconButton from "../../../../components/PhysicalIconButton";
+import AddRecipesToBookModal from "../../../../features/recipes/components/AddRecipesToBookModal";
 import RecipeCard from "../../../../features/recipes/components/RecipeCard";
 import RecipeViewModal from "../../../../features/recipes/components/RecipeViewModal";
 import {
@@ -52,6 +53,7 @@ export default function RecipeBookScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
+  const [addRecipesModalVisible, setAddRecipesModalVisible] = useState(false);
 
   // null = not editing. Tied to the viewed book, so navigating to a
   // different book discards an in-progress edit instead of leaving stale UI.
@@ -344,6 +346,9 @@ export default function RecipeBookScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
+      {/* No book name here — the heading right below in the list already
+          shows it, and both were visible on screen at once before any
+          scrolling happened. */}
       <View style={styles.stickyHeader}>
         <Pressable
           style={({ pressed }) => [styles.backButton, pressed && styles.cardPressed]}
@@ -352,9 +357,6 @@ export default function RecipeBookScreen() {
           <Feather name="chevron-left" size={16} color="#6B705C" />
           <Text style={styles.backButtonText}>Tous les livres</Text>
         </Pressable>
-        <Text numberOfLines={1} style={styles.stickyHeaderTitle}>
-          {selectedBook?.name ?? "Livre"}
-        </Text>
       </View>
       <FlatList
         data={displayedRecipes}
@@ -405,16 +407,6 @@ export default function RecipeBookScreen() {
                     >
                       <Feather name="x" size={16} color="#6B705C" />
                     </PhysicalIconButton>
-                    {/* Deleting is only offered mid-edit — same as the iPad
-                        split view, so it doesn't sit next to the title the
-                        rest of the time. */}
-                    <PhysicalIconButton
-                      variant="secondary"
-                      onPress={confirmDeleteBook}
-                      accessibilityLabel="Supprimer le livre"
-                    >
-                      <Feather name="trash-2" size={16} color={colors.danger} />
-                    </PhysicalIconButton>
                   </>
                 ) : (
                   <>
@@ -430,14 +422,32 @@ export default function RecipeBookScreen() {
                         </Text>
                       </PhysicalButtonAnimated>
                     </View>
-                    {!selectedBook.isSystem ? (
+                    {activeCustomBook ? (
                       <PhysicalIconButton
                         variant="secondary"
-                        onPress={startRename}
-                        accessibilityLabel="Modifier le nom du livre"
+                        onPress={() => setAddRecipesModalVisible(true)}
+                        accessibilityLabel="Ajouter des recettes au livre"
                       >
-                        <Feather name="edit-2" size={14} color="#6B705C" />
+                        <Feather name="bookmark" size={14} color="#6B705C" />
                       </PhysicalIconButton>
+                    ) : null}
+                    {!selectedBook.isSystem ? (
+                      <>
+                        <PhysicalIconButton
+                          variant="secondary"
+                          onPress={startRename}
+                          accessibilityLabel="Modifier le nom du livre"
+                        >
+                          <Feather name="edit-2" size={14} color="#6B705C" />
+                        </PhysicalIconButton>
+                        <PhysicalIconButton
+                          variant="secondary"
+                          onPress={confirmDeleteBook}
+                          accessibilityLabel="Supprimer le livre"
+                        >
+                          <Feather name="trash-2" size={14} color={colors.danger} />
+                        </PhysicalIconButton>
+                      </>
                     ) : null}
                   </>
                 )}
@@ -445,33 +455,6 @@ export default function RecipeBookScreen() {
             ) : null}
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
           </View>
-        }
-        ListFooterComponent={
-          activeCustomBook ? (
-            <View style={styles.footerSection}>
-              <Text style={styles.footerTitle}>Ajouter des recettes au livre</Text>
-              {availableRecipes.length ? (
-                availableRecipes.map((recipe) => (
-                  <View key={recipe.id} style={styles.availableRow}>
-                    <Text style={styles.availableName}>{recipe.title}</Text>
-                    <PhysicalButtonAnimated
-                      variant="secondary"
-                      onPress={() => handleAddRecipeToBook(recipe.id)}
-                      borderRadius={14}
-                      innerStyle={styles.availableAddButtonInner}
-                    >
-                      <Feather name="plus" size={14} color="#6B705C" />
-                      <Text style={styles.availableAddText}>Ajouter</Text>
-                    </PhysicalButtonAnimated>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.availableEmpty}>
-                  Toutes les recettes sont déjà dans ce livre.
-                </Text>
-              )}
-            </View>
-          ) : null
         }
         ListEmptyComponent={
           loading || booksLoading ? (
@@ -504,6 +487,13 @@ export default function RecipeBookScreen() {
           handleOpenRecipe(recipeId, "edit");
         }}
       />
+      <AddRecipesToBookModal
+        visible={addRecipesModalVisible}
+        bookName={selectedBook?.name ?? "Livre"}
+        availableRecipes={availableRecipes}
+        onAdd={handleAddRecipeToBook}
+        onClose={() => setAddRecipesModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -526,12 +516,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "rgba(107,112,92,0.24)",
     gap: 4,
-  },
-  stickyHeaderTitle: {
-    color: "#2D2D2A",
-    fontSize: 16,
-    fontWeight: "800",
-    letterSpacing: -0.2,
   },
   header: {
     gap: 6,
@@ -601,50 +585,6 @@ const styles = StyleSheet.create({
   cardPressed: {
     transform: [{ scale: 0.995 }],
     opacity: 0.95,
-  },
-  footerSection: {
-    marginTop: 10,
-    padding: 16,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: "#E4D9C8",
-    backgroundColor: "rgba(255, 255, 255, 0.74)",
-    gap: 8,
-  },
-  footerTitle: {
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    color: "#A5A58D",
-  },
-  availableRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-    paddingVertical: 3,
-  },
-  availableName: {
-    flex: 1,
-    color: "#2D2D2A",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  availableAddButtonInner: {
-    flexDirection: "row",
-    gap: 5,
-    paddingHorizontal: 10,
-  },
-  availableAddText: {
-    color: "#6B705C",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  availableEmpty: {
-    fontSize: 13,
-    color: "#6B705C",
-    lineHeight: 18,
   },
   loader: {
     marginTop: 32,

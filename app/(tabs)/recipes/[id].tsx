@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -204,6 +205,14 @@ export default function RecipeScreen() {
     loadRecipe();
   }, [loadRecipe]);
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace("/(tabs)/recipes");
+  };
+
   const handleUpdate = async (input: RecipeInput) => {
     if (!session || !id) return;
     try {
@@ -263,6 +272,26 @@ export default function RecipeScreen() {
     }
   };
 
+  // View mode: changing the book applies immediately (it's the only field
+  // on offer there), unlike edit mode where it's bundled with the rest of
+  // the form and only persisted on "Mettre à jour".
+  const handleChangeBook = async (bookId: string) => {
+    if (!id || !booksStorageKey || bookId === selectedBookId) return;
+
+    setSelectedBookId(bookId);
+    try {
+      const currentBooks = parseStoredBooks(
+        await AsyncStorage.getItem(booksStorageKey),
+      );
+      const nextBooks = moveRecipeToBook(currentBooks, id, bookId);
+      setCustomBooks(nextBooks);
+      await AsyncStorage.setItem(booksStorageKey, JSON.stringify(nextBooks));
+    } catch (err) {
+      console.error("change recipe book", err);
+      Alert.alert("Erreur", "Impossible de déplacer la recette. Réessaie plus tard.");
+    }
+  };
+
   const handleDelete = () => {
     Alert.alert(
       "Supprimer la recette",
@@ -309,6 +338,15 @@ export default function RecipeScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
+      <View style={styles.stickyHeader}>
+        <Pressable
+          style={({ pressed }) => [styles.backButton, pressed && styles.cardPressed]}
+          onPress={handleBack}
+        >
+          <Feather name="chevron-left" size={16} color="#6B705C" />
+          <Text style={styles.backButtonText}>Retour</Text>
+        </Pressable>
+      </View>
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator color={colors.accentSecondary} />
@@ -327,12 +365,9 @@ export default function RecipeScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.heading}>
-            {screenMode === "view"
-              ? "Afficher la recette"
-              : "Modifier la recette"}
-          </Text>
-
+          {/* No "Afficher/Modifier la recette" heading here — the native
+              stack header already says "Recette", and the toggle right
+              below makes the current mode obvious on its own. */}
           <View style={styles.modeSwitch}>
             <Pressable
               style={[
@@ -465,6 +500,31 @@ export default function RecipeScreen() {
                 </View>
               ) : null}
 
+              <View style={styles.bookPickerWrap}>
+                <Text style={styles.recipeSectionLabel}>Livre</Text>
+                <View style={styles.bookPickerRow}>
+                  {books.map((book) => {
+                    const selected = selectedBookId === book.id;
+                    return (
+                      <Pressable
+                        key={book.id}
+                        style={[styles.bookChip, selected && styles.bookChipActive]}
+                        onPress={() => handleChangeBook(book.id)}
+                      >
+                        <Text
+                          style={[
+                            styles.bookChipText,
+                            selected && styles.bookChipTextActive,
+                          ]}
+                        >
+                          {book.name}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+
               <PhysicalButton
                 variant="secondary"
                 onPress={() => setScreenMode("edit")}
@@ -539,17 +599,33 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  stickyHeader: {
+    paddingHorizontal: spacing.screen,
+    paddingTop: 4,
+    paddingBottom: 8,
+  },
+  backButton: {
+    alignSelf: "flex-start",
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    paddingHorizontal: 4,
+    marginLeft: -4,
+  },
+  backButtonText: {
+    color: "#6B705C",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  cardPressed: {
+    transform: [{ scale: 0.995 }],
+    opacity: 0.95,
+  },
   container: {
     padding: spacing.screen,
     gap: 16,
     paddingBottom: 160,
-  },
-  heading: {
-    fontSize: 28,
-    lineHeight: 32,
-    fontWeight: "900",
-    color: colors.text,
-    letterSpacing: -0.5,
   },
   bookPickerWrap: {
     gap: 8,
