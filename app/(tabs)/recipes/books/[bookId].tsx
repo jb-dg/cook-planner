@@ -505,7 +505,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: spacing.screen,
-    paddingBottom: 140,
+    paddingBottom: spacing.screen * 2,
     gap: 14,
   },
   stickyHeader: {

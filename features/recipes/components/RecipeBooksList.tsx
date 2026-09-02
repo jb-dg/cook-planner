@@ -67,9 +67,6 @@ export default function RecipeBooksList({
       <View style={styles.bookCardSurface}>
         <View style={styles.bookCardHeader}>
           <View style={styles.bookTitleBlock}>
-            <Text style={styles.bookEyebrow}>
-              {item.isSystem ? "Système" : "Livre"}
-            </Text>
             <Text style={styles.bookTitle}>{item.name}</Text>
           </View>
           <View style={styles.bookArrow}>
@@ -99,7 +96,6 @@ export default function RecipeBooksList({
         <View style={styles.heroSurface}>
           <View style={styles.headerRow}>
             <View style={styles.headingBlock}>
-              <Text style={styles.headingKicker}>Recettes</Text>
               <Text style={styles.heading}>Livres de recettes</Text>
             </View>
             <View style={styles.headerActionsGroup}>

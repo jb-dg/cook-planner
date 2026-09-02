@@ -12,6 +12,7 @@ import type {
   SentInvite,
 } from "@/components/profile/types";
 import { useAuth } from "@/contexts/AuthContext";
+import { eraseUserData } from "@/lib/eraseUserData";
 import { pickAndUploadImage } from "@/lib/mediaUpload";
 import { ensureProfileRecord } from "@/lib/profile";
 import { supabase } from "@/lib/supabase";
@@ -19,7 +20,7 @@ import { validateEmail } from "@/lib/validation/auth";
 
 export const useProfileScreenState = () => {
   const router = useRouter();
-  const { session, signOut } = useAuth();
+  const { session, signOut, deleteAccount } = useAuth();
 
   const [pseudo, setPseudo] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
@@ -59,6 +60,9 @@ export const useProfileScreenState = () => {
 
   const [leavingHousehold, setLeavingHousehold] = useState(false);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [erasingData, setErasingData] = useState(false);
 
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [householdActionsOpen, setHouseholdActionsOpen] = useState(false);
@@ -717,6 +721,103 @@ export const useProfileScreenState = () => {
     router.replace("/auth");
   };
 
+  const runDeleteAccount = async () => {
+    setDeletingAccount(true);
+    try {
+      const result = await deleteAccount();
+      if (!result.success) {
+        Alert.alert(
+          "Erreur",
+          result.message ?? "Impossible de supprimer le compte.",
+        );
+        return;
+      }
+      router.replace("/auth");
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
+
+  const runEraseData = async () => {
+    if (!session) return;
+    setErasingData(true);
+    try {
+      const result = await eraseUserData(session.user.id);
+      if (!result.success) {
+        Alert.alert(
+          "Erreur",
+          result.message ?? "Impossible d'effacer les données.",
+        );
+        return;
+      }
+      await Promise.all([loadProfile(), loadHousehold(), loadMyInvites()]);
+      Alert.alert(
+        "Données effacées",
+        "Tes recettes, ton planning, ta liste de courses et ton foyer ont été supprimés. Ton compte reste actif.",
+      );
+    } finally {
+      setErasingData(false);
+    }
+  };
+
+  const handleEraseData = () => {
+    if (erasingData) return;
+    Alert.alert(
+      "Effacer toutes mes données ?",
+      "Recettes, planning, liste de courses et foyer seront définitivement supprimés. Ton compte et ton identifiant sont conservés.",
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Effacer",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "Confirmer l'effacement",
+              "Cette action est irréversible.",
+              [
+                { text: "Annuler", style: "cancel" },
+                {
+                  text: "Tout effacer",
+                  style: "destructive",
+                  onPress: () => void runEraseData(),
+                },
+              ],
+            );
+          },
+        },
+      ],
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    if (deletingAccount) return;
+    Alert.alert(
+      "Supprimer mon compte ?",
+      "Cette action est définitive. Toutes tes recettes, ton planning, ta liste de courses et ton foyer seront supprimés.",
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Supprimer",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "Confirmer la suppression",
+              "Dernière étape : ton compte et toutes tes données seront effacés immédiatement.",
+              [
+                { text: "Annuler", style: "cancel" },
+                {
+                  text: "Supprimer définitivement",
+                  style: "destructive",
+                  onPress: () => void runDeleteAccount(),
+                },
+              ],
+            );
+          },
+        },
+      ],
+    );
+  };
+
   const quickActions = useMemo<QuickActionItem[]>(
     () => [
       {
@@ -782,6 +883,8 @@ export const useProfileScreenState = () => {
     respondingInviteId,
     leavingHousehold,
     removingMemberId,
+    deletingAccount,
+    erasingData,
     profileModalOpen,
     householdActionsOpen,
     householdModalMode,
@@ -807,6 +910,8 @@ export const useProfileScreenState = () => {
     handleLeaveHousehold,
     handleRemoveMember,
     handleSignOut,
+    handleEraseData,
+    handleDeleteAccount,
     openHouseholdModal,
   };
 };

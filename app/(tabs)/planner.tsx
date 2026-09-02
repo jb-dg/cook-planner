@@ -15,7 +15,6 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useAuth } from "../../contexts/AuthContext";
 import { DayGridSelector } from "../../features/planner/components/DayGridSelector";
 import { FocusView } from "../../features/planner/components/FocusView";
@@ -44,7 +43,6 @@ import PhysicalButtonAnimated from "../../components/PhysicalButtonAnimated";
 export default function PlannerScreen() {
   const { session } = useAuth();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
   const { width, height } = useWindowDimensions();
   // iPad landscape only: wide enough to lay the day's meals side by side
   // and center the content in a comfortable reading width.
@@ -223,13 +221,6 @@ export default function PlannerScreen() {
           contentContainerStyle={[
             sharedStyles.container,
             isIpadLandscape && styles.ipadContainer,
-            {
-              // The tab bar floats (position: absolute) above the screen edge by an
-              // extra safe-area-driven offset that useBottomTabBarHeight() doesn't
-              // report — Math.max guards against that value coming back smaller
-              // than the tab bar's own height on some devices.
-              paddingBottom: Math.max(tabBarHeight, 68) + insets.bottom + 24,
-            },
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"

@@ -42,6 +42,7 @@ type AuthContextValue = {
   requestPasswordReset: (email: string) => Promise<AuthActionResult>;
   updatePassword: (password: string) => Promise<AuthActionResult>;
   signOut: () => Promise<AuthActionResult>;
+  deleteAccount: () => Promise<AuthActionResult>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -428,6 +429,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    try {
+      const { error } = await supabase.functions.invoke("delete-account", {
+        method: "POST",
+      });
+      if (error) {
+        console.error("delete account", error);
+        return {
+          success: false,
+          message:
+            "Impossible de supprimer le compte pour le moment. Réessaie plus tard.",
+        };
+      }
+      // The account is gone server-side; drop the now-orphaned local session.
+      await supabase.auth.signOut();
+      setNeedsPasswordReset(false);
+      return { success: true };
+    } catch (error) {
+      console.error("delete account", error);
+      return {
+        success: false,
+        message:
+          "Impossible de supprimer le compte pour le moment. Réessaie plus tard.",
+      };
+    }
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -440,6 +468,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         requestPasswordReset,
         updatePassword,
         signOut,
+        deleteAccount,
       }}
     >
       {children}

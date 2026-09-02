@@ -37,7 +37,7 @@ export const styles = StyleSheet.create({
   },
   listContent: {
     padding: spacing.screen,
-    paddingBottom: 140,
+    paddingBottom: spacing.screen * 2,
     gap: 14,
   },
   header: {
@@ -81,13 +81,6 @@ export const styles = StyleSheet.create({
   headingBlock: {
     flex: 1,
     gap: 4,
-  },
-  headingKicker: {
-    fontSize: 11,
-    fontWeight: "800",
-    textTransform: "uppercase",
-    letterSpacing: 1.4,
-    color: "#A5A58D",
   },
   heading: {
     fontSize: 28,
@@ -178,13 +171,6 @@ export const styles = StyleSheet.create({
   bookTitleBlock: {
     flex: 1,
     gap: 3,
-  },
-  bookEyebrow: {
-    fontSize: 10,
-    fontWeight: "800",
-    color: "#A5A58D",
-    textTransform: "uppercase",
-    letterSpacing: 1.2,
   },
   bookTitle: {
     fontSize: 21,

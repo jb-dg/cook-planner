@@ -10,7 +10,7 @@ export const styles = StyleSheet.create({
   container: {
     padding: spacing.screen,
     gap: spacing.base * 2,
-    paddingBottom: 140,
+    paddingBottom: spacing.screen * 2,
   },
 
   // Shared "white card" surface — every section on this screen (progress,

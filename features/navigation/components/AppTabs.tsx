@@ -1,16 +1,12 @@
 import { Feather } from "@expo/vector-icons";
-import { BlurView } from "expo-blur";
-import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
 import { StyleSheet } from "react-native";
 
-import { radii } from "@/theme/design";
-
 type AppTabsProps = {
-  tabBarBottom?: number;
+  tabBarBottomInset?: number;
 };
 
-export default function AppTabs({ tabBarBottom = 16 }: AppTabsProps) {
+export default function AppTabs({ tabBarBottomInset = 0 }: AppTabsProps) {
   return (
     <Tabs
       screenOptions={{
@@ -25,21 +21,13 @@ export default function AppTabs({ tabBarBottom = 16 }: AppTabsProps) {
           textTransform: "uppercase",
           letterSpacing: 0.5,
         },
-        tabBarBackground: () => (
-          <BlurView intensity={55} tint="light" style={styles.tabBarBackground}>
-            <LinearGradient
-              colors={[
-                "rgba(255,255,255,0.55)",
-                "rgba(255,255,255,0.38)",
-                "rgba(255,255,255,0.5)",
-              ]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFillObject}
-            />
-          </BlurView>
-        ),
-        tabBarStyle: [styles.tabBarMobile, { bottom: tabBarBottom }],
+        tabBarStyle: [
+          styles.tabBarMobile,
+          {
+            height: 62 + tabBarBottomInset,
+            paddingBottom: Math.max(tabBarBottomInset, 8),
+          },
+        ],
       }}
     >
       <Tabs.Screen
@@ -92,26 +80,15 @@ export default function AppTabs({ tabBarBottom = 16 }: AppTabsProps) {
 }
 
 const styles = StyleSheet.create({
-  tabBarBackground: {
-    flex: 1,
-    borderRadius: radii.xl,
-    overflow: "hidden",
-  },
   tabBarMobile: {
-    position: "absolute",
-    marginHorizontal: 24,
-    backgroundColor: "rgba(255,255,255,0.35)",
-    borderRadius: 9999,
+    backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.80)",
-    height: 68,
-    paddingBottom: 12,
-    paddingTop: 10,
+    borderTopColor: "#E4D9C8",
+    paddingTop: 8,
     shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: -3 },
+    elevation: 8,
   },
 });

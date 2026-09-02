@@ -10,7 +10,7 @@ export const styles = StyleSheet.create({
   container: {
     padding: spacing.screen,
     gap: 20,
-    paddingBottom: 160,
+    paddingBottom: spacing.screen * 2,
   },
 
   heroCard: {
@@ -98,6 +98,24 @@ export const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "700",
     fontSize: 15,
+  },
+
+  deleteAccountButton: {
+    alignItems: "center",
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  deleteAccountText: {
+    color: colors.danger,
+    fontSize: 14,
+    fontWeight: "700",
+    textDecorationLine: "underline",
+  },
+  eraseDataText: {
+    color: colors.muted,
+    fontSize: 14,
+    fontWeight: "700",
+    textDecorationLine: "underline",
   },
 
   modalCloseIcon: {

@@ -8,7 +8,6 @@ import { useTabsLayoutAuthState } from "../hooks/useTabsLayoutAuthState";
 export default function TabsLayoutNative() {
   const { initializing, shouldRedirectToAuth } = useTabsLayoutAuthState();
   const insets = useSafeAreaInsets();
-  const tabBarBottom = Math.max(insets.bottom + 10, 16);
 
   if (initializing) {
     return <ActivityIndicator style={{ flex: 1 }} size="large" />;
@@ -18,5 +17,5 @@ export default function TabsLayoutNative() {
     return <Redirect href="/auth" />;
   }
 
-  return <AppTabs tabBarBottom={tabBarBottom} />;
+  return <AppTabs tabBarBottomInset={insets.bottom} />;
 }

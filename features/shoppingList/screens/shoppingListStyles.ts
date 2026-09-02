@@ -24,7 +24,7 @@ export const styles = StyleSheet.create({
   container: {
     padding: spacing.screen,
     gap: spacing.base * 1.5,
-    paddingBottom: spacing.screen + 140,
+    paddingBottom: spacing.screen * 2,
   },
   headerCard: {
     borderRadius: 24,

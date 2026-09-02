@@ -114,6 +114,30 @@ export default function ProfileScreenView() {
               <Text style={styles.signOutText}>Se déconnecter</Text>
             </View>
           </PhysicalButtonAnimated>
+
+          <Pressable
+            onPress={state.handleEraseData}
+            disabled={state.erasingData}
+            style={styles.deleteAccountButton}
+          >
+            <Text style={styles.eraseDataText}>
+              {state.erasingData
+                ? "Effacement…"
+                : "Effacer toutes mes données"}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={state.handleDeleteAccount}
+            disabled={state.deletingAccount}
+            style={styles.deleteAccountButton}
+          >
+            <Text style={styles.deleteAccountText}>
+              {state.deletingAccount
+                ? "Suppression…"
+                : "Supprimer mon compte"}
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
 

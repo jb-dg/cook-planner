@@ -103,6 +103,28 @@ export default function ProfileSplitView({ state }: Props) {
               <Text style={sharedStyles.signOutText}>Se déconnecter</Text>
             </View>
           </PhysicalButtonAnimated>
+
+          <Pressable
+            onPress={state.handleEraseData}
+            disabled={state.erasingData}
+            style={sharedStyles.deleteAccountButton}
+          >
+            <Text style={sharedStyles.eraseDataText}>
+              {state.erasingData
+                ? "Effacement…"
+                : "Effacer toutes mes données"}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={state.handleDeleteAccount}
+            disabled={state.deletingAccount}
+            style={sharedStyles.deleteAccountButton}
+          >
+            <Text style={sharedStyles.deleteAccountText}>
+              {state.deletingAccount ? "Suppression…" : "Supprimer mon compte"}
+            </Text>
+          </Pressable>
         </ScrollView>
       </View>
 
