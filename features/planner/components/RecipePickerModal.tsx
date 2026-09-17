@@ -1,16 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { Session } from "@supabase/supabase-js";
 import { useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Text } from "@/components/Text";
 import { colors, radii, spacing } from "../../../theme/design";
 import { formatDurationLabel, Recipe } from "../../recipes/types";
 import { MEAL_SLOTS } from "../utils/constants";

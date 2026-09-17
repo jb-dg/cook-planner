@@ -1,7 +1,8 @@
 import { addDays, format, isSameDay, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useEffect, useRef } from "react";
-import { Animated, Easing, StyleSheet, Text, View } from "react-native";
+import { Animated, Easing, StyleSheet, View } from "react-native";
+import { Text } from "@/components/Text";
 import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
 import { colors, radius, spacing } from "../../../theme/design";
 import { DayPlan, MealKey } from "../utils/types";
@@ -172,7 +173,12 @@ const styles = StyleSheet.create({
     marginTop: 1,
     width: 5,
     height: 5,
-    borderRadius: radius.pill,
+    // Android renders a square instead of a circle when borderRadius is
+    // much larger than half the box size (radius.pill = 999) — cap it at
+    // exactly half the dot's size instead. overflow: "hidden" forces Android
+    // to actually clip to that radius instead of ignoring it.
+    borderRadius: 2.5,
+    overflow: "hidden",
     backgroundColor: "transparent",
   },
   dayGridDotPlanned: {

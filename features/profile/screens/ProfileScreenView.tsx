@@ -1,15 +1,16 @@
-import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useMemo } from "react";
-import { Image, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { Image, Platform, Pressable, ScrollView, View } from "react-native";
+import { Text } from "@/components/Text";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
-import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
 import HouseholdContent from "@/components/profile/HouseholdContent";
+import HouseholdSummaryCard from "@/components/profile/HouseholdSummaryCard";
 import ProfileActionRow from "@/components/profile/ProfileActionRow";
 import ProfileInfoContent from "@/components/profile/ProfileInfoContent";
 import ProfileSlideModal from "@/components/profile/ProfileSlideModal";
 import ProfileSplitView from "@/components/profile/ProfileSplitView";
+import SettingsSection from "@/components/profile/SettingsSection";
 import { spacing } from "@/theme/design";
 
 import { useProfileScreenState } from "../hooks/useProfileScreenState";
@@ -97,48 +98,46 @@ export default function ProfileScreenView() {
           </View>
         </LinearGradient>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Actions rapides</Text>
-          <Text style={styles.sectionDescription}>
-            Connecte ou adapte ton foyer en quelques secondes.
-          </Text>
-          <View style={styles.actionList}>
-            {state.quickActions.map((action) => (
-              <ProfileActionRow key={action.id} {...action} />
-            ))}
+        {/* Mon foyer — carte unique, adaptative selon qu'un foyer est déjà
+            relié ou non. Remplace les anciennes lignes "Créer" / "Rejoindre"
+            / "Gérer mes membres", qui restaient toutes affichées même une
+            fois dans un foyer. */}
+        <View>
+          <View style={styles.sectionHeaderPlain}>
+            <Text style={styles.sectionTitle}>Mon foyer</Text>
           </View>
-
-          <PhysicalButtonAnimated variant="danger" onPress={state.handleSignOut}>
-            <View style={styles.signOutInner}>
-              <Feather name="log-out" size={16} color="#fff" />
-              <Text style={styles.signOutText}>Se déconnecter</Text>
-            </View>
-          </PhysicalButtonAnimated>
-
-          <Pressable
-            onPress={state.handleEraseData}
-            disabled={state.erasingData}
-            style={styles.deleteAccountButton}
-          >
-            <Text style={styles.eraseDataText}>
-              {state.erasingData
-                ? "Effacement…"
-                : "Effacer toutes mes données"}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={state.handleDeleteAccount}
-            disabled={state.deletingAccount}
-            style={styles.deleteAccountButton}
-          >
-            <Text style={styles.deleteAccountText}>
-              {state.deletingAccount
-                ? "Suppression…"
-                : "Supprimer mon compte"}
-            </Text>
-          </Pressable>
+          <HouseholdSummaryCard
+            loadingHousehold={state.loadingHousehold}
+            household={state.household}
+            householdMembers={state.householdMembers}
+            householdError={state.householdError}
+            isOwner={state.isOwner}
+            removingMemberId={state.removingMemberId}
+            leavingHousehold={state.leavingHousehold}
+            onOpenCreate={() => state.openHouseholdModal("create")}
+            onOpenJoin={() => state.openHouseholdModal("join")}
+            onOpenManage={() => state.openHouseholdModal("manage")}
+            onShareInviteCode={state.handleShareInviteCode}
+            onRemoveMember={state.handleRemoveMember}
+            onLeaveHousehold={state.handleLeaveHousehold}
+          />
         </View>
+
+        <ProfileActionRow
+          icon="settings"
+          label="Mes informations"
+          helper="Photo, pseudo et préférences"
+          onPress={() => state.setProfileModalOpen(true)}
+        />
+
+        {/* Paramètres — sous-menu à part : session + suppression des
+            données/du compte, à l'écart des actions foyer/profil. */}
+        <ProfileActionRow
+          icon="sliders"
+          label="Paramètres"
+          helper="Session, données et compte"
+          onPress={() => state.setSettingsModalOpen(true)}
+        />
       </ScrollView>
 
       <ProfileSlideModal
@@ -150,6 +149,25 @@ export default function ProfileScreenView() {
         title="Informations du profil"
       >
         <ProfileInfoContent state={state} />
+      </ProfileSlideModal>
+
+      <ProfileSlideModal
+        visible={state.settingsModalOpen}
+        onClose={() => state.setSettingsModalOpen(false)}
+        keyboardVerticalOffset={keyboardVerticalOffset}
+        closeIconStyle={modalCloseIconStyle}
+        contentContainerStyle={profileModalContentStyle}
+        title="Paramètres"
+      >
+        <SettingsSection
+          onSignOut={state.handleSignOut}
+          erasingData={state.erasingData}
+          deletingAccount={state.deletingAccount}
+          onEraseData={state.handleEraseData}
+          onDeleteAccount={state.handleDeleteAccount}
+          onOpenPrivacyPolicy={state.handleOpenPrivacyPolicy}
+          onOpenSupport={state.handleOpenSupport}
+        />
       </ProfileSlideModal>
 
       <ProfileSlideModal

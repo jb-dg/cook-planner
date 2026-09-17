@@ -1,17 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  LayoutChangeEvent,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, LayoutChangeEvent, Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from "react-native";
+import { Text } from "@/components/Text";
 
 import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
 import PhysicalIconButton from "@/components/PhysicalIconButton";
@@ -41,16 +31,23 @@ type Props = {
   booksLoading: boolean;
   recipesCount: number;
   bookName: string;
+  bookEmoji: string;
   bookError: string | null;
   renameError: string | null;
+  hasHousehold: boolean;
+  isShared: boolean;
   error: string | null;
   selectedBook: RecipeBook | null;
   displayedRecipes: Recipe[];
   availableRecipes: Recipe[];
   onSelectBook: (book: RecipeBook) => void;
   onBookNameChange: (value: string) => void;
+  onBookEmojiChange: (value: string) => void;
+  onIsSharedChange: (value: boolean) => void;
   onCreateBook: () => void;
   onRenameBook: (book: RecipeBook, name: string) => void;
+  onUpdateBookEmoji: (book: RecipeBook, emoji: string) => void;
+  onUpdateBookSharing: (book: RecipeBook, shared: boolean) => void;
   onDeleteBook: (book: RecipeBook) => void;
   onAddRecipeToBook: (recipeId: string) => void;
   onCreateRecipeInBook: () => void;
@@ -67,16 +64,23 @@ export default function RecipeBooksSplitView({
   booksLoading,
   recipesCount,
   bookName,
+  bookEmoji,
   bookError,
   renameError,
+  hasHousehold,
+  isShared,
   error,
   selectedBook,
   displayedRecipes,
   availableRecipes,
   onSelectBook,
   onBookNameChange,
+  onBookEmojiChange,
+  onIsSharedChange,
   onCreateBook,
   onRenameBook,
+  onUpdateBookEmoji,
+  onUpdateBookSharing,
   onDeleteBook,
   onAddRecipeToBook,
   onCreateRecipeInBook,
@@ -109,8 +113,10 @@ export default function RecipeBooksSplitView({
   // null = not editing. Tied to the selected book, so switching books while
   // mid-rename discards the in-progress edit instead of leaving stale UI.
   const [editingName, setEditingName] = useState<string | null>(null);
+  const [editingEmoji, setEditingEmoji] = useState("");
   useEffect(() => {
     setEditingName(null);
+    setEditingEmoji("");
   }, [selectedBook?.id]);
 
   const [addRecipesModalVisible, setAddRecipesModalVisible] = useState(false);
@@ -118,13 +124,21 @@ export default function RecipeBooksSplitView({
   const startRename = () => {
     if (!selectedBook) return;
     setEditingName(selectedBook.name);
+    setEditingEmoji(selectedBook.emoji ?? "");
   };
   const confirmRename = () => {
     if (!selectedBook || editingName === null) return;
     onRenameBook(selectedBook, editingName);
+    if (editingEmoji.trim() !== (selectedBook.emoji ?? "")) {
+      onUpdateBookEmoji(selectedBook, editingEmoji);
+    }
     setEditingName(null);
+    setEditingEmoji("");
   };
-  const cancelRename = () => setEditingName(null);
+  const cancelRename = () => {
+    setEditingName(null);
+    setEditingEmoji("");
+  };
 
   // "+" next to the menu title opens this.
   const [createModalVisible, setCreateModalVisible] = useState(false);
@@ -190,11 +204,15 @@ export default function RecipeBooksSplitView({
                     <View
                       style={[styles.menuIcon, isActive && styles.menuIconActive]}
                     >
-                      <Feather
-                        name="book-open"
-                        size={14}
-                        color={isActive ? "#FFFFFF" : colors.accent}
-                      />
+                      {book.emoji ? (
+                        <Text style={styles.menuIconEmoji}>{book.emoji}</Text>
+                      ) : (
+                        <Feather
+                          name="book-open"
+                          size={14}
+                          color={isActive ? "#FFFFFF" : colors.accent}
+                        />
+                      )}
                     </View>
                     <Text
                       style={[
@@ -205,6 +223,13 @@ export default function RecipeBooksSplitView({
                     >
                       {book.name}
                     </Text>
+                    {!book.isSystem ? (
+                      <Feather
+                        name={book.isShared ? "users" : "lock"}
+                        size={12}
+                        color={isActive ? "#FFFFFF" : colors.muted}
+                      />
+                    ) : null}
                     <Text
                       style={[
                         styles.menuItemCount,
@@ -229,16 +254,27 @@ export default function RecipeBooksSplitView({
           <View style={styles.detailHeader}>
             <View style={styles.detailHeadingBlock}>
               {editingName !== null ? (
-                <TextInput
-                  value={editingName}
-                  onChangeText={setEditingName}
-                  autoFocus
-                  style={styles.renameInput}
-                  onSubmitEditing={confirmRename}
-                  returnKeyType="done"
-                />
+                <View style={styles.renameRow}>
+                  <TextInput
+                    value={editingEmoji}
+                    onChangeText={setEditingEmoji}
+                    placeholder="🍰"
+                    placeholderTextColor="#A5A58D"
+                    style={styles.renameEmojiInput}
+                    maxLength={2}
+                  />
+                  <TextInput
+                    value={editingName}
+                    onChangeText={setEditingName}
+                    autoFocus
+                    style={[styles.renameInput, styles.renameNameInput]}
+                    onSubmitEditing={confirmRename}
+                    returnKeyType="done"
+                  />
+                </View>
               ) : (
                 <Text style={styles.detailHeading} numberOfLines={1}>
+                  {selectedBook?.emoji ? `${selectedBook.emoji} ` : ""}
                   {selectedBook?.name ?? "Livre"}
                 </Text>
               )}
@@ -250,6 +286,53 @@ export default function RecipeBooksSplitView({
                   {displayedRecipes.length > 1 ? "s" : ""}
                 </Text>
               )}
+              {selectedBook && !selectedBook.isSystem && editingName === null ? (
+                <View style={styles.sharingRow}>
+                  <Pressable
+                    style={[
+                      styles.sharingChip,
+                      !selectedBook.isShared && styles.sharingChipActive,
+                    ]}
+                    onPress={() => onUpdateBookSharing(selectedBook, false)}
+                  >
+                    <Feather
+                      name="lock"
+                      size={12}
+                      color={!selectedBook.isShared ? "#FFFFFF" : colors.muted}
+                    />
+                    <Text
+                      style={[
+                        styles.sharingChipText,
+                        !selectedBook.isShared && styles.sharingChipTextActive,
+                      ]}
+                    >
+                      Privé
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={[
+                      styles.sharingChip,
+                      selectedBook.isShared && styles.sharingChipActive,
+                    ]}
+                    onPress={() => onUpdateBookSharing(selectedBook, true)}
+                    disabled={!hasHousehold}
+                  >
+                    <Feather
+                      name="users"
+                      size={12}
+                      color={selectedBook.isShared ? "#FFFFFF" : colors.muted}
+                    />
+                    <Text
+                      style={[
+                        styles.sharingChipText,
+                        selectedBook.isShared && styles.sharingChipTextActive,
+                      ]}
+                    >
+                      Partagé avec le foyer
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : null}
             </View>
 
             <View style={styles.detailHeaderActions}>
@@ -352,8 +435,13 @@ export default function RecipeBooksSplitView({
       <CreateBookModal
         visible={createModalVisible}
         bookName={bookName}
+        bookEmoji={bookEmoji}
         bookError={bookError}
+        hasHousehold={hasHousehold}
+        isShared={isShared}
         onBookNameChange={onBookNameChange}
+        onBookEmojiChange={onBookEmojiChange}
+        onIsSharedChange={onIsSharedChange}
         onCreateBook={onCreateBook}
         onClose={() => setCreateModalVisible(false)}
       />
@@ -437,6 +525,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "rgba(188, 108, 37, 0.1)",
   },
+  menuIconEmoji: {
+    fontSize: 14,
+  },
   menuIconActive: {
     backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
@@ -491,6 +582,10 @@ const styles = StyleSheet.create({
     color: colors.text,
     letterSpacing: -0.8,
   },
+  renameRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
   renameInput: {
     minHeight: 44,
     borderRadius: 14,
@@ -501,6 +596,47 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 22,
     fontWeight: "800",
+  },
+  renameNameInput: {
+    flex: 1,
+  },
+  renameEmojiInput: {
+    width: 56,
+    minHeight: 44,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E4D9C8",
+    backgroundColor: "#FCFAF7",
+    textAlign: "center",
+    fontSize: 22,
+  },
+  sharingRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 4,
+  },
+  sharingChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "#E4D9C8",
+    borderRadius: 999,
+    backgroundColor: "#FCFAF7",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  sharingChipActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  sharingChipText: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  sharingChipTextActive: {
+    color: "#FFFFFF",
   },
   detailSubtitle: {
     fontSize: 13,

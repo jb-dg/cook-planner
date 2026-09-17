@@ -1,7 +1,8 @@
 import { Session } from "@supabase/supabase-js";
 import { addDays, isSameDay } from "date-fns";
 import { useMemo } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
+import { Text } from "@/components/Text";
 import { spacing } from "../../../theme/design";
 import { MEAL_SLOTS } from "../utils/constants";
 import { DayPlan, MealKey } from "../utils/types";

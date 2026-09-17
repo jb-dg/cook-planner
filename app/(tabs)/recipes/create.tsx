@@ -2,19 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Text } from "@/components/Text";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../contexts/AuthContext";
@@ -33,11 +22,7 @@ import {
   searchRecipeCatalog,
   toRecipeInput,
 } from "../../../features/recipes/addFlow";
-import {
-  buildBooksStorageKey,
-  parseStoredBooks,
-  SYSTEM_BOOK_ID,
-} from "../../../features/recipes/books";
+import { fetchCustomBooks, SYSTEM_BOOK_ID } from "../../../features/recipes/books";
 import {
   createIngredient,
   createRecipeStep,
@@ -140,7 +125,7 @@ export default function CreateRecipeScreen() {
 
   const [scope, setScope] = useState<HouseholdScope | null>(null);
   const [customBooks, setCustomBooks] = useState<
-    { id: string; name: string; recipeIds: string[] }[]
+    { id: string; name: string }[]
   >([]);
   const [booksLoading, setBooksLoading] = useState(true);
 
@@ -158,6 +143,8 @@ export default function CreateRecipeScreen() {
   );
   const [recipeSearchLoading, setRecipeSearchLoading] = useState(false);
   const [recipeSearchError, setRecipeSearchError] = useState<string | null>(null);
+  const [lastAddedIngredientId, setLastAddedIngredientId] = useState<string | null>(null);
+  const [lastAddedStepId, setLastAddedStepId] = useState<string | null>(null);
 
   const extractionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -190,11 +177,6 @@ export default function CreateRecipeScreen() {
     };
   }, [session]);
 
-  const booksStorageKey = useMemo(() => {
-    if (!session || !scope) return null;
-    return buildBooksStorageKey(session.user.id, scope.householdId);
-  }, [session, scope]);
-
   const draftStorageKey = useMemo(() => {
     if (!session || !scope) return null;
     return buildDraftStorageKey(session.user.id, scope.householdId);
@@ -203,17 +185,17 @@ export default function CreateRecipeScreen() {
   useEffect(() => {
     let cancelled = false;
 
-    if (!booksStorageKey) {
+    if (!session) {
       setCustomBooks([]);
       setBooksLoading(false);
       return;
     }
 
     setBooksLoading(true);
-    AsyncStorage.getItem(booksStorageKey)
-      .then((value) => {
+    fetchCustomBooks()
+      .then((books) => {
         if (cancelled) return;
-        setCustomBooks(parseStoredBooks(value));
+        setCustomBooks(books);
       })
       .catch((error) => {
         console.error("load recipe books", error);
@@ -230,7 +212,7 @@ export default function CreateRecipeScreen() {
     return () => {
       cancelled = true;
     };
-  }, [booksStorageKey]);
+  }, [session]);
 
   useEffect(() => {
     let cancelled = false;
@@ -514,10 +496,12 @@ export default function CreateRecipeScreen() {
   };
 
   const handleAddIngredient = () => {
+    const next = createIngredient();
     updateDraft((prev) => ({
       ...prev,
-      ingredients: [...prev.ingredients, createIngredient()],
+      ingredients: [...prev.ingredients, next],
     }));
+    setLastAddedIngredientId(next.id);
   };
 
   const handleRemoveIngredient = (ingredientId: string) => {
@@ -540,10 +524,12 @@ export default function CreateRecipeScreen() {
   };
 
   const handleAddStep = () => {
+    const next = createRecipeStep(draft.steps.length + 1);
     updateDraft((prev) => ({
       ...prev,
-      steps: [...prev.steps, createRecipeStep(prev.steps.length + 1)],
+      steps: [...prev.steps, next],
     }));
+    setLastAddedStepId(next.id);
   };
 
   const handleRemoveStep = (stepId: string) => {
@@ -641,12 +627,16 @@ export default function CreateRecipeScreen() {
         source_url: input.source_url,
       };
 
+      const targetBookId = selectedBook?.id ?? SYSTEM_BOOK_ID;
+      const bookId = targetBookId !== SYSTEM_BOOK_ID ? targetBookId : null;
+
       let { data, error } = await supabase
         .from("recipes")
         .insert({
           ...basePayload,
           image_urls: input.image_urls,
           cover_image_url: input.cover_image_url,
+          book_id: bookId,
         })
         .select("id")
         .single();
@@ -665,22 +655,6 @@ export default function CreateRecipeScreen() {
       if (error) throw error;
 
       const recipeId = data?.id ? String(data.id) : null;
-      const targetBookId = selectedBook?.id ?? SYSTEM_BOOK_ID;
-
-      if (
-        recipeId &&
-        targetBookId !== SYSTEM_BOOK_ID &&
-        booksStorageKey
-      ) {
-        const currentBooks = parseStoredBooks(await AsyncStorage.getItem(booksStorageKey));
-        const nextBooks = currentBooks.map((book) => {
-          if (book.id !== targetBookId) return book;
-          if (book.recipeIds.includes(recipeId)) return book;
-          return { ...book, recipeIds: [recipeId, ...book.recipeIds] };
-        });
-
-        await AsyncStorage.setItem(booksStorageKey, JSON.stringify(nextBooks));
-      }
 
       if (draftStorageKey) {
         await AsyncStorage.removeItem(draftStorageKey);
@@ -1188,11 +1162,12 @@ export default function CreateRecipeScreen() {
                     onChangeText={(value) =>
                       handleIngredientChange(ingredient.id, "name", value)
                     }
+                    autoFocus={ingredient.id === lastAddedIngredientId}
                   />
 
-                  <View style={styles.inlineFormRow}>
+                  <View style={styles.ingredientInputsRow}>
                     <TextInput
-                      style={[styles.input, styles.growInput]}
+                      style={[styles.input, styles.quantityInput]}
                       placeholder="Quantité"
                       placeholderTextColor={colors.muted}
                       keyboardType="decimal-pad"
@@ -1253,6 +1228,7 @@ export default function CreateRecipeScreen() {
                     onChangeText={(value) => handleStepChange(recipeStep.id, value)}
                     multiline
                     numberOfLines={3}
+                    autoFocus={recipeStep.id === lastAddedStepId}
                   />
                 </View>
               ))}
@@ -1809,8 +1785,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
   },
+  ingredientInputsRow: {
+    gap: 8,
+  },
+  quantityInput: {
+    alignSelf: "flex-start",
+    minWidth: 120,
+  },
   unitRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 6,
     paddingTop: 4,
   },

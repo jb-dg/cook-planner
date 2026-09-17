@@ -16,6 +16,16 @@ export const physicalVariants = {
     textColor: "#6B705C", // hearth-sage — matches weatly-web's .secondary-button
   },
   danger:       { bgColor: "#C75252", shadowColor: "#8B2020" },
+  // Same shape as "secondary" (white face, hairline border) but tinted
+  // danger — used for a sensitive-but-recoverable action (erasing data,
+  // account kept) that should read as more caution-worthy than a plain
+  // secondary button, without the full weight of the solid "danger" fill.
+  dangerOutline: {
+    bgColor: "#FFFFFF",
+    shadowColor: "rgba(199, 82, 82, 0.35)",
+    borderColor: "rgba(199, 82, 82, 0.3)",
+    textColor: "#C75252",
+  },
   // Light tan chip — planner week badge / nav arrows. Same physical
   // technique as the others, just a softer tint + low-opacity shadow.
   badge:        { bgColor: "#F4DFC8", shadowColor: "rgba(177, 94, 23, 0.18)", textColor: "#B15E17" },

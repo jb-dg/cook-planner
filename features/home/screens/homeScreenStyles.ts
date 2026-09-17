@@ -184,6 +184,19 @@ export const styles = StyleSheet.create({
     overflow: "hidden",
     ...shadows.floating,
   },
+  // iPad split view — wraps into as many columns as fit the pane's width
+  // instead of a single non-wrapping row, so the section actually grows
+  // to fill the detail pane instead of leaving it mostly empty.
+  recentRecipesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.base * 1.4,
+  },
+  recentRecipeCardGrid: {
+    width: 200,
+    overflow: "hidden",
+    ...shadows.floating,
+  },
   recentRecipeThumb: {
     width: "100%",
     aspectRatio: 4 / 3,

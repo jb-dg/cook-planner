@@ -3,14 +3,8 @@ import { addMonths, format, isValid, parse, startOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, useWindowDimensions } from "react-native";
+import { Text } from "@/components/Text";
 import {
   SafeAreaView,
   useSafeAreaInsets,

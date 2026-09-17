@@ -2,14 +2,8 @@ import { Feather } from "@expo/vector-icons";
 import type { RecipeBook } from "@/features/recipes/books";
 import { colors } from "@/theme/design";
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  Platform,
-  Pressable,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, FlatList, Platform, Pressable, View } from "react-native";
+import { Text } from "@/components/Text";
 
 import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
 import PhysicalIconButton from "@/components/PhysicalIconButton";
@@ -24,11 +18,16 @@ type Props = {
   recipesCount: number;
   booksCountLabel: string;
   bookName: string;
+  bookEmoji: string;
   bookError: string | null;
+  hasHousehold: boolean;
+  isShared: boolean;
   error: string | null;
   onOpenBook: (book: RecipeBook) => void;
   onRefresh: () => Promise<void>;
   onBookNameChange: (value: string) => void;
+  onBookEmojiChange: (value: string) => void;
+  onIsSharedChange: (value: boolean) => void;
   onCreateBook: () => void;
   onCreateRecipe: () => void;
   onOpenExplore: () => void;
@@ -42,11 +41,16 @@ export default function RecipeBooksList({
   recipesCount,
   booksCountLabel,
   bookName,
+  bookEmoji,
   bookError,
+  hasHousehold,
+  isShared,
   error,
   onOpenBook,
   onRefresh,
   onBookNameChange,
+  onBookEmojiChange,
+  onIsSharedChange,
   onCreateBook,
   onCreateRecipe,
   onOpenExplore,
@@ -67,7 +71,10 @@ export default function RecipeBooksList({
       <View style={styles.bookCardSurface}>
         <View style={styles.bookCardHeader}>
           <View style={styles.bookTitleBlock}>
-            <Text style={styles.bookTitle}>{item.name}</Text>
+            <Text style={styles.bookTitle}>
+              {item.emoji ? `${item.emoji} ` : ""}
+              {item.name}
+            </Text>
           </View>
           <View style={styles.bookArrow}>
             <Feather name="chevron-right" size={18} color="#BC6C25" />
@@ -79,6 +86,18 @@ export default function RecipeBooksList({
               {item.recipeIds.length} recette{item.recipeIds.length > 1 ? "s" : ""}
             </Text>
           </View>
+          {!item.isSystem ? (
+            <View style={styles.visibilityChip}>
+              <Feather
+                name={item.isShared ? "users" : "lock"}
+                size={11}
+                color={colors.muted}
+              />
+              <Text style={styles.countChipText}>
+                {item.isShared ? "Foyer" : "Privé"}
+              </Text>
+            </View>
+          ) : null}
           <Text style={styles.bookFooterText}>
             Appuie pour voir les recettes de ce livre
           </Text>
@@ -166,8 +185,13 @@ export default function RecipeBooksList({
       <CreateBookModal
         visible={createModalVisible}
         bookName={bookName}
+        bookEmoji={bookEmoji}
         bookError={bookError}
+        hasHousehold={hasHousehold}
+        isShared={isShared}
         onBookNameChange={onBookNameChange}
+        onBookEmojiChange={onBookEmojiChange}
+        onIsSharedChange={onIsSharedChange}
         onCreateBook={onCreateBook}
         onClose={() => setCreateModalVisible(false)}
       />

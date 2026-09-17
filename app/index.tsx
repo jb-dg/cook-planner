@@ -1,5 +1,6 @@
 import { Redirect } from "expo-router";
-import { ActivityIndicator, StyleSheet, Text } from "react-native";
+import { ActivityIndicator, StyleSheet } from "react-native";
+import { Text } from "@/components/Text";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../contexts/AuthContext";

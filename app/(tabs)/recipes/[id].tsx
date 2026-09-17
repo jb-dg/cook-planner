@@ -1,29 +1,17 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Text } from "@/components/Text";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import PhysicalButton from "../../../components/PhysicalButton";
 import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
 import { useAuth } from "../../../contexts/AuthContext";
 import {
-  buildBooksStorageKey,
   CustomBook,
+  fetchCustomBooks,
   moveRecipeToBook,
-  parseStoredBooks,
   SYSTEM_BOOK_ID,
 } from "../../../features/recipes/books";
 import {
@@ -53,13 +41,14 @@ const getScreenMode = (mode?: string): ScreenMode =>
   mode === "edit" ? "edit" : "view";
 
 const RECIPE_SELECT_WITH_IMAGES =
-  "id,title,duration,difficulty,servings,description,ingredients,steps,source_url,image_urls,cover_image_url,user_id,household_id";
+  "id,title,duration,difficulty,servings,description,ingredients,steps,source_url,image_urls,cover_image_url,user_id,household_id,book_id";
 const RECIPE_SELECT_BASIC =
   "id,title,duration,difficulty,servings,description,ingredients,steps,source_url,user_id,household_id";
 
 export default function RecipeScreen() {
   const { id, mode } = useLocalSearchParams<{ id: string; mode?: string }>();
   const router = useRouter();
+  const navigation = useNavigation();
   const { session } = useAuth();
   const [initialValues, setInitialValues] = useState<RecipeFormState | null>(
     null,
@@ -68,12 +57,11 @@ export default function RecipeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [screenMode, setScreenMode] = useState<ScreenMode>(getScreenMode(mode));
+  const [isDirty, setIsDirty] = useState(false);
 
   const [scope, setScope] = useState<HouseholdScope | null>(null);
   const [customBooks, setCustomBooks] = useState<CustomBook[]>([]);
-  const [booksLoaded, setBooksLoaded] = useState(false);
   const [selectedBookId, setSelectedBookId] = useState<string>(SYSTEM_BOOK_ID);
-  const bookMembershipResolvedRef = useRef(false);
 
   useEffect(() => {
     setScreenMode(getScreenMode(mode));
@@ -95,40 +83,21 @@ export default function RecipeScreen() {
     };
   }, [session]);
 
-  const booksStorageKey = useMemo(() => {
-    if (!session || !scope) return null;
-    return buildBooksStorageKey(session.user.id, scope.householdId);
-  }, [session, scope]);
-
   useEffect(() => {
-    if (!booksStorageKey) {
+    if (!session) {
       setCustomBooks([]);
-      setBooksLoaded(true);
       return;
     }
     let cancelled = false;
-    AsyncStorage.getItem(booksStorageKey)
-      .then((value) => {
-        if (!cancelled) setCustomBooks(parseStoredBooks(value));
+    fetchCustomBooks()
+      .then((books) => {
+        if (!cancelled) setCustomBooks(books);
       })
-      .catch((err) => console.error("load recipe books", err))
-      .finally(() => {
-        if (!cancelled) setBooksLoaded(true);
-      });
+      .catch((err) => console.error("load recipe books", err));
     return () => {
       cancelled = true;
     };
-  }, [booksStorageKey]);
-
-  // Resolve which book this recipe currently belongs to, once books have
-  // loaded — after that the picker below is the source of truth, not
-  // AsyncStorage.
-  useEffect(() => {
-    if (bookMembershipResolvedRef.current || !booksLoaded || !id) return;
-    bookMembershipResolvedRef.current = true;
-    const currentBook = customBooks.find((book) => book.recipeIds.includes(id));
-    setSelectedBookId(currentBook?.id ?? SYSTEM_BOOK_ID);
-  }, [customBooks, id, booksLoaded]);
+  }, [session]);
 
   const books = useMemo<SelectableBook[]>(() => {
     const systemBook: SelectableBook = {
@@ -192,7 +161,9 @@ export default function RecipeScreen() {
         return;
       }
 
-      setInitialValues(recipeToFormState(mapRecipe(data)));
+      const recipe = mapRecipe(data);
+      setInitialValues(recipeToFormState(recipe));
+      setSelectedBookId(recipe.bookId ?? SYSTEM_BOOK_ID);
     } catch (err) {
       console.error("load recipe", err);
       setError("Impossible de charger cette recette.");
@@ -211,6 +182,54 @@ export default function RecipeScreen() {
       return;
     }
     router.replace("/(tabs)/recipes");
+  };
+
+  const confirmDiscardEdits = useCallback((proceed: () => void) => {
+    Alert.alert(
+      "Quitter sans enregistrer ?",
+      "Tes modifications ne sont pas enregistrées.",
+      [
+        { text: "Continuer la modification", style: "cancel" },
+        { text: "Quitter", style: "destructive", onPress: proceed },
+      ],
+    );
+  }, []);
+
+  // Set right before navigating away after a successful save, so that
+  // `router.back()` call isn't itself caught below — `setIsDirty(false)`
+  // alone wouldn't be seen in time, since `usePreventRemove`'s listener
+  // closure only picks up the new value on the next render, which hasn't
+  // happened yet when `router.back()` runs synchronously after it.
+  const justSavedRef = useRef(false);
+
+  // Catches the header "Retour", the hardware back button, and the swipe-back
+  // gesture uniformly — any of them dispatches a navigation action that
+  // would remove this screen, which `beforeRemove` intercepts before it
+  // happens. Editing an existing recipe had no autosave (unlike creating
+  // one), so leaving mid-edit used to silently drop the changes.
+  //
+  // Hand-rolled instead of react-navigation's `usePreventRemove` — as of
+  // Expo SDK 56, expo-router forked react-navigation internally and
+  // importing `@react-navigation/native` directly breaks the bundle. This
+  // only needs the plain `beforeRemove` event, which expo-router's own
+  // `useNavigation()` still supports.
+  useEffect(() => {
+    const shouldPrevent = screenMode === "edit" && isDirty;
+    if (!shouldPrevent) return;
+
+    return navigation.addListener("beforeRemove", (e) => {
+      if (justSavedRef.current) return;
+      e.preventDefault();
+      confirmDiscardEdits(() => navigation.dispatch(e.data.action));
+    });
+  }, [navigation, screenMode, isDirty, confirmDiscardEdits]);
+
+  const handleSwitchToView = () => {
+    if (screenMode === "edit" && isDirty) {
+      confirmDiscardEdits(() => setScreenMode("view"));
+      return;
+    }
+    setScreenMode("view");
   };
 
   const handleUpdate = async (input: RecipeInput) => {
@@ -254,14 +273,7 @@ export default function RecipeScreen() {
         throw updateError;
       }
 
-      if (booksStorageKey) {
-        const currentBooks = parseStoredBooks(
-          await AsyncStorage.getItem(booksStorageKey),
-        );
-        const nextBooks = moveRecipeToBook(currentBooks, id, selectedBookId);
-        await AsyncStorage.setItem(booksStorageKey, JSON.stringify(nextBooks));
-      }
-
+      justSavedRef.current = true;
       router.back();
     } catch (err) {
       console.error("update recipe", err);
@@ -272,20 +284,15 @@ export default function RecipeScreen() {
     }
   };
 
-  // View mode: changing the book applies immediately (it's the only field
-  // on offer there), unlike edit mode where it's bundled with the rest of
-  // the form and only persisted on "Mettre à jour".
+  // Changing the book applies immediately in both view and edit mode —
+  // it's independent of the rest of the form, so there's no reason to make
+  // it wait for "Mettre à jour".
   const handleChangeBook = async (bookId: string) => {
-    if (!id || !booksStorageKey || bookId === selectedBookId) return;
+    if (!id || bookId === selectedBookId) return;
 
     setSelectedBookId(bookId);
     try {
-      const currentBooks = parseStoredBooks(
-        await AsyncStorage.getItem(booksStorageKey),
-      );
-      const nextBooks = moveRecipeToBook(currentBooks, id, bookId);
-      setCustomBooks(nextBooks);
-      await AsyncStorage.setItem(booksStorageKey, JSON.stringify(nextBooks));
+      await moveRecipeToBook(id, bookId);
     } catch (err) {
       console.error("change recipe book", err);
       Alert.alert("Erreur", "Impossible de déplacer la recette. Réessaie plus tard.");
@@ -324,6 +331,7 @@ export default function RecipeScreen() {
         throw deleteError;
       }
 
+      justSavedRef.current = true;
       router.back();
     } catch (err) {
       console.error("delete recipe", err);
@@ -374,7 +382,7 @@ export default function RecipeScreen() {
                 styles.modeButton,
                 screenMode === "view" && styles.modeButtonActive,
               ]}
-              onPress={() => setScreenMode("view")}
+              onPress={handleSwitchToView}
             >
               <Text
                 style={[
@@ -545,7 +553,7 @@ export default function RecipeScreen() {
                       <Pressable
                         key={book.id}
                         style={[styles.bookChip, selected && styles.bookChipActive]}
-                        onPress={() => setSelectedBookId(book.id)}
+                        onPress={() => handleChangeBook(book.id)}
                       >
                         <Text
                           style={[
@@ -566,6 +574,7 @@ export default function RecipeScreen() {
                 submitLabel="Mettre à jour"
                 uploadPathPrefix={`recipes/${session?.user.id ?? "unknown"}`}
                 onSubmit={handleUpdate}
+                onDirtyChange={setIsDirty}
               />
               <View style={styles.deleteWrapper}>
                 <Text style={styles.deleteLabel}>Danger</Text>

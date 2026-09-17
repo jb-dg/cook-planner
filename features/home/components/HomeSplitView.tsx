@@ -62,6 +62,7 @@ export default function HomeSplitView({ state }: Props) {
             recipes={state.recentRecipes}
             loading={state.recentRecipesLoading}
             onSelectRecipe={state.handleOpenRecipe}
+            layout="grid"
           />
         </ScrollView>
       </View>

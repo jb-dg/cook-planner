@@ -1,13 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  Alert,
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Alert, Image, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Text } from "@/components/Text";
 import { colors, radii } from "../../../theme/design";
 import {
   createEmptyFormState,
@@ -26,6 +19,7 @@ type RecipeFormProps = {
   submitLabel: string;
   uploadPathPrefix?: string;
   onSubmit: (values: RecipeInput) => Promise<void>;
+  onDirtyChange?: (dirty: boolean) => void;
 };
 
 export default function RecipeForm({
@@ -33,18 +27,29 @@ export default function RecipeForm({
   submitLabel,
   uploadPathPrefix,
   onSubmit,
+  onDirtyChange,
 }: RecipeFormProps) {
   const [form, setForm] = useState<RecipeFormState>(
     initialValues ?? createEmptyFormState()
   );
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [lastAddedIngredientId, setLastAddedIngredientId] = useState<string | null>(null);
+  const [lastAddedStepId, setLastAddedStepId] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialValues) {
       setForm(initialValues);
     }
   }, [initialValues]);
+
+  // Lets the parent screen warn before navigating away mid-edit — compared
+  // against the baseline it was loaded with, not just "has anything been
+  // typed", so switching a chip back to its original value un-dirties it.
+  useEffect(() => {
+    const baseline = initialValues ?? createEmptyFormState();
+    onDirtyChange?.(JSON.stringify(form) !== JSON.stringify(baseline));
+  }, [form, initialValues, onDirtyChange]);
 
   const canSubmit = useMemo(() => {
     return (
@@ -72,10 +77,12 @@ export default function RecipeForm({
   };
 
   const handleAddIngredient = () => {
+    const next = createIngredient();
     setForm((prev) => ({
       ...prev,
-      ingredients: [...prev.ingredients, createIngredient()],
+      ingredients: [...prev.ingredients, next],
     }));
+    setLastAddedIngredientId(next.id);
   };
 
   const handleRemoveIngredient = (id: string) => {
@@ -98,10 +105,12 @@ export default function RecipeForm({
   };
 
   const handleAddStep = () => {
+    const next = createRecipeStep(form.steps.length + 1);
     setForm((prev) => ({
       ...prev,
-      steps: [...prev.steps, createRecipeStep(prev.steps.length + 1)],
+      steps: [...prev.steps, next],
     }));
+    setLastAddedStepId(next.id);
   };
 
   const handleRemoveStep = (id: string) => {
@@ -344,6 +353,7 @@ export default function RecipeForm({
                   handleIngredientChange(ingredient.id, "name", value)
                 }
                 editable={!submitting}
+                autoFocus={ingredient.id === lastAddedIngredientId}
               />
               <View style={styles.ingredientInputsRow}>
                 <TextInput
@@ -432,6 +442,7 @@ export default function RecipeForm({
                 multiline
                 numberOfLines={3}
                 editable={!submitting}
+                autoFocus={recipeStep.id === lastAddedStepId}
               />
             </View>
           ))}
@@ -632,15 +643,15 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   ingredientInputsRow: {
-    flexDirection: "row",
     gap: 10,
-    alignItems: "center",
   },
   quantityInput: {
-    flex: 1,
+    alignSelf: "flex-start",
+    minWidth: 120,
   },
   unitRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 6,
   },
   unitChip: {

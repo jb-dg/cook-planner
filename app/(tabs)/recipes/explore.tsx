@@ -1,19 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Text } from "@/components/Text";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
@@ -225,6 +214,7 @@ export default function ExploreRecipesScreen() {
             ? [result.imageUrl]
             : [],
         coverImageUrl: extracted.coverImageUrl || result.imageUrl || "",
+        bookId: null,
       });
     } catch (previewError) {
       console.error("preview explored recipe", previewError);

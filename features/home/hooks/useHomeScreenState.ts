@@ -9,6 +9,7 @@ import {
 import { fr } from "date-fns/locale";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Platform } from "react-native";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { mapRecipe, type Recipe } from "@/features/recipes/types";
@@ -18,7 +19,12 @@ import { supabase } from "@/lib/supabase";
 
 import type { MissingSlot, PlanProgress, TodayMenu } from "../types";
 
-const RECENT_RECIPES_LIMIT = 4;
+// iPad's split view gives the recent-recipes pane a whole scrollable
+// column to itself (see HomeSplitView) — fetch enough to fill it as a
+// wrapping grid instead of leaving most of the pane empty after 4 cards.
+// Phone keeps a short horizontally-scrollable strip.
+const isIpad = Platform.OS === "ios" && Platform.isPad;
+const RECENT_RECIPES_LIMIT = isIpad ? 12 : 4;
 const RECIPE_SELECT =
   "id,title,duration,difficulty,servings,description,ingredients,steps,source_url,image_urls,cover_image_url";
 

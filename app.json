@@ -2,13 +2,15 @@
   "expo": {
     "name": "Weatly",
     "slug": "weatly",
-    "version": "1.5.1",
+    "version": "1.6.0",
     "description": "Planificateur de repas, recettes et liste de courses pour organiser la cuisine du foyer.",
     "scheme": "cookplanner",
     "orientation": "portrait",
     "icon": "./assets/images/book-icon.png",
     "userInterfaceStyle": "light",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "icon": "./assets/images/book-icon.png",
       "supportsTablet": true,
@@ -31,8 +33,7 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.WRITE_EXTERNAL_STORAGE"
-      ],
-      "edgeToEdgeEnabled": true
+      ]
     },
     "plugins": [
       "expo-router",
@@ -50,10 +51,19 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
+          "image": "./assets/images/book-icon.png",
+          "imageWidth": 140,
           "resizeMode": "contain",
-          "backgroundColor": "#FFFFFF"
+          "backgroundColor": "#FDF8F1"
+        }
+      ],
+      "expo-image",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.4"
+          }
         }
       ]
     ],

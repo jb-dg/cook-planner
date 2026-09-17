@@ -1,6 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useRef } from "react";
-import { Animated, Easing, Image, StyleSheet, Text, View } from "react-native";
+import { Animated, Easing, Image, Modal, StyleSheet } from "react-native";
+import { Text } from "@/components/Text";
 
 type AnimatedSplashScreenProps = {
   onFinish: () => void;
@@ -79,14 +80,14 @@ export function AnimatedSplashScreen({ onFinish }: AnimatedSplashScreenProps) {
   }, [animation, onFinish]);
 
   return (
-    <Animated.View style={[styles.root, { opacity: containerOpacity }]}>
-      <LinearGradient
-        colors={["#FDF8F1", "#F5EFE4", "#FDF8F1"]}
-        locations={[0, 0.5, 1]}
-        style={StyleSheet.absoluteFillObject}
-      />
+    <Modal visible animationType="none" statusBarTranslucent>
+      <Animated.View style={[styles.root, { opacity: containerOpacity }]}>
+        <LinearGradient
+          colors={["#FDF8F1", "#F5EFE4", "#FDF8F1"]}
+          locations={[0, 0.5, 1]}
+          style={StyleSheet.absoluteFillObject}
+        />
 
-      <View style={styles.content}>
         <Animated.View
           style={[
             styles.logoWrap,
@@ -103,28 +104,30 @@ export function AnimatedSplashScreen({ onFinish }: AnimatedSplashScreenProps) {
           />
         </Animated.View>
 
-        <Animated.View style={{ opacity: titleOpacity }}>
+        <Animated.View style={[styles.titleWrap, { opacity: titleOpacity }]}>
           <Text style={styles.title}>Weatly</Text>
         </Animated.View>
-      </View>
-    </Animated.View>
+      </Animated.View>
+    </Modal>
   );
 }
 
+const LOGO_SIZE = 140;
+const TITLE_OFFSET = LOGO_SIZE / 2 + 14;
+
 const styles = StyleSheet.create({
   root: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 30,
-  },
-  content: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 14,
+    backgroundColor: "#FDF8F1",
   },
   logoWrap: {
-    width: 140,
-    height: 140,
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    marginLeft: -LOGO_SIZE / 2,
+    marginTop: -LOGO_SIZE / 2,
+    width: LOGO_SIZE,
+    height: LOGO_SIZE,
     borderRadius: 28,
     overflow: "hidden",
     alignItems: "center",
@@ -134,6 +137,14 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     borderRadius: 28,
+  },
+  titleWrap: {
+    position: "absolute",
+    top: "50%",
+    left: 0,
+    right: 0,
+    marginTop: TITLE_OFFSET,
+    alignItems: "center",
   },
   title: {
     fontSize: 24,

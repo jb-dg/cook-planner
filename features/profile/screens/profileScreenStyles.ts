@@ -88,34 +88,50 @@ export const styles = StyleSheet.create({
     gap: 10,
   },
 
-  signOutInner: {
+  // Plain (no card background) header used above a section that renders
+  // its own card below it — "Mon foyer", "Paramètres".
+  sectionHeaderPlain: {
+    gap: 2,
+    marginBottom: 10,
+  },
+
+  settingsCard: {
+    padding: spacing.screen,
+    borderRadius: 24,
+    gap: 14,
+    backgroundColor: "rgb(255, 255, 255)",
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    ...shadows.subtle,
+  },
+  dangerZoneLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingTop: 2,
+  },
+  dangerZoneLabel: {
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    color: colors.danger,
+  },
+  settingsDivider: {
+    height: 1,
+    backgroundColor: "#F0E9DC",
+    marginVertical: 2,
+  },
+  // Icon + label row inside a CTA button (PhysicalButton/PhysicalButtonAnimated).
+  ctaButtonInner: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
   },
-  signOutText: {
-    color: "#fff",
+  ctaButtonText: {
     fontWeight: "700",
     fontSize: 15,
-  },
-
-  deleteAccountButton: {
-    alignItems: "center",
-    paddingVertical: 12,
-    marginTop: 4,
-  },
-  deleteAccountText: {
-    color: colors.danger,
-    fontSize: 14,
-    fontWeight: "700",
-    textDecorationLine: "underline",
-  },
-  eraseDataText: {
-    color: colors.muted,
-    fontSize: 14,
-    fontWeight: "700",
-    textDecorationLine: "underline",
   },
 
   modalCloseIcon: {

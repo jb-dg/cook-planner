@@ -1,5 +1,14 @@
 export type Difficulty = "Facile" | "Moyen" | "Expert";
-export type IngredientUnit = "pièce" | "unité" | "ml" | "gr";
+export type IngredientUnit =
+  | "pièce"
+  | "unité"
+  | "ml"
+  | "gr"
+  | "kg"
+  | "l"
+  | "càs"
+  | "càc"
+  | "pincée";
 
 export type Ingredient = {
   id: string;
@@ -26,6 +35,7 @@ export type Recipe = {
   sourceUrl: string;
   imageUrls: string[];
   coverImageUrl: string;
+  bookId: string | null;
 };
 
 export type RecipeFormState = {
@@ -55,7 +65,17 @@ export type RecipeInput = {
 };
 
 export const DIFFICULTIES: Difficulty[] = ["Facile", "Moyen", "Expert"];
-export const INGREDIENT_UNITS: IngredientUnit[] = ["pièce", "unité", "ml", "gr"];
+export const INGREDIENT_UNITS: IngredientUnit[] = [
+  "pièce",
+  "unité",
+  "gr",
+  "kg",
+  "ml",
+  "l",
+  "càs",
+  "càc",
+  "pincée",
+];
 
 export const createIngredient = (): Ingredient => ({
   id: String(Date.now() + Math.random()),
@@ -161,6 +181,7 @@ export const mapRecipe = (row: {
   imageUrls?: string[] | null;
   cover_image_url?: string | null;
   coverImageUrl?: string | null;
+  book_id?: string | null;
 }): Recipe => ({
   id: String(row.id),
   title: row.title,
@@ -177,6 +198,7 @@ export const mapRecipe = (row: {
     row.coverImageUrl ??
     sanitizeImageUrls(row.image_urls ?? row.imageUrls)[0] ??
     "",
+  bookId: row.book_id ?? null,
 });
 
 export const createEmptyFormState = (): RecipeFormState => ({

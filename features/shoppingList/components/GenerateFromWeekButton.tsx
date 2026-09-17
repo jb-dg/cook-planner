@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
-import { ActivityIndicator, StyleSheet, Text } from "react-native";
+import { ActivityIndicator, StyleSheet } from "react-native";
+import { Text } from "@/components/Text";
 
 import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
 import { colors } from "@/theme/design";

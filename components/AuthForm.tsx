@@ -1,13 +1,7 @@
 import { useMemo, useState } from "react";
 import { AntDesign } from "@expo/vector-icons";
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Text } from "@/components/Text";
 
 import PhysicalButtonAnimated from "./PhysicalButtonAnimated";
 

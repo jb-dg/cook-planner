@@ -2,13 +2,13 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Share } from "react-native";
+import * as WebBrowser from "expo-web-browser";
 
 import type {
   Household,
   HouseholdMember,
   HouseholdModalMode,
   PendingInvite,
-  QuickActionItem,
   SentInvite,
 } from "@/components/profile/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +17,9 @@ import { pickAndUploadImage } from "@/lib/mediaUpload";
 import { ensureProfileRecord } from "@/lib/profile";
 import { supabase } from "@/lib/supabase";
 import { validateEmail } from "@/lib/validation/auth";
+
+const PRIVACY_POLICY_URL = "https://weatly.net/privacy";
+const SUPPORT_URL = "https://weatly.net/support";
 
 export const useProfileScreenState = () => {
   const router = useRouter();
@@ -65,6 +68,7 @@ export const useProfileScreenState = () => {
   const [erasingData, setErasingData] = useState(false);
 
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [householdActionsOpen, setHouseholdActionsOpen] = useState(false);
   const [householdModalMode, setHouseholdModalMode] =
     useState<HouseholdModalMode>("create");
@@ -760,6 +764,18 @@ export const useProfileScreenState = () => {
     }
   };
 
+  const handleOpenPrivacyPolicy = useCallback(() => {
+    WebBrowser.openBrowserAsync(PRIVACY_POLICY_URL).catch((err) => {
+      console.error("open privacy policy", err);
+    });
+  }, []);
+
+  const handleOpenSupport = useCallback(() => {
+    WebBrowser.openBrowserAsync(SUPPORT_URL).catch((err) => {
+      console.error("open support", err);
+    });
+  }, []);
+
   const handleEraseData = () => {
     if (erasingData) return;
     Alert.alert(
@@ -818,40 +834,6 @@ export const useProfileScreenState = () => {
     );
   };
 
-  const quickActions = useMemo<QuickActionItem[]>(
-    () => [
-      {
-        id: "profile",
-        icon: "settings",
-        label: "Mes Informations",
-        helper: "Photo, pseudo et préférences",
-        onPress: () => setProfileModalOpen(true),
-      },
-      {
-        id: "household-create",
-        icon: "home",
-        label: "Créer un foyer",
-        helper: "Pour démarrer un espace partagé",
-        onPress: () => openHouseholdModal("create"),
-      },
-      {
-        id: "household-join",
-        icon: "link-2",
-        label: "Rejoindre un foyer",
-        helper: "Avec le code d'invitation",
-        onPress: () => openHouseholdModal("join"),
-      },
-      {
-        id: "household-manage",
-        icon: "users",
-        label: "Gérer mes membres",
-        helper: "Inviter, consulter ou retirer quelqu'un",
-        onPress: () => openHouseholdModal("manage"),
-      },
-    ],
-    [openHouseholdModal],
-  );
-
   return {
     session,
     pseudo,
@@ -886,17 +868,18 @@ export const useProfileScreenState = () => {
     deletingAccount,
     erasingData,
     profileModalOpen,
+    settingsModalOpen,
     householdActionsOpen,
     householdModalMode,
     isOwner,
     badgeLetter,
     displayName,
-    quickActions,
     setPseudo,
     setHouseholdName,
     setInviteEmail,
     setJoinCode,
     setProfileModalOpen,
+    setSettingsModalOpen,
     setHouseholdActionsOpen,
     handleSavePseudo,
     handlePickAvatar,
@@ -912,6 +895,8 @@ export const useProfileScreenState = () => {
     handleSignOut,
     handleEraseData,
     handleDeleteAccount,
+    handleOpenPrivacyPolicy,
+    handleOpenSupport,
     openHouseholdModal,
   };
 };

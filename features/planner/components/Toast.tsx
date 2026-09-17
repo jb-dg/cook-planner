@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Text } from "@/components/Text";
 import { colors, radii, shadows, spacing } from "../../../theme/design";
 import { Toast as ToastType } from "../utils/types";
 

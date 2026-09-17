@@ -1,13 +1,6 @@
 import { Feather } from "@expo/vector-icons";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  RefreshControl,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, View } from "react-native";
+import { Text } from "@/components/Text";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Toast } from "@/features/planner/components/Toast";

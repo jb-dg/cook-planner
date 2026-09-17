@@ -1,31 +1,29 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Text } from "@/components/Text";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../../../../contexts/AuthContext";
 import PhysicalButtonAnimated from "../../../../components/PhysicalButtonAnimated";
 import PhysicalIconButton from "../../../../components/PhysicalIconButton";
 import AddRecipesToBookModal from "../../../../features/recipes/components/AddRecipesToBookModal";
+import AddRecipeToPlannerModal from "../../../../features/recipes/components/AddRecipeToPlannerModal";
+import MoveRecipeToBookModal from "../../../../features/recipes/components/MoveRecipeToBookModal";
 import RecipeCard from "../../../../features/recipes/components/RecipeCard";
 import RecipeViewModal from "../../../../features/recipes/components/RecipeViewModal";
 import {
-  buildBooksStorageKey,
   buildRecipeBooks,
   CustomBook,
-  parseStoredBooks,
+  deleteCustomBook,
+  fetchCustomBooks,
+  moveRecipeToBook,
+  renameCustomBook,
   RecipeBook,
+  SYSTEM_BOOK_ID,
+  updateCustomBookEmoji,
+  updateCustomBookSharing,
 } from "../../../../features/recipes/books";
 import { mapRecipe, Recipe } from "../../../../features/recipes/types";
 import { fetchHouseholdScope, HouseholdScope } from "../../../../lib/households";
@@ -35,7 +33,7 @@ import { colors, spacing } from "../../../../theme/design";
 type RecipeRow = Parameters<typeof mapRecipe>[0];
 
 const RECIPE_SELECT_WITH_IMAGES =
-  "id,title,duration,difficulty,servings,description,ingredients,steps,source_url,image_urls,cover_image_url";
+  "id,title,duration,difficulty,servings,description,ingredients,steps,source_url,image_urls,cover_image_url,book_id";
 const RECIPE_SELECT_BASIC =
   "id,title,duration,difficulty,servings,description,ingredients,steps,source_url";
 
@@ -54,20 +52,19 @@ export default function RecipeBookScreen() {
   const [error, setError] = useState<string | null>(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
   const [addRecipesModalVisible, setAddRecipesModalVisible] = useState(false);
+  const [moveRecipeId, setMoveRecipeId] = useState<string | null>(null);
+  const [plannerRecipeId, setPlannerRecipeId] = useState<string | null>(null);
 
   // null = not editing. Tied to the viewed book, so navigating to a
   // different book discards an in-progress edit instead of leaving stale UI.
   const [editingName, setEditingName] = useState<string | null>(null);
+  const [editingEmoji, setEditingEmoji] = useState("");
   const [renameError, setRenameError] = useState<string | null>(null);
   useEffect(() => {
     setEditingName(null);
+    setEditingEmoji("");
     setRenameError(null);
   }, [currentBookId]);
-
-  const storageKey = useMemo(() => {
-    if (!session || !scope) return null;
-    return buildBooksStorageKey(session.user.id, scope.householdId);
-  }, [session, scope]);
 
   const fetchRecipes = useCallback(async () => {
     if (!session) {
@@ -142,20 +139,20 @@ export default function RecipeBookScreen() {
 
   useEffect(() => {
     let cancelled = false;
-    if (!storageKey) {
+    if (!session) {
       setCustomBooks([]);
       setBooksLoading(false);
       return;
     }
 
     setBooksLoading(true);
-    AsyncStorage.getItem(storageKey)
-      .then((value) => {
+    fetchCustomBooks()
+      .then((books) => {
         if (cancelled) return;
-        setCustomBooks(parseStoredBooks(value));
+        setCustomBooks(books);
       })
-      .catch((storageError) => {
-        console.error("load recipe books", storageError);
+      .catch((fetchErr) => {
+        console.error("load recipe books", fetchErr);
         if (!cancelled) {
           setCustomBooks([]);
         }
@@ -169,16 +166,7 @@ export default function RecipeBookScreen() {
     return () => {
       cancelled = true;
     };
-  }, [storageKey]);
-
-  useEffect(() => {
-    if (!storageKey || booksLoading) return;
-    AsyncStorage.setItem(storageKey, JSON.stringify(customBooks)).catch(
-      (storageError) => {
-        console.error("save recipe books", storageError);
-      },
-    );
-  }, [storageKey, booksLoading, customBooks]);
+  }, [session]);
 
   const books = useMemo<RecipeBook[]>(
     () =>
@@ -213,10 +201,25 @@ export default function RecipeBookScreen() {
   }, [selectedBook, customBooks]);
 
   const availableRecipes = useMemo(() => {
-    if (!activeCustomBook) return [];
-    const ids = new Set(activeCustomBook.recipeIds);
+    if (!activeCustomBook || !selectedBook) return [];
+    const ids = new Set(selectedBook.recipeIds);
     return recipes.filter((recipe) => !ids.has(recipe.id));
-  }, [activeCustomBook, recipes]);
+  }, [activeCustomBook, selectedBook, recipes]);
+
+  const recipeBeingMoved = useMemo(
+    () => recipes.find((recipe) => recipe.id === moveRecipeId) ?? null,
+    [recipes, moveRecipeId],
+  );
+  const moveTargetBooks = useMemo(
+    () => books.filter((book) => !book.isSystem && book.id !== selectedBook?.id),
+    [books, selectedBook],
+  );
+  const recipeBeingPlanned = useMemo(
+    () => recipes.find((recipe) => recipe.id === plannerRecipeId) ?? null,
+    [recipes, plannerRecipeId],
+  );
+
+  const hasHousehold = !!scope?.householdId;
 
   const handleRefresh = useCallback(async () => {
     if (!session) return;
@@ -256,39 +259,62 @@ export default function RecipeBookScreen() {
     });
   };
 
-  const handleAddRecipeToBook = (recipeId: string) => {
+  const handleAddRecipeToBook = async (recipeId: string) => {
     if (!activeCustomBook) return;
-    setCustomBooks((prev) =>
-      prev.map((book) => {
-        if (book.id !== activeCustomBook.id) return book;
-        if (book.recipeIds.includes(recipeId)) return book;
-        return { ...book, recipeIds: [recipeId, ...book.recipeIds] };
-      }),
-    );
+    try {
+      await moveRecipeToBook(recipeId, activeCustomBook.id);
+      setRecipes((prev) =>
+        prev.map((recipe) =>
+          recipe.id === recipeId ? { ...recipe, bookId: activeCustomBook.id } : recipe,
+        ),
+      );
+    } catch (err) {
+      console.error("add recipe to book", err);
+    }
   };
 
-  const handleRemoveRecipeFromBook = (recipeId: string) => {
+  const handleRemoveRecipeFromBook = async (recipeId: string) => {
     if (!activeCustomBook) return;
-    setCustomBooks((prev) =>
-      prev.map((book) => {
-        if (book.id !== activeCustomBook.id) return book;
-        return { ...book, recipeIds: book.recipeIds.filter((id) => id !== recipeId) };
-      }),
-    );
+    try {
+      await moveRecipeToBook(recipeId, SYSTEM_BOOK_ID);
+      setRecipes((prev) =>
+        prev.map((recipe) => (recipe.id === recipeId ? { ...recipe, bookId: null } : recipe)),
+      );
+    } catch (err) {
+      console.error("remove recipe from book", err);
+    }
+  };
+
+  const handleMoveRecipeToAnotherBook = async (targetBookId: string) => {
+    if (!moveRecipeId) return;
+    try {
+      await moveRecipeToBook(moveRecipeId, targetBookId);
+      setRecipes((prev) =>
+        prev.map((recipe) =>
+          recipe.id === moveRecipeId ? { ...recipe, bookId: targetBookId } : recipe,
+        ),
+      );
+    } catch (err) {
+      console.error("move recipe to book", err);
+    } finally {
+      setMoveRecipeId(null);
+    }
   };
 
   const startRename = () => {
     if (!selectedBook) return;
     setEditingName(selectedBook.name);
+    setEditingEmoji(activeCustomBook?.emoji ?? "");
     setRenameError(null);
   };
 
   const cancelRename = () => {
     setEditingName(null);
+    setEditingEmoji("");
     setRenameError(null);
   };
 
-  const confirmRename = () => {
+  const confirmRename = async () => {
     if (!selectedBook || editingName === null) return;
     const trimmed = editingName.trim();
     if (!trimmed) {
@@ -305,13 +331,50 @@ export default function RecipeBookScreen() {
       return;
     }
 
-    setCustomBooks((prev) =>
-      prev.map((book) =>
-        book.id === selectedBook.id ? { ...book, name: trimmed } : book,
-      ),
-    );
-    setEditingName(null);
-    setRenameError(null);
+    const trimmedEmoji = editingEmoji.trim() || null;
+
+    try {
+      await renameCustomBook(selectedBook.id, trimmed);
+      if (trimmedEmoji !== (activeCustomBook?.emoji ?? null)) {
+        await updateCustomBookEmoji(selectedBook.id, trimmedEmoji);
+      }
+      setCustomBooks((prev) =>
+        prev.map((book) =>
+          book.id === selectedBook.id
+            ? { ...book, name: trimmed, emoji: trimmedEmoji }
+            : book,
+        ),
+      );
+      setEditingName(null);
+      setEditingEmoji("");
+      setRenameError(null);
+    } catch (err) {
+      console.error("rename recipe book", err);
+      setRenameError("Impossible de renommer le livre. Réessaie plus tard.");
+    }
+  };
+
+  const handleToggleSharing = async (shared: boolean) => {
+    if (!activeCustomBook) return;
+    const targetHouseholdId = shared ? scope?.householdId ?? null : null;
+    if (targetHouseholdId === activeCustomBook.householdId) return;
+
+    try {
+      await updateCustomBookSharing(activeCustomBook.id, targetHouseholdId);
+      setCustomBooks((prev) =>
+        prev.map((book) =>
+          book.id === activeCustomBook.id
+            ? { ...book, householdId: targetHouseholdId }
+            : book,
+        ),
+      );
+    } catch (err) {
+      console.error("update book sharing", err);
+      Alert.alert(
+        "Erreur",
+        "Impossible de modifier le partage de ce livre. Réessaie plus tard.",
+      );
+    }
   };
 
   const confirmDeleteBook = () => {
@@ -324,11 +387,16 @@ export default function RecipeBookScreen() {
         {
           text: "Supprimer",
           style: "destructive",
-          onPress: () => {
-            setCustomBooks((prev) =>
-              prev.filter((book) => book.id !== selectedBook.id),
-            );
-            handleBackToRecipes();
+          onPress: async () => {
+            try {
+              await deleteCustomBook(selectedBook.id);
+              setCustomBooks((prev) =>
+                prev.filter((book) => book.id !== selectedBook.id),
+              );
+              handleBackToRecipes();
+            } catch (err) {
+              console.error("delete recipe book", err);
+            }
           },
         },
       ],
@@ -341,6 +409,8 @@ export default function RecipeBookScreen() {
       onView={() => handleOpenRecipe(item.id, "view")}
       removable={!!activeCustomBook}
       onRemove={() => handleRemoveRecipeFromBook(item.id)}
+      onMove={activeCustomBook ? () => setMoveRecipeId(item.id) : undefined}
+      onAddToPlanner={() => setPlannerRecipeId(item.id)}
     />
   );
 
@@ -367,16 +437,29 @@ export default function RecipeBookScreen() {
         ListHeaderComponent={
           <View style={styles.header}>
             {editingName !== null ? (
-              <TextInput
-                value={editingName}
-                onChangeText={setEditingName}
-                autoFocus
-                style={styles.renameInput}
-                onSubmitEditing={confirmRename}
-                returnKeyType="done"
-              />
+              <View style={styles.renameRow}>
+                <TextInput
+                  value={editingEmoji}
+                  onChangeText={setEditingEmoji}
+                  placeholder="🍰"
+                  placeholderTextColor="#A5A58D"
+                  style={styles.renameEmojiInput}
+                  maxLength={2}
+                />
+                <TextInput
+                  value={editingName}
+                  onChangeText={setEditingName}
+                  autoFocus
+                  style={[styles.renameInput, styles.renameNameInput]}
+                  onSubmitEditing={confirmRename}
+                  returnKeyType="done"
+                />
+              </View>
             ) : (
-              <Text style={styles.heading}>{selectedBook?.name ?? "Livre"}</Text>
+              <Text style={styles.heading}>
+                {selectedBook?.emoji ? `${selectedBook.emoji} ` : ""}
+                {selectedBook?.name ?? "Livre"}
+              </Text>
             )}
             {renameError && editingName !== null ? (
               <Text style={styles.errorText}>{renameError}</Text>
@@ -389,6 +472,53 @@ export default function RecipeBookScreen() {
                   : "Livre introuvable"}
               </Text>
             )}
+            {selectedBook && !selectedBook.isSystem && editingName === null ? (
+              <View style={styles.sharingRow}>
+                <Pressable
+                  style={[
+                    styles.sharingChip,
+                    !selectedBook.isShared && styles.sharingChipActive,
+                  ]}
+                  onPress={() => handleToggleSharing(false)}
+                >
+                  <Feather
+                    name="lock"
+                    size={12}
+                    color={!selectedBook.isShared ? "#FFFFFF" : colors.muted}
+                  />
+                  <Text
+                    style={[
+                      styles.sharingChipText,
+                      !selectedBook.isShared && styles.sharingChipTextActive,
+                    ]}
+                  >
+                    Privé
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={[
+                    styles.sharingChip,
+                    selectedBook.isShared && styles.sharingChipActive,
+                  ]}
+                  onPress={() => handleToggleSharing(true)}
+                  disabled={!hasHousehold}
+                >
+                  <Feather
+                    name="users"
+                    size={12}
+                    color={selectedBook.isShared ? "#FFFFFF" : colors.muted}
+                  />
+                  <Text
+                    style={[
+                      styles.sharingChipText,
+                      selectedBook.isShared && styles.sharingChipTextActive,
+                    ]}
+                  >
+                    Partagé avec le foyer
+                  </Text>
+                </Pressable>
+              </View>
+            ) : null}
             {selectedBook ? (
               <View style={styles.headerActionsRow}>
                 {editingName !== null ? (
@@ -494,6 +624,20 @@ export default function RecipeBookScreen() {
         onAdd={handleAddRecipeToBook}
         onClose={() => setAddRecipesModalVisible(false)}
       />
+      <MoveRecipeToBookModal
+        visible={!!moveRecipeId}
+        recipeTitle={recipeBeingMoved?.title ?? ""}
+        currentBookName={selectedBook?.name ?? "Livre"}
+        targetBooks={moveTargetBooks}
+        onSelectBook={handleMoveRecipeToAnotherBook}
+        onClose={() => setMoveRecipeId(null)}
+      />
+      <AddRecipeToPlannerModal
+        visible={!!plannerRecipeId}
+        recipe={recipeBeingPlanned}
+        session={session}
+        onClose={() => setPlannerRecipeId(null)}
+      />
     </SafeAreaView>
   );
 }
@@ -552,6 +696,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
+  renameRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
   renameInput: {
     minHeight: 44,
     borderRadius: 14,
@@ -562,6 +710,47 @@ const styles = StyleSheet.create({
     color: "#2D2D2A",
     fontSize: 22,
     fontWeight: "800",
+  },
+  renameNameInput: {
+    flex: 1,
+  },
+  renameEmojiInput: {
+    width: 56,
+    minHeight: 44,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E4D9C8",
+    backgroundColor: "#FCFAF7",
+    textAlign: "center",
+    fontSize: 22,
+  },
+  sharingRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 2,
+  },
+  sharingChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "#E4D9C8",
+    borderRadius: 999,
+    backgroundColor: "#FCFAF7",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  sharingChipActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  sharingChipText: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  sharingChipTextActive: {
+    color: "#FFFFFF",
   },
   headerActionsRow: {
     flexDirection: "row",

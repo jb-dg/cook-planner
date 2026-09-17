@@ -1,6 +1,7 @@
 import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import { Text } from "@/components/Text";
 import { colors } from "../../../theme/design";
 import { DayPlan } from "../utils/types";
 

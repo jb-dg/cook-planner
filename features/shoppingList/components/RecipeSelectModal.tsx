@@ -1,15 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Text } from "@/components/Text";
 
 import type { Recipe } from "@/features/recipes/types";
 import PhysicalIconButton from "@/components/PhysicalIconButton";

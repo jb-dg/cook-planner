@@ -206,6 +206,17 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
+  visibilityChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#E4D9C8",
+    backgroundColor: "#F5EFE4",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
   countChipText: {
     fontSize: 11,
     fontWeight: "700",

@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { useEffect, useRef } from "react";
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Modal, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Text } from "@/components/Text";
 
 import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
 import PhysicalIconButton from "@/components/PhysicalIconButton";
@@ -9,8 +10,13 @@ import { colors, spacing } from "@/theme/design";
 type Props = {
   visible: boolean;
   bookName: string;
+  bookEmoji: string;
   bookError: string | null;
+  hasHousehold: boolean;
+  isShared: boolean;
   onBookNameChange: (value: string) => void;
+  onBookEmojiChange: (value: string) => void;
+  onIsSharedChange: (value: boolean) => void;
   onCreateBook: () => void;
   onClose: () => void;
 };
@@ -23,8 +29,13 @@ type Props = {
 export default function CreateBookModal({
   visible,
   bookName,
+  bookEmoji,
   bookError,
+  hasHousehold,
+  isShared,
   onBookNameChange,
+  onBookEmojiChange,
+  onIsSharedChange,
   onCreateBook,
   onClose,
 }: Props) {
@@ -61,16 +72,72 @@ export default function CreateBookModal({
               <Feather name="x" size={16} color={colors.muted} />
             </PhysicalIconButton>
           </View>
-          <TextInput
-            value={bookName}
-            onChangeText={onBookNameChange}
-            placeholder="Nom du livre"
-            placeholderTextColor="#A5A58D"
-            style={styles.input}
-            autoFocus
-            returnKeyType="done"
-            onSubmitEditing={submit}
-          />
+          <View style={styles.nameRow}>
+            <TextInput
+              value={bookEmoji}
+              onChangeText={onBookEmojiChange}
+              placeholder="🍰"
+              placeholderTextColor="#A5A58D"
+              style={styles.emojiInput}
+              maxLength={2}
+              returnKeyType="next"
+            />
+            <TextInput
+              value={bookName}
+              onChangeText={onBookNameChange}
+              placeholder="Nom du livre"
+              placeholderTextColor="#A5A58D"
+              style={[styles.input, styles.nameInput]}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={submit}
+            />
+          </View>
+          {hasHousehold ? (
+            <View style={styles.visibilityRow}>
+              <Pressable
+                style={[styles.visibilityChip, !isShared && styles.visibilityChipActive]}
+                onPress={() => onIsSharedChange(false)}
+              >
+                <Feather
+                  name="lock"
+                  size={13}
+                  color={!isShared ? "#FFFFFF" : colors.muted}
+                />
+                <Text
+                  style={[
+                    styles.visibilityChipText,
+                    !isShared && styles.visibilityChipTextActive,
+                  ]}
+                >
+                  Privé
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.visibilityChip, isShared && styles.visibilityChipActive]}
+                onPress={() => onIsSharedChange(true)}
+              >
+                <Feather
+                  name="users"
+                  size={13}
+                  color={isShared ? "#FFFFFF" : colors.muted}
+                />
+                <Text
+                  style={[
+                    styles.visibilityChipText,
+                    isShared && styles.visibilityChipTextActive,
+                  ]}
+                >
+                  Partagé avec le foyer
+                </Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Text style={styles.visibilityHint}>
+              Ce livre restera privé. Rejoins un foyer depuis ton profil pour
+              pouvoir en partager avec d’autres.
+            </Text>
+          )}
           {bookError ? <Text style={styles.errorText}>{bookError}</Text> : null}
           <PhysicalButtonAnimated
             variant="primary"
@@ -130,10 +197,62 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
   },
+  nameRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  nameInput: {
+    flex: 1,
+  },
+  emojiInput: {
+    width: 52,
+    minHeight: 46,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E4D9C8",
+    backgroundColor: "#FCFAF7",
+    textAlign: "center",
+    fontSize: 20,
+  },
   errorText: {
     color: colors.danger,
     fontSize: 12,
     fontWeight: "600",
+  },
+  visibilityRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  visibilityChip: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "#E4D9C8",
+    borderRadius: 999,
+    backgroundColor: "#FCFAF7",
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+  },
+  visibilityChipActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  visibilityChipText: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  visibilityChipTextActive: {
+    color: "#FFFFFF",
+  },
+  visibilityHint: {
+    color: colors.muted,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "500",
   },
   confirmInner: {
     flexDirection: "row",

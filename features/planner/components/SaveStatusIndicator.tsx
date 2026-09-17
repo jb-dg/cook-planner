@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Animated, StyleSheet, Text } from "react-native";
+import { Animated, StyleSheet } from "react-native";
+import { Text } from "@/components/Text";
 import { Feather } from "@expo/vector-icons";
 import { colors, spacing } from "../../../theme/design";
 

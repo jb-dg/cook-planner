@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { Redirect } from "expo-router";
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, ScrollView, StyleSheet, View } from "react-native";
+import { Text } from "@/components/Text";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import AuthForm from "@/components/AuthForm";

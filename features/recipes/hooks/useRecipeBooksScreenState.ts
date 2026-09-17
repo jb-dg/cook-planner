@@ -1,12 +1,16 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  buildBooksStorageKey,
   buildRecipeBooks,
-  parseStoredBooks,
+  createCustomBook,
+  deleteCustomBook,
+  fetchCustomBooks,
+  moveRecipeToBook as moveRecipeToBookApi,
+  renameCustomBook,
+  updateCustomBookEmoji,
+  updateCustomBookSharing,
   type CustomBook,
   type RecipeBook,
 } from "@/features/recipes/books";
@@ -18,7 +22,7 @@ import { mapRecipe, type Recipe } from "../types";
 type RecipeRow = Parameters<typeof mapRecipe>[0];
 
 const RECIPE_SELECT_WITH_IMAGES =
-  "id,title,duration,difficulty,servings,description,ingredients,steps,source_url,image_urls,cover_image_url";
+  "id,title,duration,difficulty,servings,description,ingredients,steps,source_url,image_urls,cover_image_url,book_id";
 const RECIPE_SELECT_BASIC =
   "id,title,duration,difficulty,servings,description,ingredients,steps,source_url";
 
@@ -34,15 +38,14 @@ export const useRecipeBooksScreenState = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bookName, setBookName] = useState("");
+  const [bookEmoji, setBookEmoji] = useState("");
+  const [isShared, setIsShared] = useState(false);
   const [bookError, setBookError] = useState<string | null>(null);
   const [renameError, setRenameError] = useState<string | null>(null);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
 
-  const storageKey = useMemo(() => {
-    if (!session || !scope) return null;
-    return buildBooksStorageKey(session.user.id, scope.householdId);
-  }, [session, scope]);
+  const hasHousehold = !!scope?.householdId;
 
   const fetchRecipes = useCallback(async () => {
     if (!session) {
@@ -115,32 +118,29 @@ export const useRecipeBooksScreenState = () => {
     }, [session, fetchRecipes]),
   );
 
-  const loadBooks = useCallback(
-    async (cancelRef?: { cancelled: boolean }) => {
-      if (!storageKey) {
-        setCustomBooks([]);
-        setBooksLoading(false);
-        return;
-      }
+  const loadBooks = useCallback(async (cancelRef?: { cancelled: boolean }) => {
+    if (!session) {
+      setCustomBooks([]);
+      setBooksLoading(false);
+      return;
+    }
 
-      setBooksLoading(true);
-      try {
-        const value = await AsyncStorage.getItem(storageKey);
-        if (cancelRef?.cancelled) return;
-        setCustomBooks(parseStoredBooks(value));
-      } catch (storageError) {
-        console.error("load recipe books", storageError);
-        if (!cancelRef?.cancelled) {
-          setCustomBooks([]);
-        }
-      } finally {
-        if (!cancelRef?.cancelled) {
-          setBooksLoading(false);
-        }
+    setBooksLoading(true);
+    try {
+      const books = await fetchCustomBooks();
+      if (cancelRef?.cancelled) return;
+      setCustomBooks(books);
+    } catch (fetchErr) {
+      console.error("load recipe books", fetchErr);
+      if (!cancelRef?.cancelled) {
+        setCustomBooks([]);
       }
-    },
-    [storageKey],
-  );
+    } finally {
+      if (!cancelRef?.cancelled) {
+        setBooksLoading(false);
+      }
+    }
+  }, [session]);
 
   useEffect(() => {
     const cancelRef = { cancelled: false };
@@ -157,23 +157,14 @@ export const useRecipeBooksScreenState = () => {
   // reloaded.
   useFocusEffect(
     useCallback(() => {
-      if (!storageKey) return;
+      if (!session) return;
       const cancelRef = { cancelled: false };
       loadBooks(cancelRef);
       return () => {
         cancelRef.cancelled = true;
       };
-    }, [storageKey, loadBooks]),
+    }, [session, loadBooks]),
   );
-
-  useEffect(() => {
-    if (!storageKey || booksLoading) return;
-    AsyncStorage.setItem(storageKey, JSON.stringify(customBooks)).catch(
-      (storageError) => {
-        console.error("save recipe books", storageError);
-      },
-    );
-  }, [storageKey, booksLoading, customBooks]);
 
   const books = useMemo<RecipeBook[]>(
     () =>
@@ -216,10 +207,10 @@ export const useRecipeBooksScreenState = () => {
   }, [selectedBook, customBooks]);
 
   const availableRecipes = useMemo(() => {
-    if (!activeCustomBook) return [];
-    const ids = new Set(activeCustomBook.recipeIds);
+    if (!activeCustomBook || !selectedBook) return [];
+    const ids = new Set(selectedBook.recipeIds);
     return recipes.filter((recipe) => !ids.has(recipe.id));
-  }, [activeCustomBook, recipes]);
+  }, [activeCustomBook, selectedBook, recipes]);
 
   const selectedRecipe = useMemo(() => {
     if (!selectedRecipeId) return null;
@@ -236,7 +227,8 @@ export const useRecipeBooksScreenState = () => {
     }
   }, [session, fetchRecipes]);
 
-  const handleCreateBook = useCallback(() => {
+  const handleCreateBook = useCallback(async () => {
+    if (!session) return;
     const name = bookName.trim();
     if (!name) {
       setBookError("Donne un nom au livre.");
@@ -251,14 +243,34 @@ export const useRecipeBooksScreenState = () => {
       return;
     }
 
-    const id = `book-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-    setCustomBooks((prev) => [{ id, name, recipeIds: [] }, ...prev]);
-    setBookName("");
-    setBookError(null);
-  }, [bookName, books]);
+    try {
+      const created = await createCustomBook({
+        ownerId: session.user.id,
+        name,
+        householdId: isShared ? scope?.householdId ?? null : null,
+        emoji: bookEmoji.trim() || null,
+      });
+      setCustomBooks((prev) => [created, ...prev]);
+      setBookName("");
+      setBookEmoji("");
+      setIsShared(false);
+      setBookError(null);
+    } catch (err) {
+      console.error("create recipe book", err);
+      setBookError("Impossible de créer le livre. Réessaie plus tard.");
+    }
+  }, [session, bookName, bookEmoji, isShared, scope?.householdId, books]);
+
+  const onBookEmojiChange = useCallback((value: string) => {
+    setBookEmoji(value);
+  }, []);
+
+  const onIsSharedChange = useCallback((value: boolean) => {
+    setIsShared(value);
+  }, []);
 
   const handleRenameBook = useCallback(
-    (book: RecipeBook, name: string) => {
+    async (book: RecipeBook, name: string) => {
       if (book.isSystem) return;
 
       const trimmed = name.trim();
@@ -276,35 +288,83 @@ export const useRecipeBooksScreenState = () => {
         return;
       }
 
-      setCustomBooks((prev) =>
-        prev.map((entry) => (entry.id === book.id ? { ...entry, name: trimmed } : entry)),
-      );
-      setRenameError(null);
+      try {
+        await renameCustomBook(book.id, trimmed);
+        setCustomBooks((prev) =>
+          prev.map((entry) => (entry.id === book.id ? { ...entry, name: trimmed } : entry)),
+        );
+        setRenameError(null);
+      } catch (err) {
+        console.error("rename recipe book", err);
+        setRenameError("Impossible de renommer le livre. Réessaie plus tard.");
+      }
     },
     [books],
   );
 
-  const handleDeleteBook = useCallback(
-    (book: RecipeBook) => {
+  const handleUpdateBookEmoji = useCallback(async (book: RecipeBook, emoji: string) => {
+    if (book.isSystem) return;
+    const trimmedEmoji = emoji.trim() || null;
+    try {
+      await updateCustomBookEmoji(book.id, trimmedEmoji);
+      setCustomBooks((prev) =>
+        prev.map((entry) => (entry.id === book.id ? { ...entry, emoji: trimmedEmoji } : entry)),
+      );
+    } catch (err) {
+      console.error("update book emoji", err);
+    }
+  }, []);
+
+  const handleUpdateBookSharing = useCallback(
+    async (book: RecipeBook, shared: boolean) => {
       if (book.isSystem) return;
-      setCustomBooks((prev) => prev.filter((entry) => entry.id !== book.id));
-      // Falls back to the system book: selectedBook re-derives from
-      // `books[0]` once the deleted id no longer matches anything.
-      setSelectedBookId((current) => (current === book.id ? null : current));
+      const targetHouseholdId = shared ? scope?.householdId ?? null : null;
+      try {
+        await updateCustomBookSharing(book.id, targetHouseholdId);
+        setCustomBooks((prev) =>
+          prev.map((entry) =>
+            entry.id === book.id ? { ...entry, householdId: targetHouseholdId } : entry,
+          ),
+        );
+      } catch (err) {
+        console.error("update book sharing", err);
+      }
     },
-    [],
+    [scope?.householdId],
+  );
+
+  const handleDeleteBook = useCallback(
+    async (book: RecipeBook) => {
+      if (book.isSystem) return;
+      try {
+        await deleteCustomBook(book.id);
+        setCustomBooks((prev) => prev.filter((entry) => entry.id !== book.id));
+        // Falls back to the system book: selectedBook re-derives from
+        // `books[0]` once the deleted id no longer matches anything.
+        setSelectedBookId((current) => (current === book.id ? null : current));
+        // Recipes that were in the deleted book had their book_id cleared
+        // server-side (ON DELETE SET NULL) — refetch so local state matches.
+        fetchRecipes();
+      } catch (err) {
+        console.error("delete recipe book", err);
+      }
+    },
+    [fetchRecipes],
   );
 
   const handleAddRecipeToBook = useCallback(
-    (recipeId: string) => {
+    async (recipeId: string) => {
       if (!activeCustomBook) return;
-      setCustomBooks((prev) =>
-        prev.map((book) => {
-          if (book.id !== activeCustomBook.id) return book;
-          if (book.recipeIds.includes(recipeId)) return book;
-          return { ...book, recipeIds: [recipeId, ...book.recipeIds] };
-        }),
-      );
+      try {
+        await moveRecipeToBookApi(recipeId, activeCustomBook.id);
+        setRecipes((prev) =>
+          prev.map((recipe) =>
+            recipe.id === recipeId ? { ...recipe, bookId: activeCustomBook.id } : recipe,
+          ),
+        );
+      } catch (err) {
+        console.error("add recipe to book", err);
+      }
     },
     [activeCustomBook],
   );
@@ -379,16 +439,23 @@ export const useRecipeBooksScreenState = () => {
     books,
     booksCountLabel,
     bookName,
+    bookEmoji,
     bookError,
     renameError,
+    hasHousehold,
+    isShared,
     selectedBook,
     selectedBookId,
     selectedRecipe,
     displayedRecipes,
     availableRecipes,
     onBookNameChange,
+    onBookEmojiChange,
+    onIsSharedChange,
     handleCreateBook,
     handleRenameBook,
+    handleUpdateBookEmoji,
+    handleUpdateBookSharing,
     handleDeleteBook,
     handleAddRecipeToBook,
     handleOpenBook,

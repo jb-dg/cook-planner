@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import { Text } from "@/components/Text";
 
 import PhysicalButton from "@/components/PhysicalButton";
 import { colors, radii, shadows, spacing } from "@/theme/design";
@@ -32,6 +33,7 @@ export default function HouseholdSummaryCard({
   leavingHousehold,
   onOpenCreate,
   onOpenJoin,
+  onOpenManage,
   onShareInviteCode,
   onRemoveMember,
   onLeaveHousehold,
@@ -142,6 +144,18 @@ export default function HouseholdSummaryCard({
           ))
         )}
       </View>
+
+      {isOwner ? (
+        <Pressable style={styles.inviteMemberRow} onPress={onOpenManage}>
+          <View style={styles.inviteMemberIcon}>
+            <Feather name="user-plus" size={16} color={colors.accent} />
+          </View>
+          <Text style={styles.inviteMemberText} numberOfLines={1}>
+            Inviter un membre
+          </Text>
+          <Feather name="chevron-right" size={16} color={colors.accentTertiary} />
+        </Pressable>
+      ) : null}
 
       {!isOwner || householdMembers.length <= 1 ? (
         <Pressable
@@ -338,6 +352,29 @@ const styles = StyleSheet.create({
   },
   secondaryButtonWrapper: {
     flex: 1,
+  },
+  inviteMemberRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 2,
+    paddingVertical: 4,
+  },
+  inviteMemberIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: "rgba(188, 108, 37, 0.3)",
+    backgroundColor: "rgba(188, 108, 37, 0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  inviteMemberText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.text,
   },
   secondaryButtonText: {
     color: colors.muted,

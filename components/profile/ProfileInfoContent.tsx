@@ -1,4 +1,5 @@
-import { ActivityIndicator, Image, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Image, TextInput, View } from "react-native";
+import { Text } from "@/components/Text";
 
 import PhysicalButton from "@/components/PhysicalButton";
 import type { useProfileScreenState } from "@/features/profile/hooks/useProfileScreenState";

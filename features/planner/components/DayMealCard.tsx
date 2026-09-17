@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { Session } from "@supabase/supabase-js";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Text } from "@/components/Text";
 import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
 import { colors, spacing } from "../../../theme/design";
 import { MealKey } from "../utils/types";
@@ -155,13 +156,6 @@ export const DayMealCard = ({
         <Text style={styles.dishName} numberOfLines={2}>
           {meal.recipe}
         </Text>
-
-        {isLunch ? (
-          <View style={styles.dotRow}>
-            <View style={[styles.dot, { backgroundColor: colors.accent }]} />
-            <View style={[styles.dot, { backgroundColor: "#E8B98A" }]} />
-          </View>
-        ) : null}
       </View>
     );
   }
@@ -274,15 +268,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginTop: 6,
     marginBottom: 8,
-  },
-  dotRow: {
-    flexDirection: "row",
-    gap: 5,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 999,
   },
   inputFilled: {
     backgroundColor: colors.surface,

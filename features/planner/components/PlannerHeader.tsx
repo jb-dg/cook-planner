@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Text } from "@/components/Text";
 import { Feather } from "@expo/vector-icons";
 import { colors, spacing } from "../../../theme/design";
 import { ViewMode } from "../utils/types";

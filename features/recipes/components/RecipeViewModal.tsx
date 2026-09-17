@@ -1,15 +1,6 @@
 import { Feather } from "@expo/vector-icons";
-import {
-  Image,
-  Linking,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Text } from "@/components/Text";
 
 import PhysicalButton from "@/components/PhysicalButton";
 import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";

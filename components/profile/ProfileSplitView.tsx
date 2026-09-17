@@ -1,11 +1,12 @@
-import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Text } from "@/components/Text";
 
-import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
 import HouseholdContent from "@/components/profile/HouseholdContent";
+import HouseholdSummaryCard from "@/components/profile/HouseholdSummaryCard";
 import ProfileActionRow from "@/components/profile/ProfileActionRow";
 import ProfileInfoContent from "@/components/profile/ProfileInfoContent";
+import SettingsSection from "@/components/profile/SettingsSection";
 import type { HouseholdModalMode } from "@/components/profile/types";
 import type { useProfileScreenState } from "@/features/profile/hooks/useProfileScreenState";
 import { styles as sharedStyles } from "@/features/profile/screens/profileScreenStyles";
@@ -15,12 +16,14 @@ type ProfileState = ReturnType<typeof useProfileScreenState>;
 
 type SelectedSection =
   | "profile"
+  | "settings"
   | "household-create"
   | "household-join"
   | "household-manage";
 
 const SECTION_TITLES: Record<SelectedSection, string> = {
   profile: "Mes informations",
+  settings: "Paramètres",
   "household-create": "Créer un foyer",
   "household-join": "Rejoindre un foyer",
   "household-manage": "Gérer mon foyer",
@@ -36,17 +39,13 @@ type Props = {
   state: ProfileState;
 };
 
-// iPad only (portrait and landscape): the quick actions that open a
-// full-screen modal on phone instead select which content shows in the
-// right pane — no navigation away from the screen at all.
+// iPad only (portrait and landscape): the actions that open a full-screen
+// modal on phone instead select which content shows in the right pane —
+// no navigation away from the screen at all. Mirrors the phone layout:
+// one adaptive "Mon foyer" card, a standalone "Mes informations" row, and
+// a separate "Paramètres" section for session/destructive settings.
 export default function ProfileSplitView({ state }: Props) {
   const [selected, setSelected] = useState<SelectedSection>("household-manage");
-
-  const menuActions = state.quickActions.map((action) => ({
-    ...action,
-    active: selected === action.id,
-    onPress: () => setSelected(action.id as SelectedSection),
-  }));
 
   const householdMode = SECTION_HOUSEHOLD_MODE[selected];
 
@@ -85,46 +84,42 @@ export default function ProfileSplitView({ state }: Props) {
             </View>
           </View>
 
-          <View style={sharedStyles.section}>
-            <Text style={sharedStyles.sectionTitle}>Actions rapides</Text>
-            <Text style={sharedStyles.sectionDescription}>
-              Connecte ou adapte ton foyer en quelques secondes.
-            </Text>
-            <View style={sharedStyles.actionList}>
-              {menuActions.map((action) => (
-                <ProfileActionRow key={action.id} {...action} />
-              ))}
+          <View>
+            <View style={sharedStyles.sectionHeaderPlain}>
+              <Text style={sharedStyles.sectionTitle}>Mon foyer</Text>
             </View>
+            <HouseholdSummaryCard
+              loadingHousehold={state.loadingHousehold}
+              household={state.household}
+              householdMembers={state.householdMembers}
+              householdError={state.householdError}
+              isOwner={state.isOwner}
+              removingMemberId={state.removingMemberId}
+              leavingHousehold={state.leavingHousehold}
+              onOpenCreate={() => setSelected("household-create")}
+              onOpenJoin={() => setSelected("household-join")}
+              onOpenManage={() => setSelected("household-manage")}
+              onShareInviteCode={state.handleShareInviteCode}
+              onRemoveMember={state.handleRemoveMember}
+              onLeaveHousehold={state.handleLeaveHousehold}
+            />
           </View>
 
-          <PhysicalButtonAnimated variant="danger" onPress={state.handleSignOut}>
-            <View style={sharedStyles.signOutInner}>
-              <Feather name="log-out" size={16} color="#fff" />
-              <Text style={sharedStyles.signOutText}>Se déconnecter</Text>
-            </View>
-          </PhysicalButtonAnimated>
+          <ProfileActionRow
+            icon="settings"
+            label="Mes informations"
+            helper="Photo, pseudo et préférences"
+            active={selected === "profile"}
+            onPress={() => setSelected("profile")}
+          />
 
-          <Pressable
-            onPress={state.handleEraseData}
-            disabled={state.erasingData}
-            style={sharedStyles.deleteAccountButton}
-          >
-            <Text style={sharedStyles.eraseDataText}>
-              {state.erasingData
-                ? "Effacement…"
-                : "Effacer toutes mes données"}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={state.handleDeleteAccount}
-            disabled={state.deletingAccount}
-            style={sharedStyles.deleteAccountButton}
-          >
-            <Text style={sharedStyles.deleteAccountText}>
-              {state.deletingAccount ? "Suppression…" : "Supprimer mon compte"}
-            </Text>
-          </Pressable>
+          <ProfileActionRow
+            icon="sliders"
+            label="Paramètres"
+            helper="Session, données et compte"
+            active={selected === "settings"}
+            onPress={() => setSelected("settings")}
+          />
         </ScrollView>
       </View>
 
@@ -137,6 +132,16 @@ export default function ProfileSplitView({ state }: Props) {
           <Text style={styles.detailHeading}>{SECTION_TITLES[selected]}</Text>
           {selected === "profile" ? (
             <ProfileInfoContent state={state} />
+          ) : selected === "settings" ? (
+            <SettingsSection
+              onSignOut={state.handleSignOut}
+              erasingData={state.erasingData}
+              deletingAccount={state.deletingAccount}
+              onEraseData={state.handleEraseData}
+              onDeleteAccount={state.handleDeleteAccount}
+              onOpenPrivacyPolicy={state.handleOpenPrivacyPolicy}
+              onOpenSupport={state.handleOpenSupport}
+            />
           ) : (
             <HouseholdContent mode={householdMode ?? "manage"} state={state} />
           )}

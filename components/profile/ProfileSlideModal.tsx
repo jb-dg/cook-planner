@@ -1,16 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import type { ReactNode } from "react";
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  type StyleProp,
-  type ViewStyle,
-} from "react-native";
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, type StyleProp, type ViewStyle } from "react-native";
+import { Text } from "@/components/Text";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { colors } from "@/theme/design";

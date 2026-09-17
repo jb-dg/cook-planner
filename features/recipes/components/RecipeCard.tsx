@@ -1,7 +1,9 @@
 import { Feather } from "@expo/vector-icons";
-import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Platform, Pressable, StyleSheet, View } from "react-native";
+import { Text } from "@/components/Text";
 
 import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
+import PhysicalIconButton from "@/components/PhysicalIconButton";
 import { colors } from "@/theme/design";
 
 import type { Recipe } from "../types";
@@ -18,6 +20,13 @@ type Props = {
   onView: () => void;
   removable?: boolean;
   onRemove?: () => void;
+  // Opens the "move to another book" flow — only meaningful alongside
+  // `removable`, same as onRemove (both live behind the same options menu).
+  onMove?: () => void;
+  // Opens a picker to place this recipe in a slot in the current week's
+  // planning. Independent of removable/onRemove/onMove — shown on any card
+  // that gets it, regardless of which book is open.
+  onAddToPlanner?: () => void;
   // Grid mode (iPad): fixed card height so a row of four lines up
   // regardless of content length. Both modes open the recipe on tap —
   // "Modifier" lives in the view modal's own footer button instead of a
@@ -32,6 +41,8 @@ export default function RecipeCard({
   onView,
   removable,
   onRemove,
+  onMove,
+  onAddToPlanner,
   compact,
 }: Props) {
   const hasImage = !!(recipe.coverImageUrl || recipe.imageUrls[0]);
@@ -133,16 +144,53 @@ export default function RecipeCard({
     </>
   );
 
-  const removeButton =
-    removable && onRemove ? (
-      <PhysicalButtonAnimated
-        variant="secondary"
-        onPress={onRemove}
-        innerStyle={localStyles.membershipButtonInner}
-      >
-        <Feather name="minus-circle" size={14} color="#6B705C" />
-        <Text style={localStyles.membershipButtonText}>Retirer du livre</Text>
-      </PhysicalButtonAnimated>
+  const showOptions = !!removable && (!!onRemove || !!onMove);
+
+  const handleOptionsPress = () => {
+    Alert.alert(recipe.title, undefined, [
+      ...(onMove
+        ? [{ text: "Déplacer vers un autre livre", onPress: onMove }]
+        : []),
+      ...(onRemove
+        ? [
+            {
+              text: "Retirer du livre",
+              style: "destructive" as const,
+              onPress: onRemove,
+            },
+          ]
+        : []),
+      { text: "Annuler", style: "cancel" as const },
+    ]);
+  };
+
+  const actionsRow =
+    onAddToPlanner || showOptions ? (
+      <View style={localStyles.actionsRow}>
+        {onAddToPlanner ? (
+          <View style={localStyles.addToPlannerWrapper}>
+            <PhysicalButtonAnimated
+              variant="secondary"
+              onPress={onAddToPlanner}
+              innerStyle={localStyles.membershipButtonInner}
+            >
+              <Feather name="calendar" size={14} color="#6B705C" />
+              <Text style={localStyles.membershipButtonText}>
+                Ajouter au planning
+              </Text>
+            </PhysicalButtonAnimated>
+          </View>
+        ) : null}
+        {showOptions ? (
+          <PhysicalIconButton
+            variant="secondary"
+            onPress={handleOptionsPress}
+            accessibilityLabel="Options de la recette"
+          >
+            <Feather name="more-horizontal" size={18} color="#6B705C" />
+          </PhysicalIconButton>
+        ) : null}
+      </View>
     ) : null;
 
   if (compact) {
@@ -166,7 +214,7 @@ export default function RecipeCard({
           {thumbnail}
           <View style={localStyles.compactBody}>
             {header}
-            {removeButton}
+            {actionsRow}
           </View>
         </View>
       </Pressable>
@@ -187,13 +235,21 @@ export default function RecipeCard({
       <View style={booksStyles.recipeCardSurface}>
         {thumbnail}
         {header}
-        {removeButton}
+        {actionsRow}
       </View>
     </Pressable>
   );
 }
 
 const localStyles = StyleSheet.create({
+  actionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  addToPlannerWrapper: {
+    flex: 1,
+  },
   membershipButtonInner: {
     flexDirection: "row",
     gap: 6,
