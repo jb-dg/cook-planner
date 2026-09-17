@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { StyleSheet } from "react-native";
+import { colors } from "../../../theme/design";
 
 type AppTabsProps = {
   tabBarBottomInset?: number;
@@ -12,8 +13,8 @@ export default function AppTabs({ tabBarBottomInset = 0 }: AppTabsProps) {
       screenOptions={{
         headerShown: false,
         tabBarPosition: "bottom",
-        tabBarActiveTintColor: "#BC6C25",
-        tabBarInactiveTintColor: "#6B705C",
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.muted,
         tabBarHideOnKeyboard: true,
         tabBarLabelStyle: {
           fontSize: 9,
@@ -81,11 +82,11 @@ export default function AppTabs({ tabBarBottomInset = 0 }: AppTabsProps) {
 
 const styles = StyleSheet.create({
   tabBarMobile: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: "#E4D9C8",
+    borderTopColor: colors.cardBorder,
     paddingTop: 8,
-    shadowColor: "#000",
+    shadowColor: colors.shadow,
     shadowOpacity: 0.08,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: -3 },

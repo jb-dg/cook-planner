@@ -7,7 +7,7 @@ import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
 import PhysicalIconButton from "@/components/PhysicalIconButton";
 import type { RecipeBook } from "@/features/recipes/books";
 import type { Recipe } from "@/features/recipes/types";
-import { colors, spacing } from "@/theme/design";
+import { colors, spacing, tints } from "@/theme/design";
 
 import AddRecipesToBookModal from "./AddRecipesToBookModal";
 import CreateBookModal from "./CreateBookModal";
@@ -210,7 +210,7 @@ export default function RecipeBooksSplitView({
                         <Feather
                           name="book-open"
                           size={14}
-                          color={isActive ? "#FFFFFF" : colors.accent}
+                          color={isActive ? colors.surface : colors.accent}
                         />
                       )}
                     </View>
@@ -227,7 +227,7 @@ export default function RecipeBooksSplitView({
                       <Feather
                         name={book.isShared ? "users" : "lock"}
                         size={12}
-                        color={isActive ? "#FFFFFF" : colors.muted}
+                        color={isActive ? colors.surface : colors.muted}
                       />
                     ) : null}
                     <Text
@@ -259,7 +259,7 @@ export default function RecipeBooksSplitView({
                     value={editingEmoji}
                     onChangeText={setEditingEmoji}
                     placeholder="🍰"
-                    placeholderTextColor="#A5A58D"
+                    placeholderTextColor={colors.accentTertiary}
                     style={styles.renameEmojiInput}
                     maxLength={2}
                   />
@@ -298,7 +298,7 @@ export default function RecipeBooksSplitView({
                     <Feather
                       name="lock"
                       size={12}
-                      color={!selectedBook.isShared ? "#FFFFFF" : colors.muted}
+                      color={!selectedBook.isShared ? colors.surface : colors.muted}
                     />
                     <Text
                       style={[
@@ -320,7 +320,7 @@ export default function RecipeBooksSplitView({
                     <Feather
                       name="users"
                       size={12}
-                      color={selectedBook.isShared ? "#FFFFFF" : colors.muted}
+                      color={selectedBook.isShared ? colors.surface : colors.muted}
                     />
                     <Text
                       style={[
@@ -368,7 +368,7 @@ export default function RecipeBooksSplitView({
                     onPress={onCreateRecipeInBook}
                     innerStyle={styles.createRecipeButtonInner}
                   >
-                    <Feather name="plus" size={14} color="#FFFFFF" />
+                    <Feather name="plus" size={14} color={colors.surface} />
                     <Text style={styles.createRecipeButtonText}>Nouvelle recette</Text>
                   </PhysicalButtonAnimated>
                   {selectedBook && !selectedBook.isSystem ? (
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     textTransform: "uppercase",
     letterSpacing: 1.4,
-    color: "#A5A58D",
+    color: colors.accentTertiary,
   },
   menuHeadingRow: {
     flexDirection: "row",
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   menuItemTextActive: {
-    color: "#FFFFFF",
+    color: colors.surface,
   },
   menuItemCount: {
     fontSize: 12,
@@ -590,8 +590,8 @@ const styles = StyleSheet.create({
     minHeight: 44,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E4D9C8",
-    backgroundColor: "#FCFAF7",
+    borderColor: colors.cardBorder,
+    backgroundColor: tints.surfaceCream,
     paddingHorizontal: 14,
     color: colors.text,
     fontSize: 22,
@@ -605,8 +605,8 @@ const styles = StyleSheet.create({
     minHeight: 44,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E4D9C8",
-    backgroundColor: "#FCFAF7",
+    borderColor: colors.cardBorder,
+    backgroundColor: tints.surfaceCream,
     textAlign: "center",
     fontSize: 22,
   },
@@ -620,9 +620,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     borderWidth: 1,
-    borderColor: "#E4D9C8",
+    borderColor: colors.cardBorder,
     borderRadius: 999,
-    backgroundColor: "#FCFAF7",
+    backgroundColor: tints.surfaceCream,
     paddingHorizontal: 12,
     paddingVertical: 7,
   },
@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   sharingChipTextActive: {
-    color: "#FFFFFF",
+    color: colors.surface,
   },
   detailSubtitle: {
     fontSize: 13,
@@ -649,7 +649,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   createRecipeButtonText: {
-    color: "#FFFFFF",
+    color: colors.surface,
     fontSize: 13,
     fontWeight: "700",
   },

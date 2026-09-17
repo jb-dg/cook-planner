@@ -295,7 +295,7 @@ export default function PlannerScreen() {
                   : "Revenir à la vue du jour"
               }
             >
-              <Feather name="list" size={18} color="#FFFFFF" />
+              <Feather name="list" size={18} color={colors.surface} />
               <Text style={styles.listButtonText}>
                 {viewMode === "focus"
                   ? "Voir la semaine en liste"
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     gap: spacing.base * 0.6,
   },
   listButtonText: {
-    color: "#FFFFFF",
+    color: colors.surface,
     fontWeight: "800",
     fontSize: 17,
   },

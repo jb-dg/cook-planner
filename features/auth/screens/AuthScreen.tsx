@@ -5,18 +5,17 @@ import { Text } from "@/components/Text";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import AuthForm from "@/components/AuthForm";
-import { useTheme } from "@/theme/useTheme";
+import { colors, typography } from "@/theme/design";
 
 import { useAuthScreenState } from "../hooks/useAuthScreenState";
 
 export default function AuthScreen() {
   const { isInitializing, shouldRedirectToTabs } = useAuthScreenState();
-  const t = useTheme();
 
   if (isInitializing) {
     return (
-      <View style={[styles.loader, { backgroundColor: t.colors.bg }]}>
-        <Text style={{ color: t.colors.textMuted, fontWeight: "600" }}>
+      <View style={[styles.loader, { backgroundColor: colors.background }]}>
+        <Text style={{ color: colors.muted, fontWeight: "600" }}>
           Chargement…
         </Text>
       </View>
@@ -70,7 +69,7 @@ export default function AuthScreen() {
           </View>
 
           <View style={styles.securityRow}>
-            <Feather name="lock" size={12} color="#A5A58D" />
+            <Feather name="lock" size={12} color={colors.accentTertiary} />
             <Text style={styles.securityText}>
               Sécurisé comme une recette de famille
             </Text>
@@ -84,7 +83,7 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#FDF8F1",
+    backgroundColor: colors.background,
     overflow: "hidden",
   },
   loader: {
@@ -99,7 +98,7 @@ const styles = StyleSheet.create({
     width: 220,
     height: 220,
     borderRadius: 110,
-    backgroundColor: "#DDA15E",
+    backgroundColor: colors.accentSoft,
     opacity: 0.1,
   },
   blobBottomRight: {
@@ -109,7 +108,7 @@ const styles = StyleSheet.create({
     width: 260,
     height: 260,
     borderRadius: 130,
-    backgroundColor: "#BC6C25",
+    backgroundColor: colors.accent,
     opacity: 0.08,
   },
   scrollContent: {
@@ -133,11 +132,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#BC6C25",
+    backgroundColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",
     transform: [{ rotate: "3deg" }],
-    shadowColor: "#BC6C25",
+    shadowColor: colors.accent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 8,
@@ -151,31 +150,30 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "800",
     letterSpacing: -0.5,
-    color: "#2D2D2A",
+    color: colors.text,
   },
   heroSection: {
     gap: 10,
   },
   kicker: {
-    fontSize: 17,
-    fontStyle: "italic",
-    color: "#BC6C25",
-    fontWeight: "500",
+    fontFamily: typography.family.handwritten,
+    fontSize: 26,
+    color: colors.accent,
   },
   heroTitle: {
     fontSize: 30,
     fontWeight: "900",
     lineHeight: 36,
     letterSpacing: -0.5,
-    color: "#2D2D2A",
+    color: colors.text,
   },
   heroTitleAccent: {
-    color: "#DDA15E",
+    color: colors.accentSoft,
   },
   heroSubtitle: {
     fontSize: 14,
     lineHeight: 21,
-    color: "#6B705C",
+    color: colors.muted,
   },
   cardWrap: {
     width: "100%",
@@ -197,12 +195,12 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 16,
     right: -10,
-    backgroundColor: "#FEFAE0",
+    backgroundColor: colors.surfaceAlt,
     paddingHorizontal: 20,
     paddingVertical: 6,
     borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: "#DDA15E",
+    borderColor: colors.accentSoft,
     transform: [{ rotate: "6deg" }],
     zIndex: 10,
   },
@@ -210,7 +208,7 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     fontWeight: "600",
     fontSize: 13,
-    color: "#BC6C25",
+    color: colors.accent,
   },
   securityRow: {
     flexDirection: "row",
@@ -224,6 +222,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1,
     textTransform: "uppercase",
-    color: "#A5A58D",
+    color: colors.accentTertiary,
   },
 });

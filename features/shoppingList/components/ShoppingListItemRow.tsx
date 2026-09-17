@@ -25,7 +25,7 @@ export const ShoppingListItemRow = ({ item, onToggle, onDelete }: Props) => {
         accessibilityState={{ checked: item.isChecked }}
         accessibilityLabel={`Cocher ${item.name}`}
       >
-        {item.isChecked && <Feather name="check" size={14} color="#FFFFFF" />}
+        {item.isChecked && <Feather name="check" size={14} color={colors.surface} />}
       </Pressable>
 
       <View style={styles.info}>

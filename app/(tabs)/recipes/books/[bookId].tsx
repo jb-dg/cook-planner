@@ -28,7 +28,7 @@ import {
 import { mapRecipe, Recipe } from "../../../../features/recipes/types";
 import { fetchHouseholdScope, HouseholdScope } from "../../../../lib/households";
 import { supabase } from "../../../../lib/supabase";
-import { colors, spacing } from "../../../../theme/design";
+import { colors, spacing, tints } from "../../../../theme/design";
 
 type RecipeRow = Parameters<typeof mapRecipe>[0];
 
@@ -424,7 +424,7 @@ export default function RecipeBookScreen() {
           style={({ pressed }) => [styles.backButton, pressed && styles.cardPressed]}
           onPress={handleBackToRecipes}
         >
-          <Feather name="chevron-left" size={16} color="#6B705C" />
+          <Feather name="chevron-left" size={16} color={colors.muted} />
           <Text style={styles.backButtonText}>Tous les livres</Text>
         </Pressable>
       </View>
@@ -442,7 +442,7 @@ export default function RecipeBookScreen() {
                   value={editingEmoji}
                   onChangeText={setEditingEmoji}
                   placeholder="🍰"
-                  placeholderTextColor="#A5A58D"
+                  placeholderTextColor={colors.accentTertiary}
                   style={styles.renameEmojiInput}
                   maxLength={2}
                 />
@@ -484,7 +484,7 @@ export default function RecipeBookScreen() {
                   <Feather
                     name="lock"
                     size={12}
-                    color={!selectedBook.isShared ? "#FFFFFF" : colors.muted}
+                    color={!selectedBook.isShared ? colors.surface : colors.muted}
                   />
                   <Text
                     style={[
@@ -506,7 +506,7 @@ export default function RecipeBookScreen() {
                   <Feather
                     name="users"
                     size={12}
-                    color={selectedBook.isShared ? "#FFFFFF" : colors.muted}
+                    color={selectedBook.isShared ? colors.surface : colors.muted}
                   />
                   <Text
                     style={[
@@ -535,7 +535,7 @@ export default function RecipeBookScreen() {
                       onPress={cancelRename}
                       accessibilityLabel="Annuler"
                     >
-                      <Feather name="x" size={16} color="#6B705C" />
+                      <Feather name="x" size={16} color={colors.muted} />
                     </PhysicalIconButton>
                   </>
                 ) : (
@@ -546,7 +546,7 @@ export default function RecipeBookScreen() {
                         onPress={handleCreateRecipeInBook}
                         innerStyle={styles.createRecipeButtonInner}
                       >
-                        <Feather name="plus" size={14} color="#FFFFFF" />
+                        <Feather name="plus" size={14} color={colors.surface} />
                         <Text style={styles.createRecipeButtonText}>
                           Nouvelle recette
                         </Text>
@@ -558,7 +558,7 @@ export default function RecipeBookScreen() {
                         onPress={() => setAddRecipesModalVisible(true)}
                         accessibilityLabel="Ajouter des recettes au livre"
                       >
-                        <Feather name="bookmark" size={14} color="#6B705C" />
+                        <Feather name="bookmark" size={14} color={colors.muted} />
                       </PhysicalIconButton>
                     ) : null}
                     {!selectedBook.isSystem ? (
@@ -568,7 +568,7 @@ export default function RecipeBookScreen() {
                           onPress={startRename}
                           accessibilityLabel="Modifier le nom du livre"
                         >
-                          <Feather name="edit-2" size={14} color="#6B705C" />
+                          <Feather name="edit-2" size={14} color={colors.muted} />
                         </PhysicalIconButton>
                         <PhysicalIconButton
                           variant="secondary"
@@ -674,19 +674,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   backButtonText: {
-    color: "#6B705C",
+    color: colors.muted,
     fontSize: 13,
     fontWeight: "700",
   },
   heading: {
     fontSize: 28,
     fontWeight: "900",
-    color: "#2D2D2A",
+    color: colors.text,
     letterSpacing: -0.8,
     lineHeight: 32,
   },
   subtitle: {
-    color: "#6B705C",
+    color: colors.muted,
     fontSize: 14,
     lineHeight: 19,
     fontWeight: "600",
@@ -704,10 +704,10 @@ const styles = StyleSheet.create({
     minHeight: 44,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E4D9C8",
-    backgroundColor: "#FCFAF7",
+    borderColor: colors.cardBorder,
+    backgroundColor: tints.surfaceCream,
     paddingHorizontal: 14,
-    color: "#2D2D2A",
+    color: colors.text,
     fontSize: 22,
     fontWeight: "800",
   },
@@ -719,8 +719,8 @@ const styles = StyleSheet.create({
     minHeight: 44,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E4D9C8",
-    backgroundColor: "#FCFAF7",
+    borderColor: colors.cardBorder,
+    backgroundColor: tints.surfaceCream,
     textAlign: "center",
     fontSize: 22,
   },
@@ -734,9 +734,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     borderWidth: 1,
-    borderColor: "#E4D9C8",
+    borderColor: colors.cardBorder,
     borderRadius: 999,
-    backgroundColor: "#FCFAF7",
+    backgroundColor: tints.surfaceCream,
     paddingHorizontal: 12,
     paddingVertical: 7,
   },
@@ -750,7 +750,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   sharingChipTextActive: {
-    color: "#FFFFFF",
+    color: colors.surface,
   },
   headerActionsRow: {
     flexDirection: "row",
@@ -767,7 +767,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   createRecipeButtonText: {
-    color: "#FFFFFF",
+    color: colors.surface,
     fontSize: 13,
     fontWeight: "700",
   },
@@ -793,11 +793,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#2D2D2A",
+    color: colors.text,
     letterSpacing: -0.3,
   },
   emptySubtitle: {
-    color: "#6B705C",
+    color: colors.muted,
     textAlign: "center",
     fontSize: 14,
     lineHeight: 19,

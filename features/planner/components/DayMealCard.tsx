@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
 import { Text } from "@/components/Text";
 import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
-import { colors, spacing } from "../../../theme/design";
+import { colors, spacing, tints } from "../../../theme/design";
 import { MealKey } from "../utils/types";
 
 type Props = {
@@ -40,6 +40,9 @@ export const DayMealCard = ({
   const filled = !!meal.recipe?.trim();
   const isLunch = slot.key === "lunch";
   const slotLabel = isLunch ? "Déjeuner" : "Dîner";
+  // Sage for lunch, accent for dinner — matches gradients.lunch/dinner in
+  // theme/design.ts, so the two meal types read differently at a glance.
+  const slotColor = isLunch ? colors.accentSecondary : colors.accent;
   const disabled = syncing || saving;
 
   const startEditing = () => {
@@ -164,7 +167,7 @@ export const DayMealCard = ({
   // inline quick-add row that turns into a text input on tap.
   return (
     <View style={[styles.card, styles.cardEmpty]}>
-      <Text style={[styles.slotLabel, styles.slotLabelAccent]}>
+      <Text style={[styles.slotLabel, styles.slotLabelAccent, { color: slotColor }]}>
         {slotLabel.toUpperCase()}
       </Text>
 
@@ -173,8 +176,8 @@ export const DayMealCard = ({
         onPress={onOpenRecipePicker}
         disabled={disabled || recipesLoading}
       >
-        <View style={styles.addCircle}>
-          <Feather name="plus" size={16} color={colors.accent} />
+        <View style={[styles.addCircle, { borderColor: slotColor }]}>
+          <Feather name="plus" size={16} color={slotColor} />
         </View>
         <View style={styles.addTextBlock}>
           <Text style={styles.addText}>
@@ -231,7 +234,7 @@ const styles = StyleSheet.create({
   cardEmpty: {
     borderWidth: 2,
     borderStyle: "dashed",
-    borderColor: "#E6D3B8",
+    borderColor: tints.cardBorderDashed,
   },
   slotHeader: {
     flexDirection: "row",
@@ -248,7 +251,6 @@ const styles = StyleSheet.create({
     color: colors.muted,
   },
   slotLabelAccent: {
-    color: colors.accent,
     marginBottom: 12,
   },
   slotHeaderActions: {
@@ -292,7 +294,7 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   saveButtonText: {
-    color: "#FFFFFF",
+    color: colors.surface,
     fontWeight: "800",
     fontSize: 13,
   },
@@ -324,7 +326,7 @@ const styles = StyleSheet.create({
     gap: 14,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#EEE3D2",
+    borderBottomColor: tints.dividerOnWarm,
   },
   addCircle: {
     width: 38,
@@ -357,7 +359,7 @@ const styles = StyleSheet.create({
   },
   quickInputText: {
     fontSize: 15,
-    color: "#B3A88F",
+    color: tints.textFaint,
     fontWeight: "600",
   },
   quickSaveWrapper: {

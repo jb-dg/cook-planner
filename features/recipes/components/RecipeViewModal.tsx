@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.9)",
     overflow: "hidden",
@@ -354,9 +354,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   metaChip: {
-    backgroundColor: "#F5EFE4",
+    backgroundColor: colors.surfaceAlt,
     borderWidth: 1,
-    borderColor: "#E4D9C8",
+    borderColor: colors.cardBorder,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 5,
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(188, 108, 37, 0.2)",
   },
   metaChipText: {
-    color: "#6B705C",
+    color: colors.muted,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 0.5,
@@ -448,7 +448,7 @@ const styles = StyleSheet.create({
     padding: spacing.card,
     borderTopWidth: 1,
     borderTopColor: "rgba(228, 217, 200, 0.7)",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
   },
   secondaryButtonInner: {
     flexDirection: "row",

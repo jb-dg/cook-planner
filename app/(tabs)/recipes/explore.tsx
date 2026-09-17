@@ -250,7 +250,7 @@ export default function ExploreRecipesScreen() {
               style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
               onPress={handleBack}
             >
-              <Feather name="chevron-left" size={16} color="#6B705C" />
+              <Feather name="chevron-left" size={16} color={colors.muted} />
               <Text style={styles.backButtonText}>Retour</Text>
             </Pressable>
             <Text style={styles.kicker}>Marmiton</Text>
@@ -282,9 +282,9 @@ export default function ExploreRecipesScreen() {
                 innerStyle={styles.searchButtonInner}
               >
                 {loading ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={colors.surface} />
                 ) : (
-                  <Feather name="search" size={17} color="#FFFFFF" />
+                  <Feather name="search" size={17} color={colors.surface} />
                 )}
               </PhysicalButtonAnimated>
             </View>
@@ -362,13 +362,13 @@ export default function ExploreRecipesScreen() {
                         innerStyle={styles.addButtonInner}
                       >
                         {isSaving ? (
-                          <ActivityIndicator color="#FFFFFF" />
+                          <ActivityIndicator color={colors.surface} />
                         ) : (
                           <>
                             <Feather
                               name={isSaved ? "arrow-right" : "plus"}
                               size={14}
-                              color={isSaved ? colors.muted : "#FFFFFF"}
+                              color={isSaved ? colors.muted : colors.surface}
                             />
                             <Text
                               style={
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     marginLeft: -4,
   },
   backButtonText: {
-    color: "#6B705C",
+    color: colors.muted,
     fontSize: 13,
     fontWeight: "700",
   },
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.84)",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
     padding: 14,
     gap: 10,
   },
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.88)",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
     overflow: "hidden",
   },
   resultImageWrap: {
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   addButtonText: {
-    color: "#FFFFFF",
+    color: colors.surface,
     fontSize: 13,
     fontWeight: "800",
   },

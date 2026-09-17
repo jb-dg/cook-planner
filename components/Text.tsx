@@ -35,6 +35,13 @@ function resolveInterFamily(fontWeight: unknown, isItalic: boolean): string {
 
 export function Text({ style, ...props }: TextProps) {
   const flattened = StyleSheet.flatten(style) ?? {};
+
+  // An explicit fontFamily (e.g. the handwritten accent face) is a deliberate
+  // choice — leave it alone instead of forcing it back to an Inter variant.
+  if (flattened.fontFamily) {
+    return <RNText {...props} style={style} />;
+  }
+
   const fontFamily = resolveInterFamily(flattened.fontWeight, flattened.fontStyle === "italic");
 
   return <RNText {...props} style={[style, { fontFamily, fontWeight: undefined }]} />;

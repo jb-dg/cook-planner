@@ -41,7 +41,7 @@ export default function HouseholdSummaryCard({
   if (loadingHousehold) {
     return (
       <View style={styles.householdCard}>
-        <ActivityIndicator color="#6B705C" />
+        <ActivityIndicator color={colors.muted} />
       </View>
     );
   }
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
   },
   memberBadgeLetter: {
-    color: "#FFFFFF",
+    color: colors.surface,
     fontWeight: "800",
     fontSize: 15,
   },

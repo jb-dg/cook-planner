@@ -3,14 +3,14 @@ import { addDays, isSameDay } from "date-fns";
 import { useMemo } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { Text } from "@/components/Text";
-import { spacing } from "../../../theme/design";
+import { colors, spacing } from "../../../theme/design";
 import { MEAL_SLOTS } from "../utils/constants";
 import { DayPlan, MealKey } from "../utils/types";
 import { DayMealCard } from "./DayMealCard";
 
 // const shadowShell = Platform.select({
 //   ios: {
-//     shadowColor: "#000",
+//     shadowColor: colors.shadow,
 //     shadowOpacity: 0.08,
 //     shadowRadius: 18,
 //     shadowOffset: { width: 0, height: 8 },
@@ -27,7 +27,7 @@ import { DayMealCard } from "./DayMealCard";
 const shadowShell = {
   sm: Platform.select({
     ios: {
-      shadowColor: "#000",
+      shadowColor: colors.shadow,
       shadowOpacity: 0.06,
       shadowRadius: 4,
       shadowOffset: { width: 0, height: 2 },
@@ -37,27 +37,27 @@ const shadowShell = {
   }),
   md: Platform.select({
     ios: {
-      shadowColor: "#000",
+      shadowColor: colors.shadow,
       shadowOpacity: 0.07,
       shadowRadius: 10,
       shadowOffset: { width: 0, height: 4 },
     },
     android: {
       elevation: 4,
-      shadowColor: "#000",
+      shadowColor: colors.shadow,
     },
     default: {},
   }),
   lg: Platform.select({
     ios: {
-      shadowColor: "#000",
+      shadowColor: colors.shadow,
       shadowOpacity: 0.1,
       shadowRadius: 16,
       shadowOffset: { width: 0, height: 8 },
     },
     android: {
       elevation: 8,
-      shadowColor: "#000",
+      shadowColor: colors.shadow,
     },
     default: {},
   }),
@@ -185,14 +185,14 @@ const styles = StyleSheet.create({
     right: -1,
     bottom: -2,
     borderRadius: 26,
-    backgroundColor: "#000000",
+    backgroundColor: colors.shadow,
     opacity: 0.12,
   },
   // shellCardSurface mirrors HearthWeeklyPlanner's shellCard
   shellCardSurface: {
     borderRadius: 26,
     padding: 18,
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.74)",
     gap: spacing.base * 0.6,
@@ -210,19 +210,19 @@ const styles = StyleSheet.create({
   noteBox: {
     padding: 14,
     borderRadius: 16,
-    backgroundColor: "#F5EFE4",
+    backgroundColor: colors.surfaceAlt,
     gap: 4,
   },
   noteLabel: {
     fontSize: 10,
     fontWeight: "800",
-    color: "#6B705C",
+    color: colors.muted,
     textTransform: "uppercase",
     letterSpacing: 1,
   },
   noteText: {
     fontSize: 13,
-    color: "#6B705C",
+    color: colors.muted,
     lineHeight: 18,
   },
 });

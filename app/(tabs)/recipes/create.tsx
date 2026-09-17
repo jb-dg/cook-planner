@@ -742,7 +742,7 @@ export default function CreateRecipeScreen() {
             style={({ pressed }) => [styles.backButton, pressed && styles.cardPressed]}
             onPress={handleBack}
           >
-            <Feather name="chevron-left" size={16} color="#6B705C" />
+            <Feather name="chevron-left" size={16} color={colors.muted} />
             <Text style={styles.backButtonText}>Retour</Text>
           </Pressable>
           <Text style={styles.heading}>Ajouter une recette</Text>
@@ -808,7 +808,7 @@ export default function CreateRecipeScreen() {
                     <Feather
                       name={option.icon}
                       size={18}
-                      color={selected ? "#FFFFFF" : colors.accentTertiary}
+                      color={selected ? colors.surface : colors.accentTertiary}
                     />
                     <Text
                       style={[
@@ -871,9 +871,9 @@ export default function CreateRecipeScreen() {
                     innerStyle={styles.searchButtonInner}
                   >
                     {recipeSearchLoading ? (
-                      <ActivityIndicator color="#FFFFFF" />
+                      <ActivityIndicator color={colors.surface} />
                     ) : (
-                      <Feather name="search" size={16} color="#FFFFFF" />
+                      <Feather name="search" size={16} color={colors.surface} />
                     )}
                   </PhysicalButtonAnimated>
                 </View>
@@ -933,7 +933,7 @@ export default function CreateRecipeScreen() {
                           </View>
                           {selected ? (
                             <View style={styles.searchSelectedIcon}>
-                              <Feather name="check" size={14} color="#FFFFFF" />
+                              <Feather name="check" size={14} color={colors.surface} />
                             </View>
                           ) : null}
                         </Pressable>
@@ -1411,7 +1411,7 @@ const styles = StyleSheet.create({
     marginLeft: -4,
   },
   backButtonText: {
-    color: "#6B705C",
+    color: colors.muted,
     fontSize: 13,
     fontWeight: "700",
   },
@@ -1442,10 +1442,10 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 6,
     borderRadius: 999,
-    backgroundColor: "#E4D9C8",
+    backgroundColor: colors.cardBorder,
   },
   progressDotActive: {
-    backgroundColor: "#DDA15E",
+    backgroundColor: colors.accentSoft,
   },
   progressDotComplete: {
     backgroundColor: colors.accent,
@@ -1484,7 +1484,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   bookChipTextActive: {
-    color: "#FFFFFF",
+    color: colors.surface,
   },
   stepSection: {
     gap: 12,
@@ -1516,7 +1516,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   sourceCardTitleSelected: {
-    color: "#FFFFFF",
+    color: colors.surface,
   },
   sourceCardDescription: {
     color: colors.muted,
@@ -1648,7 +1648,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   primaryButtonText: {
-    color: "#FFFFFF",
+    color: colors.surface,
     fontSize: 14,
     fontWeight: "800",
   },
@@ -1740,7 +1740,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   choiceChipTextActive: {
-    color: "#FFFFFF",
+    color: colors.surface,
   },
   ingredientsWrap: {
     gap: 10,
@@ -1816,7 +1816,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   unitChipTextActive: {
-    color: "#FFFFFF",
+    color: colors.surface,
   },
   addIngredientText: {
     color: colors.muted,
@@ -1867,7 +1867,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   photoActionTextActive: {
-    color: "#FFFFFF",
+    color: colors.surface,
   },
   photoRemoveText: {
     color: colors.danger,
@@ -1883,7 +1883,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.9)",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
     padding: 16,
     gap: 10,
   },

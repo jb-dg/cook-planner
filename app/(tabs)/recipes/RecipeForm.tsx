@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   photoActionTextActive: {
-    color: "#FFFFFF",
+    color: colors.surface,
   },
   photoRemoveText: {
     color: colors.danger,
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   difficultyChipTextActive: {
-    color: "#fff",
+    color: colors.surface,
     fontWeight: "700",
   },
   ingredientsEditor: {
@@ -672,7 +672,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   unitChipTextActive: {
-    color: "#fff",
+    color: colors.surface,
   },
   addIngredientText: {
     color: colors.muted,
@@ -683,7 +683,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   saveButtonText: {
-    color: "#fff",
+    color: colors.surface,
     fontWeight: "800",
     fontSize: 16,
     letterSpacing: 0.3,

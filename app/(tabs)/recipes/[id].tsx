@@ -351,7 +351,7 @@ export default function RecipeScreen() {
           style={({ pressed }) => [styles.backButton, pressed && styles.cardPressed]}
           onPress={handleBack}
         >
-          <Feather name="chevron-left" size={16} color="#6B705C" />
+          <Feather name="chevron-left" size={16} color={colors.muted} />
           <Text style={styles.backButtonText}>Retour</Text>
         </Pressable>
       </View>
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
     marginLeft: -4,
   },
   backButtonText: {
-    color: "#6B705C",
+    color: colors.muted,
     fontSize: 13,
     fontWeight: "700",
   },
@@ -662,7 +662,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   bookChipTextActive: {
-    color: "#FFFFFF",
+    color: colors.surface,
   },
   modeSwitch: {
     flexDirection: "row",
@@ -691,12 +691,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   modeButtonTextActive: {
-    color: "#FFFFFF",
+    color: colors.surface,
   },
   recipeCard: {
     padding: spacing.card,
     borderRadius: 24,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.9)",
     gap: 14,
@@ -832,7 +832,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   deleteButtonText: {
-    color: "#FFFFFF",
+    color: colors.surface,
     fontWeight: "700",
   },
 });

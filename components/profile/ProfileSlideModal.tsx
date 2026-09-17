@@ -36,7 +36,7 @@ export default function ProfileSlideModal({
           keyboardVerticalOffset={keyboardVerticalOffset}
         >
           <Pressable style={closeIconStyle} onPress={onClose}>
-            <Feather name="x" size={18} color="#2D2D2A" />
+            <Feather name="x" size={18} color={colors.text} />
           </Pressable>
           <ScrollView
             contentContainerStyle={contentContainerStyle}

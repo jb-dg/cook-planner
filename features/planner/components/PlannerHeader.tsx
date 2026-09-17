@@ -2,6 +2,7 @@ import { StyleSheet, View } from "react-native";
 import { Text } from "@/components/Text";
 import { Feather } from "@expo/vector-icons";
 import { colors, spacing } from "../../../theme/design";
+import { physicalVariants } from "../../../theme/shadows";
 import { ViewMode } from "../utils/types";
 import { SaveStatusIndicator } from "./SaveStatusIndicator";
 import PhysicalButtonAnimated from "../../../components/PhysicalButtonAnimated";
@@ -58,7 +59,7 @@ export const PlannerHeader = ({
             onPress={() => onNavigateWeek("prev")}
             accessibilityLabel="Semaine précédente"
           >
-            <Feather name="chevron-left" size={16} color="#B15E17" />
+            <Feather name="chevron-left" size={16} color={physicalVariants.badge.textColor} />
           </PhysicalIconButton>
 
           <PhysicalButtonAnimated
@@ -69,7 +70,7 @@ export const PlannerHeader = ({
             accessibilityRole="button"
             accessibilityLabel="Changer de semaine"
           >
-            <Feather name="calendar" size={14} color="#B15E17" />
+            <Feather name="calendar" size={14} color={physicalVariants.badge.textColor} />
             <Text style={styles.weekBadgeText}>Semaine {weekNumber}</Text>
           </PhysicalButtonAnimated>
 
@@ -79,7 +80,7 @@ export const PlannerHeader = ({
             onPress={() => onNavigateWeek("next")}
             accessibilityLabel="Semaine suivante"
           >
-            <Feather name="chevron-right" size={16} color="#B15E17" />
+            <Feather name="chevron-right" size={16} color={physicalVariants.badge.textColor} />
           </PhysicalIconButton>
         </View>
 
@@ -178,7 +179,7 @@ const styles = StyleSheet.create({
     minHeight: 40,
   },
   weekBadgeText: {
-    color: "#B15E17",
+    color: physicalVariants.badge.textColor,
     fontWeight: "800",
     fontSize: 12,
     textTransform: "uppercase",
@@ -221,7 +222,7 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   todayButtonText: {
-    color: "#B15E17",
+    color: physicalVariants.badge.textColor,
     fontWeight: "800",
     fontSize: 16,
   },

@@ -7,6 +7,7 @@ import type { useProfileScreenState } from "@/features/profile/hooks/useProfileS
 import { styles } from "@/features/profile/screens/profileScreenStyles";
 
 import type { HouseholdModalMode } from "./types";
+import { colors } from "@/theme/design";
 
 type ProfileState = ReturnType<typeof useProfileScreenState>;
 
@@ -36,7 +37,7 @@ export default function HouseholdContent({ mode, state }: Props) {
             <Text style={styles.subheading}>Créer un foyer</Text>
             <TextInput
               placeholder="Nom du foyer (ex: Famille Durand)"
-              placeholderTextColor="#A5A58D"
+              placeholderTextColor={colors.accentTertiary}
               value={state.householdName}
               onChangeText={state.setHouseholdName}
               style={styles.input}
@@ -113,7 +114,7 @@ export default function HouseholdContent({ mode, state }: Props) {
             </Text>
             <TextInput
               placeholder="Code d'invitation"
-              placeholderTextColor="#A5A58D"
+              placeholderTextColor={colors.accentTertiary}
               value={state.joinCode}
               onChangeText={state.setJoinCode}
               style={styles.input}
@@ -171,7 +172,7 @@ export default function HouseholdContent({ mode, state }: Props) {
           </Text>
           <TextInput
             placeholder="Email du membre"
-            placeholderTextColor="#A5A58D"
+            placeholderTextColor={colors.accentTertiary}
             value={state.inviteEmail}
             onChangeText={state.setInviteEmail}
             style={styles.input}

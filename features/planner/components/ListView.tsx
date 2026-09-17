@@ -2,7 +2,7 @@ import { addDays, format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "@/components/Text";
-import { colors } from "../../../theme/design";
+import { colors, tints } from "../../../theme/design";
 import { DayPlan } from "../utils/types";
 
 type Props = {
@@ -64,7 +64,9 @@ export const ListView = ({
 
             <View style={styles.mealsColumn}>
               <View style={styles.mealLine}>
-                <Text style={styles.mealLabel}>Déjeuner</Text>
+                <Text style={[styles.mealLabel, { color: colors.accentSecondary }]}>
+                  Déjeuner
+                </Text>
                 <Text
                   style={[
                     styles.mealValue,
@@ -117,7 +119,7 @@ const styles = StyleSheet.create({
     width: 46,
     minHeight: 46,
     borderRadius: 14,
-    backgroundColor: "#F4E9D9",
+    backgroundColor: tints.badgeCream,
     alignItems: "center",
     justifyContent: "center",
     gap: 2,
@@ -138,7 +140,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   dateBadgeTextActive: {
-    color: "#FFFFFF",
+    color: colors.surface,
   },
   mealsColumn: {
     flex: 1,

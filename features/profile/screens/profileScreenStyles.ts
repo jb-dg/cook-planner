@@ -36,7 +36,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
-    backgroundColor: "#BC6C25",
+    backgroundColor: colors.accent,
     overflow: "hidden",
   },
   avatarImage: {
@@ -46,7 +46,7 @@ export const styles = StyleSheet.create({
   avatarLetter: {
     fontSize: 32,
     fontWeight: "900",
-    color: "#FFFFFF",
+    color: colors.surface,
   },
   heroText: {
     flex: 1,
@@ -119,7 +119,7 @@ export const styles = StyleSheet.create({
   },
   settingsDivider: {
     height: 1,
-    backgroundColor: "#F0E9DC",
+    backgroundColor: colors.cardBorder,
     marginVertical: 2,
   },
   // Icon + label row inside a CTA button (PhysicalButton/PhysicalButtonAnimated).
@@ -202,7 +202,7 @@ export const styles = StyleSheet.create({
   avatarEditorLetter: {
     fontSize: 32,
     fontWeight: "900",
-    color: "#FFFFFF",
+    color: colors.surface,
   },
   avatarUploadButton: {
     flex: 1,
@@ -249,7 +249,7 @@ export const styles = StyleSheet.create({
   },
 
   primaryButtonText: {
-    color: "#fff",
+    color: colors.surface,
     fontWeight: "800",
     fontSize: 15,
   },

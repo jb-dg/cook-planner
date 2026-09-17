@@ -91,8 +91,8 @@ export default function SettingsSection({
         disabled={deletingAccount}
       >
         <View style={styles.ctaButtonInner}>
-          <Feather name="user-x" size={16} color="#fff" />
-          <Text style={[styles.ctaButtonText, { color: "#fff" }]}>
+          <Feather name="user-x" size={16} color={colors.surface} />
+          <Text style={[styles.ctaButtonText, { color: colors.surface }]}>
             {deletingAccount ? "Suppression…" : "Supprimer mon compte"}
           </Text>
         </View>

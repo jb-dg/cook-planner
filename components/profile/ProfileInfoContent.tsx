@@ -4,6 +4,7 @@ import { Text } from "@/components/Text";
 import PhysicalButton from "@/components/PhysicalButton";
 import type { useProfileScreenState } from "@/features/profile/hooks/useProfileScreenState";
 import { styles } from "@/features/profile/screens/profileScreenStyles";
+import { colors } from "@/theme/design";
 
 type ProfileState = ReturnType<typeof useProfileScreenState>;
 
@@ -41,12 +42,12 @@ export default function ProfileInfoContent({ state }: Props) {
       </View>
       <Text style={[styles.label, { marginTop: 16 }]}>Pseudo unique</Text>
       {state.loadingProfile ? (
-        <ActivityIndicator color="#6B705C" />
+        <ActivityIndicator color={colors.muted} />
       ) : (
         <>
           <TextInput
             placeholder="ex: chef_lucie"
-            placeholderTextColor="#A5A58D"
+            placeholderTextColor={colors.accentTertiary}
             value={state.pseudo}
             onChangeText={state.setPseudo}
             style={styles.input}

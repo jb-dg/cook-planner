@@ -6,11 +6,61 @@ export const colors = {
   text: "#2D2D2A", // Hearth Warm Black
   muted: "#6B705C", // Hearth Sage
   accent: "#BC6C25", // Hearth Accent
+  accentSoft: "#DDA15E", // Hearth Soft
   accentSecondary: "#6B705C", // Hearth Sage
   accentTertiary: "#A5A58D", // Hearth Clay
   danger: "#C75252",
   cardBorder: "#E4D9C8", // warm border
+  shadow: "#000", // generic elevation-shadow black — matches shadows.subtle below
 };
+
+// Supplementary tints already in use around the app — not part of the core
+// Hearth palette above, but real, repeated (or once-off) values worth naming
+// instead of leaving as raw hex.
+export const tints = {
+  surfaceCream: "#FCFAF7", // lightest input/card fill — recipe book screens
+  cardBorderDashed: "#E6D3B8", // dashed border on an empty meal slot
+  dividerOnWarm: "#EEE3D2", // subtle divider drawn over a warm/cream surface
+  textFaint: "#B3A88F", // fainter than colors.muted — low-emphasis prompts
+  badgeCream: "#F4E9D9", // soft cream badge fill (e.g. date badge)
+};
+
+// Typography scale — single source for font sizes/weights (was duplicated in theme/theme.ts).
+export const typography = {
+  family: {
+    regular: "Inter",
+    medium: "Inter",
+    semibold: "Inter",
+    bold: "Inter",
+    // Reserved for a few high-emotion, low-frequency touches (an editorial
+    // accroche, a friendly empty state) — not a general-purpose UI face.
+    handwritten: "CoveredByYourGrace_400Regular",
+  },
+  size: {
+    h1: 28,
+    h2: 22,
+    h3: 18,
+    body: 16,
+    bodySmall: 14,
+    label: 13,
+    caption: 12,
+  },
+  lineHeight: {
+    h1: 36,
+    h2: 28,
+    h3: 24,
+    body: 22,
+    bodySmall: 20,
+    label: 18,
+    caption: 16,
+  },
+  weight: {
+    regular: "400",
+    medium: "500",
+    semibold: "600",
+    bold: "700",
+  },
+} as const;
 
 // Gradient definitions — Hearth warm palette
 export const gradients = {
@@ -41,6 +91,14 @@ export const spacing = {
   base: 10,
   screen: 20,
   card: 18,
+  // Finer scale (was duplicated in theme/theme.ts) for tighter, componentized layouts.
+  xxs: 4,
+  xs: 8,
+  sm: 12,
+  md: 18,
+  lg: 22,
+  xl: 28,
+  xxl: 36,
 };
 
 export const shadows = {

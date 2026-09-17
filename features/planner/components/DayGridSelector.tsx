@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   dayGridTitleActive: {
-    color: "#FFF",
+    color: colors.surface,
   },
   dayGridNumber: {
     fontSize: 20,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   dayGridNumberActive: {
-    color: "#FFF",
+    color: colors.surface,
   },
   // Hidden unless a meal is planned for that day — never shown for
   // selection/today alone, so it stays a single, unambiguous signal.
@@ -185,6 +185,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
   },
   dayGridDotActive: {
-    backgroundColor: "#FFF",
+    backgroundColor: colors.surface,
   },
 });

@@ -64,7 +64,7 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.surfaceAlt,
   },
   saveButtonText: {
-    color: "#fff",
+    color: colors.surface,
     fontWeight: "800",
     fontSize: 16,
   },

@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native";
 
-import { colors, radius, shadows, spacing } from "@/theme/design";
+import { colors, radius, shadows, spacing, typography } from "@/theme/design";
 
 export const styles = StyleSheet.create({
   screen: {
@@ -216,9 +216,11 @@ export const styles = StyleSheet.create({
     padding: 16,
   },
   recentRecipesEmptyText: {
-    color: colors.muted,
-    fontSize: 13,
-    lineHeight: 18,
+    fontFamily: typography.family.handwritten,
+    color: colors.accent,
+    fontSize: 22,
+    lineHeight: 26,
+    textAlign: "center",
   },
 
   shoppingSummaryCard: {

@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { PhysicalVariant, physicalVariants } from "../theme/shadows";
+import { colors } from "../theme/design";
 
 const SIZE = 44;
 const DEPTH = 3;
@@ -44,8 +45,8 @@ export default function PhysicalIconButton({
     "borderColor" in variantConfig
       ? variantConfig.borderColor
       : active
-        ? "#2D2D2A"
-        : "#E4D9C8";
+        ? colors.text
+        : colors.cardBorder;
 
   return (
     <View
@@ -64,7 +65,7 @@ export default function PhysicalIconButton({
         style={({ pressed }) => [
           styles.button,
           {
-            backgroundColor: disabled ? "#E4D9C8" : variantConfig.bgColor,
+            backgroundColor: disabled ? colors.cardBorder : variantConfig.bgColor,
             borderRadius,
             borderColor,
           },

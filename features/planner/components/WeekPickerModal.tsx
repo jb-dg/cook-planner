@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
     color: colors.muted,
   },
   sheetDayTextSelected: {
-    color: "#fff",
+    color: colors.surface,
   },
   sheetDot: {
     marginTop: 4,

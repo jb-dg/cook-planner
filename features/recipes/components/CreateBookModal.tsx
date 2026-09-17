@@ -5,7 +5,7 @@ import { Text } from "@/components/Text";
 
 import PhysicalButtonAnimated from "@/components/PhysicalButtonAnimated";
 import PhysicalIconButton from "@/components/PhysicalIconButton";
-import { colors, spacing } from "@/theme/design";
+import { colors, spacing, tints } from "@/theme/design";
 
 type Props = {
   visible: boolean;
@@ -77,7 +77,7 @@ export default function CreateBookModal({
               value={bookEmoji}
               onChangeText={onBookEmojiChange}
               placeholder="🍰"
-              placeholderTextColor="#A5A58D"
+              placeholderTextColor={colors.accentTertiary}
               style={styles.emojiInput}
               maxLength={2}
               returnKeyType="next"
@@ -86,7 +86,7 @@ export default function CreateBookModal({
               value={bookName}
               onChangeText={onBookNameChange}
               placeholder="Nom du livre"
-              placeholderTextColor="#A5A58D"
+              placeholderTextColor={colors.accentTertiary}
               style={[styles.input, styles.nameInput]}
               autoFocus
               returnKeyType="done"
@@ -102,7 +102,7 @@ export default function CreateBookModal({
                 <Feather
                   name="lock"
                   size={13}
-                  color={!isShared ? "#FFFFFF" : colors.muted}
+                  color={!isShared ? colors.surface : colors.muted}
                 />
                 <Text
                   style={[
@@ -120,7 +120,7 @@ export default function CreateBookModal({
                 <Feather
                   name="users"
                   size={13}
-                  color={isShared ? "#FFFFFF" : colors.muted}
+                  color={isShared ? colors.surface : colors.muted}
                 />
                 <Text
                   style={[
@@ -144,7 +144,7 @@ export default function CreateBookModal({
             onPress={submit}
             innerStyle={styles.confirmInner}
           >
-            <Feather name="check" size={14} color="#FFFFFF" />
+            <Feather name="check" size={14} color={colors.surface} />
             <Text style={styles.confirmText}>Créer le livre</Text>
           </PhysicalButtonAnimated>
         </View>
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     borderRadius: 24,
     padding: spacing.card,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.9)",
     gap: 14,
@@ -190,8 +190,8 @@ const styles = StyleSheet.create({
     minHeight: 46,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E4D9C8",
-    backgroundColor: "#FCFAF7",
+    borderColor: colors.cardBorder,
+    backgroundColor: tints.surfaceCream,
     paddingHorizontal: 14,
     color: colors.text,
     fontSize: 15,
@@ -209,8 +209,8 @@ const styles = StyleSheet.create({
     minHeight: 46,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E4D9C8",
-    backgroundColor: "#FCFAF7",
+    borderColor: colors.cardBorder,
+    backgroundColor: tints.surfaceCream,
     textAlign: "center",
     fontSize: 20,
   },
@@ -230,9 +230,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     borderWidth: 1,
-    borderColor: "#E4D9C8",
+    borderColor: colors.cardBorder,
     borderRadius: 999,
-    backgroundColor: "#FCFAF7",
+    backgroundColor: tints.surfaceCream,
     paddingHorizontal: 10,
     paddingVertical: 9,
   },
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   visibilityChipTextActive: {
-    color: "#FFFFFF",
+    color: colors.surface,
   },
   visibilityHint: {
     color: colors.muted,
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   confirmText: {
-    color: "#FFFFFF",
+    color: colors.surface,
     fontSize: 14,
     fontWeight: "800",
   },

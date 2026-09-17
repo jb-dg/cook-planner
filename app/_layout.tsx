@@ -9,6 +9,7 @@ import {
   Inter_800ExtraBold,
   Inter_900Black,
 } from "@expo-google-fonts/inter";
+import { CoveredByYourGrace_400Regular } from "@expo-google-fonts/covered-by-your-grace";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -18,6 +19,7 @@ import { useFonts } from "expo-font";
 
 import { AnimatedSplashScreen } from "../components/AnimatedSplashScreen";
 import { AuthProvider } from "../contexts/AuthContext";
+import { colors } from "../theme/design";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -31,6 +33,7 @@ export default function RootLayout() {
     Inter_700Bold,
     Inter_800ExtraBold,
     Inter_900Black,
+    CoveredByYourGrace_400Regular,
   });
 
   useEffect(() => {
@@ -46,7 +49,7 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <LinearGradient
-        colors={["#FDF8F1", "#F5EFE4", "#FDF8F1"]}
+        colors={[colors.background, colors.surfaceAlt, colors.background]}
         locations={[0, 0.5, 1]}
         style={styles.gradient}
       >
@@ -71,6 +74,6 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   gradient: {
     flex: 1,
-    backgroundColor: "#FDF8F1",
+    backgroundColor: colors.background,
   },
 });

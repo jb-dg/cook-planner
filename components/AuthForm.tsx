@@ -12,7 +12,7 @@ import {
   validatePassword,
   validatePasswordPresence,
 } from "../lib/validation/auth";
-import { useTheme } from "../theme/useTheme";
+import { colors, radii, spacing, typography } from "../theme/design";
 
 type Mode = "signin" | "signup" | "forgot";
 type ActiveMode = Mode | "recovery";
@@ -31,7 +31,6 @@ export default function AuthForm() {
     updatePassword,
     needsPasswordReset,
   } = useAuth();
-  const t = useTheme();
 
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
@@ -198,25 +197,25 @@ export default function AuthForm() {
       StyleSheet.create({
         container: {
           width: "100%",
-          gap: t.spacing.md,
+          gap: spacing.md,
         },
         titleRow: {
-          gap: t.spacing.xxs,
-          marginBottom: t.spacing.xs,
+          gap: spacing.xxs,
+          marginBottom: spacing.xs,
         },
         title: {
-          fontSize: t.typography.size.h2,
-          lineHeight: t.typography.lineHeight.h2,
-          fontWeight: t.typography.weight.bold,
-          color: t.colors.textPrimary,
+          fontSize: typography.size.h2,
+          lineHeight: typography.lineHeight.h2,
+          fontWeight: typography.weight.bold,
+          color: colors.text,
         },
         kicker: {
-          fontSize: t.typography.size.bodySmall,
-          lineHeight: t.typography.lineHeight.bodySmall,
-          color: t.colors.textMuted,
+          fontSize: typography.size.bodySmall,
+          lineHeight: typography.lineHeight.bodySmall,
+          color: colors.muted,
         },
         fieldGroup: {
-          gap: t.spacing.xxs,
+          gap: spacing.xxs,
         },
         fieldHeader: {
           flexDirection: "row",
@@ -229,62 +228,62 @@ export default function AuthForm() {
           fontWeight: "700",
           letterSpacing: 1.2,
           textTransform: "uppercase",
-          color: "#A5A58D",
+          color: colors.accentTertiary,
         },
         forgotLink: {
           fontSize: 10,
           fontWeight: "700",
           letterSpacing: 1.2,
           textTransform: "uppercase",
-          color: t.colors.primary,
+          color: colors.accent,
         },
         input: {
           height: 52,
           borderWidth: 2,
           borderColor: "rgba(165, 165, 141, 0.25)",
-          borderRadius: t.radius.lg,
-          paddingHorizontal: t.components.textInput.paddingHorizontal,
-          fontSize: t.typography.size.body,
+          borderRadius: radii.lg,
+          paddingHorizontal: spacing.md,
+          fontSize: typography.size.body,
           backgroundColor: "rgba(255, 255, 255, 0.55)",
-          color: t.colors.textPrimary,
+          color: colors.text,
         },
         inputFocused: {
-          backgroundColor: "#FFFFFF",
-          borderColor: t.colors.primary,
+          backgroundColor: colors.surface,
+          borderColor: colors.accent,
         },
         inputError: {
-          borderColor: t.colors.error,
+          borderColor: colors.danger,
         },
         error: {
-          color: t.colors.error,
-          marginTop: t.spacing.xxs,
-          fontSize: t.typography.size.label,
+          color: colors.danger,
+          marginTop: spacing.xxs,
+          fontSize: typography.size.label,
         },
         message: {
-          fontSize: t.typography.size.bodySmall,
-          fontWeight: t.typography.weight.semibold,
+          fontSize: typography.size.bodySmall,
+          fontWeight: typography.weight.semibold,
         },
         messageSuccess: {
-          color: t.colors.primary,
+          color: colors.accent,
         },
         messageError: {
-          color: t.colors.error,
+          color: colors.danger,
         },
         buttonText: {
-          color: t.components.button.primary.textColor,
+          color: colors.surface,
           fontWeight: "800",
-          fontSize: t.typography.size.body,
+          fontSize: typography.size.body,
           letterSpacing: 0.3,
         },
         buttonTextDisabled: {
-          color: t.colors.textPrimary,
+          color: colors.text,
         },
         // Divider
         dividerRow: {
           flexDirection: "row",
           alignItems: "center",
-          gap: t.spacing.sm,
-          marginVertical: t.spacing.xs,
+          gap: spacing.sm,
+          marginVertical: spacing.xs,
         },
         dividerLine: {
           flex: 1,
@@ -296,21 +295,21 @@ export default function AuthForm() {
           fontWeight: "700",
           letterSpacing: 1.2,
           textTransform: "uppercase",
-          color: "#A5A58D",
+          color: colors.accentTertiary,
         },
         // Social buttons
         socialRow: {
           flexDirection: "row",
-          gap: t.spacing.sm,
+          gap: spacing.sm,
         },
         socialBtn: {
           flex: 1,
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
-          gap: t.spacing.xs,
+          gap: spacing.xs,
           minHeight: 48,
-          borderRadius: t.radius.lg,
+          borderRadius: radii.lg,
           backgroundColor: "rgba(255, 255, 255, 0.6)",
           borderWidth: 1,
           borderColor: "rgba(165, 165, 141, 0.25)",
@@ -319,15 +318,15 @@ export default function AuthForm() {
           opacity: 0.55,
         },
         socialBtnText: {
-          fontSize: t.typography.size.bodySmall,
+          fontSize: typography.size.bodySmall,
           fontWeight: "700",
-          color: t.colors.textPrimary,
+          color: colors.text,
         },
         // Mode switch link
         link: {
-          color: t.colors.primary,
-          fontWeight: t.typography.weight.semibold,
-          fontSize: t.typography.size.bodySmall,
+          color: colors.accent,
+          fontWeight: typography.weight.semibold,
+          fontSize: typography.size.bodySmall,
           textAlign: "left",
         },
         switchRow: {
@@ -336,11 +335,11 @@ export default function AuthForm() {
           gap: 4,
         },
         switchLabel: {
-          fontSize: t.typography.size.bodySmall,
-          color: t.colors.textMuted,
+          fontSize: typography.size.bodySmall,
+          color: colors.muted,
         },
       }),
-    [t],
+    [],
   );
 
   return (
@@ -360,7 +359,7 @@ export default function AuthForm() {
             autoComplete="email"
             keyboardType="email-address"
             placeholder="email@exemple.com"
-            placeholderTextColor={t.components.textInput.placeholderColor}
+            placeholderTextColor={colors.muted}
             style={[s.input, errors.email ? s.inputError : null]}
             value={email}
             onChangeText={setEmail}
@@ -390,7 +389,7 @@ export default function AuthForm() {
           <TextInput
             placeholder="••••••••"
             secureTextEntry
-            placeholderTextColor={t.components.textInput.placeholderColor}
+            placeholderTextColor={colors.muted}
             style={[s.input, errors.password ? s.inputError : null]}
             value={password}
             onChangeText={setPassword}
@@ -414,7 +413,7 @@ export default function AuthForm() {
           <TextInput
             placeholder="••••••••"
             secureTextEntry
-            placeholderTextColor={t.components.textInput.placeholderColor}
+            placeholderTextColor={colors.muted}
             style={[s.input, errors.confirm ? s.inputError : null]}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
@@ -445,8 +444,8 @@ export default function AuthForm() {
           <ActivityIndicator
             color={
               submitDisabled
-                ? t.colors.textMuted
-                : t.components.button.primary.textColor
+                ? colors.muted
+                : colors.surface
             }
           />
         ) : (
@@ -475,9 +474,12 @@ export default function AuthForm() {
               disabled={busy}
             >
               {socialSubmitting === "google" ? (
+                // Google's fixed brand red, not a Hearth token — required by their brand guidelines.
+                // eslint-disable-next-line no-restricted-syntax
                 <ActivityIndicator color="#EA4335" />
               ) : (
                 <>
+                  {/* eslint-disable-next-line no-restricted-syntax -- Google brand red, see above */}
                   <AntDesign name="google" size={18} color="#EA4335" />
                   <Text style={s.socialBtnText}>Google</Text>
                 </>
@@ -489,10 +491,10 @@ export default function AuthForm() {
               disabled={busy}
             >
               {socialSubmitting === "apple" ? (
-                <ActivityIndicator color={t.colors.textPrimary} />
+                <ActivityIndicator color={colors.text} />
               ) : (
                 <>
-                  <AntDesign name="apple" size={18} color={t.colors.textPrimary} />
+                  <AntDesign name="apple" size={18} color={colors.text} />
                   <Text style={s.socialBtnText}>Apple</Text>
                 </>
               )}

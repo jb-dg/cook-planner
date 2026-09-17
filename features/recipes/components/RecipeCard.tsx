@@ -174,7 +174,7 @@ export default function RecipeCard({
               onPress={onAddToPlanner}
               innerStyle={localStyles.membershipButtonInner}
             >
-              <Feather name="calendar" size={14} color="#6B705C" />
+              <Feather name="calendar" size={14} color={colors.muted} />
               <Text style={localStyles.membershipButtonText}>
                 Ajouter au planning
               </Text>
@@ -187,7 +187,7 @@ export default function RecipeCard({
             onPress={handleOptionsPress}
             accessibilityLabel="Options de la recette"
           >
-            <Feather name="more-horizontal" size={18} color="#6B705C" />
+            <Feather name="more-horizontal" size={18} color={colors.muted} />
           </PhysicalIconButton>
         ) : null}
       </View>
@@ -256,7 +256,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   membershipButtonText: {
-    color: "#6B705C",
+    color: colors.muted,
     fontSize: 13,
     fontWeight: "700",
   },
@@ -300,7 +300,7 @@ const localStyles = StyleSheet.create({
     width: "100%",
     height: 118,
     borderRadius: CARD_RADIUS,
-    backgroundColor: "#F5EFE4",
+    backgroundColor: colors.surfaceAlt,
   },
   compactTitle: {
     fontSize: 16,

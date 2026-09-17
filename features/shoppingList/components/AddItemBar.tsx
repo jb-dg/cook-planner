@@ -58,7 +58,7 @@ export const AddItemBar = ({ onSubmit }: Props) => {
         innerStyle={styles.addButtonInner}
         accessibilityLabel="Ajouter l'article"
       >
-        <Feather name="plus" size={18} color="#FFFFFF" />
+        <Feather name="plus" size={18} color={colors.surface} />
       </PhysicalButtonAnimated>
     </View>
   );

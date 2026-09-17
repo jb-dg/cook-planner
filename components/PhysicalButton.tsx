@@ -7,6 +7,7 @@ import {
   ViewStyle,
 } from "react-native";
 import { PhysicalVariant, physicalVariants } from "../theme/shadows";
+import { colors } from "../theme/design";
 
 const DEPTH = 5;
 const BORDER_RADIUS = 18;
@@ -59,7 +60,7 @@ export default function PhysicalButton({
         style={({ pressed }) => [
           styles.button,
           {
-            backgroundColor: disabled ? "#E4D9C8" : bgColor,
+            backgroundColor: disabled ? colors.cardBorder : bgColor,
             borderRadius: BORDER_RADIUS,
           },
           borderColor && { borderWidth: 2, borderColor },

@@ -1,17 +1,17 @@
 import { Platform, StyleSheet } from "react-native";
 
-import { colors, spacing } from "@/theme/design";
+import { colors, spacing, typography } from "@/theme/design";
 
 const shadowCard = Platform.select({
   ios: {
-    shadowColor: "#6B705C",
+    shadowColor: colors.muted,
     shadowOpacity: 0.12,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 8 },
   },
   android: {
     elevation: 3,
-    shadowColor: "#000",
+    shadowColor: colors.shadow,
   },
   default: {},
 });
@@ -82,9 +82,9 @@ export const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: colors.text,
+    fontFamily: typography.family.handwritten,
+    fontSize: 24,
+    color: colors.accent,
   },
   emptySubtitle: {
     fontSize: 13,

@@ -25,9 +25,9 @@ type ProfileActionRowProps = Omit<QuickActionItem, "id"> & {
 };
 
 const TONE_COLORS: Record<ActionRowTone, { icon: string; bg: string; border: string }> = {
-  accent: { icon: "#BC6C25", bg: "rgba(188, 108, 37, 0.08)", border: "rgba(188, 108, 37, 0.3)" },
-  muted: { icon: "#6B705C", bg: "rgba(107, 112, 92, 0.08)", border: "rgba(107, 112, 92, 0.25)" },
-  danger: { icon: "#C75252", bg: "rgba(199, 82, 82, 0.07)", border: "rgba(199, 82, 82, 0.25)" },
+  accent: { icon: colors.accent, bg: "rgba(188, 108, 37, 0.08)", border: "rgba(188, 108, 37, 0.3)" },
+  muted: { icon: colors.muted, bg: "rgba(107, 112, 92, 0.08)", border: "rgba(107, 112, 92, 0.25)" },
+  danger: { icon: colors.danger, bg: "rgba(199, 82, 82, 0.07)", border: "rgba(199, 82, 82, 0.25)" },
 };
 
 export default function ProfileActionRow({
@@ -64,7 +64,7 @@ export default function ProfileActionRow({
         <Feather
           name={icon}
           size={16}
-          color={active ? "#FFFFFF" : emphasis ? "#FFFFFF" : toneColors.icon}
+          color={active ? colors.surface : emphasis ? colors.surface : toneColors.icon}
         />
       </View>
       <View style={styles.actionContent}>
@@ -91,7 +91,7 @@ export default function ProfileActionRow({
       <Feather
         name="chevron-right"
         size={18}
-        color={active ? "rgba(255,255,255,0.85)" : emphasis ? colors.danger : "#A5A58D"}
+        color={active ? "rgba(255,255,255,0.85)" : emphasis ? colors.danger : colors.accentTertiary}
       />
     </Pressable>
   );
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   actionLabelActive: {
-    color: "#FFFFFF",
+    color: colors.surface,
   },
   actionHelper: {
     fontSize: 12,

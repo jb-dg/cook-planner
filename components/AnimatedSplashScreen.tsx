@@ -2,6 +2,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useRef } from "react";
 import { Animated, Easing, Image, Modal, StyleSheet } from "react-native";
 import { Text } from "@/components/Text";
+import { colors } from "@/theme/design";
 
 type AnimatedSplashScreenProps = {
   onFinish: () => void;
@@ -83,7 +84,7 @@ export function AnimatedSplashScreen({ onFinish }: AnimatedSplashScreenProps) {
     <Modal visible animationType="none" statusBarTranslucent>
       <Animated.View style={[styles.root, { opacity: containerOpacity }]}>
         <LinearGradient
-          colors={["#FDF8F1", "#F5EFE4", "#FDF8F1"]}
+          colors={[colors.background, colors.surfaceAlt, colors.background]}
           locations={[0, 0.5, 1]}
           style={StyleSheet.absoluteFillObject}
         />
@@ -118,7 +119,7 @@ const TITLE_OFFSET = LOGO_SIZE / 2 + 14;
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#FDF8F1",
+    backgroundColor: colors.background,
   },
   logoWrap: {
     position: "absolute",
@@ -149,7 +150,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#2D2D2A",
+    color: colors.text,
     letterSpacing: 0.3,
   },
 });

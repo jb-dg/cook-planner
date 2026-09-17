@@ -77,7 +77,7 @@ export default function RecipeBooksList({
             </Text>
           </View>
           <View style={styles.bookArrow}>
-            <Feather name="chevron-right" size={18} color="#BC6C25" />
+            <Feather name="chevron-right" size={18} color={colors.accent} />
           </View>
         </View>
         <View style={styles.bookFooterRow}>

@@ -9,6 +9,7 @@ import {
   ViewStyle,
 } from "react-native";
 import { PhysicalVariant, physicalVariants } from "../theme/shadows";
+import { colors } from "../theme/design";
 
 const SHADOW_OFFSET_REST = 5;
 const SHADOW_OFFSET_PRESSED = 2;
@@ -97,7 +98,7 @@ export default function PhysicalButtonAnimated({
           style={[
             styles.button,
             {
-              backgroundColor: disabled ? "#E4D9C8" : bgColor,
+              backgroundColor: disabled ? colors.cardBorder : bgColor,
               borderRadius,
             },
             borderColor && { borderWidth: 2, borderColor },
